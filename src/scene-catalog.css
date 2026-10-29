@@ -1,0 +1,23 @@
+.scene-catalog-page{flex:1;min-height:0;overflow:auto;background:#f5f7fa;padding:36px 24px 44px;color:#2e425b}
+.sc-header{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 28px}.sc-header h1{font-size:28px;font-weight:600;margin:7px 0}.sc-search{display:flex;align-items:center;gap:10px;padding:11px 14px;background:white;border:1px solid #dce5ee;border-radius:9px;color:#8194aa}.sc-search input{width:230px;border:0;outline:none;background:transparent;font-size:13px;color:#314763}
+.sc-layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:30px;margin:0;align-items:start}.sc-content{min-width:0}.sc-category{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:22px}.sc-category h2{font-size:15px;font-weight:500;color:#527797}.sc-category>span{font-size:12px;color:#899bad}
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:24px}.sc-card{min-width:0;overflow:hidden;background:white;border:1px solid #e0e7ef;border-radius:13px;text-align:left;color:#2e425b;padding:0;display:flex;flex-direction:column}.sc-preview{position:relative;width:100%;aspect-ratio:1.8;overflow:hidden}.scene-preview{display:block;width:100%;height:100%}.sc-status{position:absolute;top:13px;right:13px;color:#667e93;background:#ffffffdb;border:1px solid #dce5ed;border-radius:5px;padding:4px 9px;font-size:11px}.sc-card-body{padding:21px 23px 24px;flex:1}.sc-card h3{font-size:17px;font-weight:550;line-height:1.5;margin:0 0 9px}.sc-card p{font-size:13px;color:#798c9f;line-height:1.8;margin:0}.sc-open{display:flex;align-items:center;justify-content:space-between;color:#477da7;font-size:12px;margin-top:20px}.sc-ready{cursor:pointer;transition:box-shadow .15s,border-color .15s}.sc-ready:hover{border-color:#a3bfd6;box-shadow:0 5px 20px #34516d0b}.sc-ready:focus-visible{outline:2px solid #347ebc;outline-offset:3px}
+.sc-empty{padding:65px 20px;border:1px dashed #dce6ef;border-radius:12px;text-align:center;color:#7b91a6}.sc-empty p{font-size:13px;margin:16px 0}.sc-empty button{margin:auto;color:#6087ac}.sc-pagination{display:flex;justify-content:center;align-items:center;gap:28px;margin:30px 0 5px}.sc-pagination button{display:flex;align-items:center;gap:8px;background:white;border:1px solid #dce5ee;border-radius:7px;padding:9px 14px;font-size:12px;color:#597e9e}.sc-pagination button:disabled{color:#a6b4c1;cursor:default;background:transparent}.sc-pagination>span{font-size:12px;color:#8596a9}
+@media(max-width:1150px){.scene-catalog-page{padding:28px 24px}.sc-layout{grid-template-columns:220px minmax(0,1fr);gap:24px}.sc-grid{gap:22px}}
+@media(max-width:750px){.scene-catalog-page{padding:23px 16px}.sc-header{align-items:flex-start;flex-direction:column;gap:16px}.sc-search{width:100%}.sc-search input{width:100%}.sc-layout{grid-template-columns:1fr;gap:22px}.sc-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.sc-card-body{padding:19px 21px}.sc-pagination{gap:18px}}
+@media(max-width:550px){.sc-grid{grid-template-columns:1fr}}
+
+/* Quiet surfaces frame the experiment illustrations; selection carries the accent. */
+.scene-catalog-page { background: #f2f5fa; color: #20364f; }
+.sc-card { border-color: #d6e0eb; box-shadow: 0 2px 5px #20364f05; }
+.sc-preview { border-bottom: 1px solid #dbe4ee; }
+.sc-card h3 { color: #20364f; font-weight: 650; }
+.sc-open { color: #2258a6; font-weight: 600; }
+.sc-open svg { transition: transform .18s ease; }
+.sc-ready { transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease; }
+.sc-ready:hover { border-color: #8aa9d6; box-shadow: 0 10px 26px #274b7714; transform: translateY(-3px); }
+.sc-ready:hover .sc-open svg { transform: translateX(3px); }
+.optics-directory .od-select.active { color: #194ab8; background: #e7efff; box-shadow: inset 3px 0 #2862d5; }
+.optics-directory .od-select small { color: #566b83; }
+.sc-search:focus-within { border-color: #7399d7; box-shadow: 0 0 0 3px #2563eb12; }
+@media(prefers-reduced-motion:reduce) { .sc-ready, .sc-open svg { transition: none; } .sc-ready:hover { transform: none; } }

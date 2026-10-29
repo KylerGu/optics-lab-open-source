@@ -1,0 +1,9 @@
+import {useEffect,useRef} from 'react';
+import type {SpatialFourierResult} from './builderModel';
+import {fourFOutputCanvas} from './SpatialFourFOutput';
+
+export default function SpatialFourierOutput({result,radius}:{result:SpatialFourierResult;radius:number}){
+  const ref=useRef<HTMLCanvasElement>(null),extent=result.points.at(-1)!.xMm,probe=result.parameters.observationUm*.001;
+  useEffect(()=>{const canvas=fourFOutputCanvas(result,radius);ref.current!.width=ref.current!.height=256;ref.current!.getContext('2d')!.drawImage(canvas,0,0);},[result,radius]);
+  return <article className="sb-four-f-output" aria-label="傅里叶频谱结果"><strong>傅里叶频谱屏</strong><div className="sb-four-f-image"><canvas ref={ref} aria-label="傅里叶零级与正负一级频谱光强"/><svg viewBox="0 0 256 256" aria-label="频谱观察点"><circle cx={128+128*probe/extent} cy={128} r={3} stroke="white" fill="#26836a"/><text x={140+128*probe/extent} y={119} fill="white" fontSize={12}>xꜰ</text></svg></div><small className="sb-four-f-extent">xꜰ：±{Number((extent*1000).toFixed(1))} μm</small><div className="sb-four-f-values"><span>一级位置 x₁<strong>{result.parameters.modulation?result.orderPositionUm.toFixed(2):'—'} μm</strong></span><span>观察点 I / I₀<strong>{result.pointIntensity.toFixed(4)}</strong></span></div><small className="sb-four-f-note">光斑半径 wꜰ：{result.spotRadiusUm.toFixed(2)} μm · 以频谱中心为基准</small><details><summary>光强曲线</summary><svg viewBox="0 0 280 115" role="img" aria-label="傅里叶频谱光强曲线"><path d="M20 10V95H270" stroke="#cbd5e1" fill="none"/><path d={result.points.map((p,i)=>`${i?'L':'M'}${(20+(p.xMm+extent)/(2*extent)*250).toFixed(2)},${(95-p.intensity*80).toFixed(2)}`).join(' ')} stroke="#427ad3" fill="none"/><text x="20" y="110" fontSize={10}>−{Number((extent*1000).toFixed(1))}</text><text x="270" y="110" textAnchor="end" fontSize={10}>{Number((extent*1000).toFixed(1))} μm</text></svg></details></article>;
+}

@@ -1,0 +1,3500 @@
+[
+  {
+    "id": "reflection-law",
+    "title": "反射定律",
+    "categoryId": "reflection-refraction",
+    "latex": "\\theta_r=\\theta_i",
+    "question": "反射光会朝哪个方向传播？",
+    "meaning": "入射角和反射角都从法线量起，反射光位于法线另一侧。法线就是垂直于界面的方向。",
+    "conditions": "平整界面的镜面反射；不用于粗糙表面的漫反射方向分布。",
+    "application": "平面镜转向、折叠光路和反射测角。",
+    "diagram": "interface",
+    "sceneId": "reflection-refraction-0",
+    "fields": [
+      {
+        "key": "i",
+        "label": "入射角 θᵢ",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 45
+      },
+      {
+        "key": "r",
+        "label": "反射角 θᵣ",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 45
+      }
+    ]
+  },
+  {
+    "id": "snell-law",
+    "title": "折射定律",
+    "categoryId": "reflection-refraction",
+    "latex": "n_1\\sin\\theta_i=n_2\\sin\\theta_t",
+    "question": "经过界面后，光线向法线靠近还是远离？",
+    "meaning": "折射率较大的介质通常使光线更靠近法线；若所需正弦超过 1，就没有向远处传播的折射光。",
+    "conditions": "均匀、各向同性介质之间的平整界面。使用相同真空波长下的折射率，角度从法线量起。",
+    "application": "透镜、棱镜、光纤及透明窗口的光路设计。",
+    "diagram": "interface",
+    "sceneId": "reflection-refraction-0",
+    "fields": [
+      {
+        "key": "n1",
+        "label": "入射折射率 n₁",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1
+      },
+      {
+        "key": "n2",
+        "label": "透射折射率 n₂",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1.5
+      },
+      {
+        "key": "i",
+        "label": "入射角 θᵢ",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 45
+      },
+      {
+        "key": "t",
+        "label": "折射角 θₜ",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 28.1255057020557
+      }
+    ]
+  },
+  {
+    "id": "critical-angle",
+    "title": "全反射临界角",
+    "categoryId": "reflection-refraction",
+    "latex": "\\theta_c=\\arcsin\\!\\left(\\frac{n_2}{n_1}\\right),\\quad n_1>n_2",
+    "question": "入射角多大时，折射光不再向介质内部传播？",
+    "meaning": "光从高折射率进入低折射率介质时，临界角处折射角达到 90°；超过临界角才发生全反射。",
+    "conditions": "n₁ > n₂，介质无吸收。全反射仍有界面外倏逝场，本光线示意不显示该场。",
+    "application": "光纤导光、全反射棱镜和界面折射率测量。",
+    "diagram": "interface",
+    "sceneId": "reflection-refraction-1",
+    "fields": [
+      {
+        "key": "n1",
+        "label": "入射折射率 n₁",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1.5
+      },
+      {
+        "key": "n2",
+        "label": "透射折射率 n₂",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1
+      },
+      {
+        "key": "c",
+        "label": "临界角 θc",
+        "unit": "°",
+        "min": 0.001,
+        "max": 89.999,
+        "default": 41.810314895778596
+      }
+    ]
+  },
+  {
+    "id": "fresnel-power",
+    "title": "界面反射与透射功率",
+    "categoryId": "reflection-refraction",
+    "latex": "R_s=\\left(\\frac{n_1\\cos i-n_2\\cos t}{n_1\\cos i+n_2\\cos t}\\right)^2,\\quad R_p=\\left(\\frac{n_2\\cos i-n_1\\cos t}{n_2\\cos i+n_1\\cos t}\\right)^2,\\quad R=\\frac{R_s+R_p}{2},\\ T=1-R",
+    "question": "光线分成两路后，能量如何分配？",
+    "meaning": "菲涅耳公式描述不同偏振方向的反射比例；未偏振光取两方向平均。这里 R、T 都是功率比例，透射振幅的平方不能直接当作功率比例。",
+    "conditions": "无吸收、非磁性介质的平面界面；未偏振入射。全反射区 R = 1，T = 0。",
+    "application": "估算玻璃窗口反射损失、镀膜前的界面损耗。",
+    "diagram": "interface",
+    "sceneId": "reflection-refraction-0",
+    "fields": [
+      {
+        "key": "n1",
+        "label": "入射折射率 n₁",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1
+      },
+      {
+        "key": "n2",
+        "label": "透射折射率 n₂",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1.5
+      },
+      {
+        "key": "i",
+        "label": "入射角 i",
+        "unit": "°",
+        "min": 0,
+        "max": 89.999,
+        "default": 0
+      },
+      {
+        "key": "R",
+        "label": "反射功率 R",
+        "unit": "%",
+        "min": 0,
+        "max": 100,
+        "default": 4
+      }
+    ],
+    "targets": [
+      "R",
+      "i"
+    ]
+  },
+  {
+    "id": "prism-deviation",
+    "title": "棱镜偏折与最小偏折",
+    "categoryId": "reflection-refraction",
+    "latex": "\\delta=i+e-A,\\quad r_1+r_2=A,\\quad\\delta_s=2\\arcsin\\!\\left(\\frac{n}{n_0}\\sin\\frac A2\\right)-A",
+    "question": "怎样让通过棱镜的光线偏折最小？",
+    "meaning": "先用折射定律计算两面角度；对称光路中两面的内角都是 A/2。当 n > n₀ 时，对称光路给出最小偏折。",
+    "conditions": "均匀棱镜、相同外介质，主光线穿过两斜面。对称出射要求 (n/n₀)sin(A/2) ≤ 1；n < n₀ 时 δs 为负偏折的极值。计算器求对称光路的 δs。",
+    "application": "用最小偏折测折射率、设计棱镜光束转向。",
+    "diagram": "prism",
+    "sceneId": "reflection-refraction-2",
+    "fields": [
+      {
+        "key": "n",
+        "label": "棱镜折射率 n",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1.5
+      },
+      {
+        "key": "n0",
+        "label": "外介质折射率 n₀",
+        "unit": "无量纲",
+        "min": 0.01,
+        "max": 10,
+        "default": 1
+      },
+      {
+        "key": "A",
+        "label": "顶角 A",
+        "unit": "°",
+        "min": 0.1,
+        "max": 89.9,
+        "default": 60
+      },
+      {
+        "key": "delta",
+        "label": "对称光路偏折 δs",
+        "unit": "°",
+        "min": -89.9,
+        "max": 179.9,
+        "default": 37.18075578145828
+      }
+    ],
+    "targets": [
+      "delta",
+      "n",
+      "n0"
+    ]
+  },
+  {
+    "id": "thin-lens",
+    "title": "近轴成像公式",
+    "categoryId": "paraxial",
+    "latex": "\\frac1f=\\frac1u+\\frac1v",
+    "question": "像在哪里，是否能投到屏幕上？",
+    "meaning": "实物物距 u > 0。透镜中会聚透镜 f > 0，发散透镜 f < 0；实像 v > 0 位于透镜另一侧。球面镜中凹面镜 f > 0，凸面镜 f < 0；实像 v > 0 位于镜前。虚像均取 v < 0，u = f 时像在无穷远。",
+    "conditions": "理想薄透镜或球面镜的近轴成像；透镜物像两侧为空气。不包含厚透镜主面偏移、大孔径像差或衍射。",
+    "application": "投影、相机对焦、放大镜物像距离估算。",
+    "diagram": "lens",
+    "sceneId": "paraxial-0",
+    "fields": [
+      {
+        "key": "f",
+        "label": "有向焦距 f",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 100
+      },
+      {
+        "key": "u",
+        "label": "实物物距 u",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 200
+      },
+      {
+        "key": "v",
+        "label": "有向像距 v",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 200
+      }
+    ]
+  },
+  {
+    "id": "magnification",
+    "title": "横向放大率",
+    "categoryId": "paraxial",
+    "latex": "m=\\frac{h'}h=-\\frac vu",
+    "question": "像是放大、缩小，还是倒立？",
+    "meaning": "放大率绝对值是像与物的高度比。m < 0 表示倒立像，m > 0 表示正立像。物距和像距使用薄透镜的符号约定。",
+    "conditions": "近轴成像，实物 u > 0；计算器由像距与物距求放大率，或反求其中一个距离。",
+    "application": "比较投影尺寸、设计光学放大和缩小系统。",
+    "diagram": "lens",
+    "sceneId": "paraxial-0",
+    "fields": [
+      {
+        "key": "u",
+        "label": "实物物距 u",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 200
+      },
+      {
+        "key": "v",
+        "label": "有向像距 v",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 200
+      },
+      {
+        "key": "m",
+        "label": "放大率 m",
+        "unit": "无量纲",
+        "min": -10000,
+        "max": 10000,
+        "default": -1
+      }
+    ]
+  },
+  {
+    "id": "mirror-focal",
+    "title": "球面镜焦距与曲率",
+    "categoryId": "paraxial",
+    "latex": "f=\\frac R2",
+    "question": "球面镜弯得更明显时，焦点如何改变？",
+    "meaning": "凹面镜的有向曲率半径与焦距为正，凸面镜为负。曲率半径的绝对值越小，焦距绝对值越小。",
+    "conditions": "近轴球面镜；离轴、大孔径光线不全部聚于同一点。",
+    "application": "反射聚焦、望远镜反射物镜与球面镜测量。",
+    "diagram": "mirror",
+    "sceneId": "paraxial-1",
+    "fields": [
+      {
+        "key": "R",
+        "label": "有向曲率半径 R",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 200
+      },
+      {
+        "key": "f",
+        "label": "有向焦距 f",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 100
+      }
+    ]
+  },
+  {
+    "id": "system-focal",
+    "title": "双透镜等效焦距",
+    "categoryId": "paraxial",
+    "latex": "\\frac1F=\\frac1{f_1}+\\frac1{f_2}-\\frac d{f_1f_2}",
+    "question": "两片透镜组合后，焦距为什么不只是相加？",
+    "meaning": "间距改变系统屈光能力。等效焦距从组合系统的主面量起；当分母为零时为无焦系统，不代表任意有限物距都成像在无穷远。",
+    "conditions": "空气中理想薄透镜、同轴近轴模型，有向焦距不能为零。",
+    "application": "组合镜头、扩束器与望远镜配置的初步估算。",
+    "diagram": "double-lens",
+    "sceneId": "paraxial-2",
+    "fields": [
+      {
+        "key": "f1",
+        "label": "第一片有向焦距 f₁",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 100
+      },
+      {
+        "key": "f2",
+        "label": "第二片有向焦距 f₂",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 100
+      },
+      {
+        "key": "d",
+        "label": "透镜间距 d",
+        "unit": "mm",
+        "min": 0,
+        "max": 100000,
+        "default": 350
+      },
+      {
+        "key": "F",
+        "label": "系统等效焦距 F",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": -66.66666666666667
+      }
+    ]
+  },
+  {
+    "id": "matrix-imaging",
+    "title": "光线矩阵与像面位置",
+    "categoryId": "paraxial",
+    "latex": "\\begin{pmatrix}y_2\\\\\\theta_2\\end{pmatrix}=\\begin{pmatrix}A&B\\\\C&D\\end{pmatrix}\\begin{pmatrix}y_0\\\\\\theta_0\\end{pmatrix},\\quad v=-\\frac BD,\\quad m=A+vC",
+    "question": "前一片尚未形成像时，后一片怎样接收光线？",
+    "meaning": "光线矩阵是同时记录光线高度和倾角如何变化的四个系数。由物平面到最后一片后的矩阵，继续传播 v 后需满足 B + vD = 0，才能形成同一物点的像。",
+    "conditions": "空气中近轴模型。B 单位为 mm，C 单位为 mm⁻¹，A、D 无量纲。D = 0 且 B ≠ 0 时像在无穷远；此计算器只反求 B、D、v。",
+    "application": "多透镜成像、存在虚物的系统、显微镜中间像分析。",
+    "diagram": "double-lens",
+    "sceneId": "paraxial-2",
+    "fields": [
+      {
+        "key": "B",
+        "label": "矩阵系数 B",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": -150
+      },
+      {
+        "key": "D",
+        "label": "矩阵系数 D",
+        "unit": "无量纲",
+        "min": -100000,
+        "max": 100000,
+        "default": 0.5
+      },
+      {
+        "key": "v",
+        "label": "距末片的像距 v",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 300
+      }
+    ]
+  },
+  {
+    "id": "microscope-angular",
+    "title": "显微镜目视角放大率",
+    "categoryId": "instruments",
+    "latex": "M=m_o\\frac D{f_e}\\quad(\\text{final image at infinity})",
+    "question": "为什么显微镜需要物镜和目镜共同放大？",
+    "meaning": "物镜先把微小物体形成放大的中间像，目镜再增加该像对眼睛张开的角度；负号表示倒立。这里仅计算最终像在无穷远的放松眼配置。",
+    "conditions": "物镜中间实像位于目镜前焦平面，眼在目镜附近；D 为明视参考距离。不同最终像距离须用实际光路重新计算。",
+    "application": "比较物镜放大率和目镜焦距对目视大小的影响。",
+    "diagram": "microscope",
+    "sceneId": "instruments-0",
+    "fields": [
+      {
+        "key": "mo",
+        "label": "物镜横向放大率 mₒ",
+        "unit": "无量纲",
+        "min": -100000,
+        "max": 100000,
+        "default": -10
+      },
+      {
+        "key": "near",
+        "label": "明视参考距离 D",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 250
+      },
+      {
+        "key": "fe",
+        "label": "目镜焦距 fₑ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 20
+      },
+      {
+        "key": "M",
+        "label": "目视角放大率 M",
+        "unit": "倍",
+        "min": -100000,
+        "max": 100000,
+        "default": -125
+      }
+    ]
+  },
+  {
+    "id": "telescope-angular",
+    "title": "望远镜无焦角放大率",
+    "categoryId": "instruments",
+    "latex": "M=-\\frac{f_o}{f_e},\\quad d=f_o+f_e",
+    "question": "会聚目镜和发散目镜的望远镜为什么成像方向不同？",
+    "meaning": "远物入射光近似平行；两镜间距满足有向焦距之和时，出射光重新平行。会聚目镜产生负角放大率（倒像），发散目镜产生正角放大率（正像）。",
+    "conditions": "理想薄透镜、远物近轴光线、无焦配置。有限镜距误差会导致出射角随入射高度改变，此时不能把焦距比当作唯一角放大率。",
+    "application": "选择开普勒与伽利略望远镜的倍率。",
+    "diagram": "telescope",
+    "sceneId": "instruments-1",
+    "fields": [
+      {
+        "key": "fo",
+        "label": "物镜焦距 fₒ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 200
+      },
+      {
+        "key": "fe",
+        "label": "目镜有向焦距 fₑ",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 30
+      },
+      {
+        "key": "M",
+        "label": "角放大率 M",
+        "unit": "倍",
+        "min": -100000,
+        "max": 100000,
+        "default": -6.666666666666667
+      }
+    ]
+  },
+  {
+    "id": "camera-defocus",
+    "title": "相机几何离焦与光圈",
+    "categoryId": "instruments",
+    "latex": "c=a\\left|1-\\frac sv\\right|,\\quad N=\\frac fa",
+    "question": "缩小光圈为什么能减轻几何离焦？",
+    "meaning": "感光面不在理想像面时，孔径上的不同光线落到一个圆形范围内，其直径为 c。缩小 a 会缩小几何弥散圆；真实相机还存在随小孔径增加的衍射，本式未包含该限制。",
+    "conditions": "理想薄透镜和圆形孔径、无像差的近轴几何成像；v 为有限有向像距。反求 s 时可能有像面前后的两个位置。",
+    "application": "判断感光面位置误差、比较光圈与离焦斑。",
+    "diagram": "camera",
+    "sceneId": "instruments-2",
+    "fields": [
+      {
+        "key": "a",
+        "label": "光圈直径 a",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 12.5
+      },
+      {
+        "key": "s",
+        "label": "感光面距离 s",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 65
+      },
+      {
+        "key": "v",
+        "label": "有向像距 v",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 57.142857142857146
+      },
+      {
+        "key": "c",
+        "label": "弥散圆直径 c",
+        "unit": "mm",
+        "min": 0,
+        "max": 100000,
+        "default": 1.71875
+      }
+    ]
+  },
+  {
+    "id": "pupil-imaging",
+    "title": "光阑经透镜的光瞳像",
+    "categoryId": "aberrations",
+    "latex": "v_p=\\frac{fu_p}{u_p-f},\\quad D_p=\\left|\\frac{f}{u_p-f}\\right|D_s",
+    "question": "光瞳为什么可以在透镜另一侧，甚至位于无穷远？",
+    "meaning": "入瞳是从物侧看到的孔径光阑像，出瞳是从像侧看到的像。只有光阑与观察侧之间有透镜时才用成像公式；若透镜口径本身限制光束，两个光瞳都在透镜上。本求解器计算外置光阑经单片透镜所成的孔径像，须先辨认它是否为实际孔径光阑。",
+    "conditions": "理想正薄透镜、光阑距透镜 uₚ > 0；像距采用沿光传播方向的符号。反求光阑距离可能有两个位置；光阑在焦平面时光瞳在无穷远。",
+    "application": "辨认相机入瞳、目镜出瞳及孔径放大。",
+    "diagram": "aperture",
+    "sceneId": "aberrations-0",
+    "fields": [
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 100
+      },
+      {
+        "key": "up",
+        "label": "光阑距透镜 uₚ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 50
+      },
+      {
+        "key": "Ds",
+        "label": "外置光阑直径 Dₛ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 12
+      },
+      {
+        "key": "Dp",
+        "label": "经透镜所成孔径像直径 Dₚ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 24
+      }
+    ],
+    "targets": [
+      "Dp",
+      "Ds",
+      "up"
+    ],
+    "reference": "https://www.rp-photonics.com/entrance_and_exit_pupil.html"
+  },
+  {
+    "id": "aperture-effective",
+    "title": "后置光阑的轴上通光限制",
+    "categoryId": "aberrations",
+    "latex": "D_l=\\frac{D_s}{\\left|1+z/u-z/f\\right|}",
+    "question": "为什么限制光束的孔径会随物距和光阑位置改变？",
+    "meaning": "轴上物点射向透镜面高度 y 的光线，在后置光阑处高度为 (1+z/u−z/f)y。把光阑允许的直径折算到透镜面，再与透镜口径比较，较小者限制轴上光束。系数为零时，外置孔径恰在该物体的像面，主要限制视场。",
+    "conditions": "光阑位于透镜后方 z ≥ 0、实物 u > 0、正薄透镜；忽略衍射。前置光阑须使用 1+z/u，本求解器仅适用于后置。",
+    "application": "比较透镜口径和外置光阑谁限制轴上光束。",
+    "diagram": "aperture",
+    "sceneId": "aberrations-0",
+    "fields": [
+      {
+        "key": "f",
+        "label": "透镜焦距 f",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 100
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 200
+      },
+      {
+        "key": "z",
+        "label": "后置光阑位置 z",
+        "unit": "mm",
+        "min": 0,
+        "max": 10000,
+        "default": 50
+      },
+      {
+        "key": "Ds",
+        "label": "光阑直径 Dₛ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 12
+      },
+      {
+        "key": "Dl",
+        "label": "折算到透镜面直径 Dₗ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 16
+      }
+    ],
+    "targets": [
+      "Dl",
+      "Ds"
+    ],
+    "reference": "https://www.rp-photonics.com/entrance_and_exit_pupil.html"
+  },
+  {
+    "id": "lensmaker-thick",
+    "title": "厚球面透镜近轴焦距",
+    "categoryId": "aberrations",
+    "latex": "\\frac1F=(n-1)\\left[\\frac2R-\\frac{(n-1)t}{nR^2}\\right]",
+    "question": "精确光线的近轴焦点如何与透镜公式核对？",
+    "meaning": "双凸透镜前后曲率半径分别为 +R、−R。厚度修正后得到从主面量起的有效焦距 F；实际后顶点到近轴焦点的距离还需用后焦距公式。本式只描述轴附近的光线，球差场景中的边缘光线由两次精确折射计算。",
+    "conditions": "空气中的对称双凸透镜，n > 1、R > 0、t > 0，有限正焦距。反求 R 只保留 t < 2R 的有效球面几何解。",
+    "application": "核对精确追迹的近轴极限。",
+    "diagram": "aberration",
+    "sceneId": "aberrations-1",
+    "fields": [
+      {
+        "key": "n",
+        "label": "透镜折射率 n",
+        "unit": "",
+        "min": 1.001,
+        "max": 3,
+        "default": 1.5132231404958678
+      },
+      {
+        "key": "R",
+        "label": "两面曲率半径大小 R",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 60
+      },
+      {
+        "key": "t",
+        "label": "中心厚度 t",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 5.810499613777495
+      },
+      {
+        "key": "F",
+        "label": "有效焦距 F",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 59.430088403112414
+      }
+    ],
+    "targets": [
+      "F",
+      "R",
+      "t"
+    ],
+    "reference": "https://www.rp-photonics.com/lenses.html"
+  },
+  {
+    "id": "back-focal",
+    "title": "厚透镜后焦距",
+    "categoryId": "aberrations",
+    "latex": "\\mathrm{BFL}=F\\left[1-\\frac{(n-1)t}{nR}\\right]",
+    "question": "为什么从透镜表面量到焦点的距离不等于有效焦距？",
+    "meaning": "透镜有厚度时主面不在后顶点。后焦距 BFL 从后顶点量起，与场景中观察屏的距离使用同一个起点；F 从主面量起。",
+    "conditions": "空气中的对称双凸厚透镜、近轴光线；F、n、R、t 须与透镜几何一致。",
+    "application": "把屏放在近轴焦平面，比较球差光线的落点。",
+    "diagram": "aberration",
+    "sceneId": "aberrations-1",
+    "fields": [
+      {
+        "key": "F",
+        "label": "有效焦距 F",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 59.430088403112414
+      },
+      {
+        "key": "n",
+        "label": "透镜折射率 n",
+        "unit": "",
+        "min": 1.001,
+        "max": 3,
+        "default": 1.5132231404958678
+      },
+      {
+        "key": "R",
+        "label": "曲率半径大小 R",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 60
+      },
+      {
+        "key": "t",
+        "label": "中心厚度 t",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 5.810499613777495
+      },
+      {
+        "key": "bfl",
+        "label": "后焦距 BFL",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 57.47812415727405
+      }
+    ],
+    "targets": [
+      "bfl",
+      "F"
+    ],
+    "reference": "https://www.rp-photonics.com/lenses.html"
+  },
+  {
+    "id": "cauchy-index",
+    "title": "教学色散模型",
+    "categoryId": "aberrations",
+    "latex": "n(\\lambda)=A+\\frac{B}{(\\lambda/1000)^2}",
+    "question": "不同颜色为什么会聚焦在不同位置？",
+    "meaning": "λ 在输入中使用 nm，计算时除以 1000 换成 μm。B > 0 时短波折射率更高；B = 0 时关闭教学模型中的色散。A、B 可调，这些值不宣称对应真实牌号玻璃。",
+    "conditions": "只在选定可见光范围内展示正常色散；不含吸收共振与反常色散。反求波长时 B > 0 且 n > A。",
+    "application": "比较蓝光、绿光和红光的近轴焦点。",
+    "diagram": "aberration",
+    "sceneId": "aberrations-1",
+    "fields": [
+      {
+        "key": "A",
+        "label": "常数 A",
+        "unit": "",
+        "min": 1,
+        "max": 3,
+        "default": 1.5
+      },
+      {
+        "key": "B",
+        "label": "系数 B",
+        "unit": "μm²",
+        "min": 0,
+        "max": 1,
+        "default": 0.004
+      },
+      {
+        "key": "wavelength",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 350,
+        "max": 900,
+        "default": 550
+      },
+      {
+        "key": "n",
+        "label": "折射率 n",
+        "unit": "",
+        "min": 1,
+        "max": 4,
+        "default": 1.5132231404958678
+      }
+    ],
+    "targets": [
+      "n",
+      "A",
+      "B",
+      "wavelength"
+    ],
+    "reference": "https://www.rp-photonics.com/chromatic_dispersion.html"
+  },
+  {
+    "id": "microscope-camera-magnification",
+    "title": "显微相机光学放大率",
+    "categoryId": "instruments",
+    "latex": "M=\\frac{f_t}{f_o}\\,a",
+    "question": "管镜和相机转接倍率怎样决定成像大小？",
+    "meaning": "无穷远物镜把前焦面物体的光送入管镜，管镜形成倒立实像，理想转接镜再缩放这个像。M 表示尺寸放大率的大小，倒像方向在场景中单独显示。",
+    "conditions": "物体位于物镜前焦面、管镜后焦面经理想转接镜与相机感光面对应；忽略像差、衍射和转接镜的实际结构。",
+    "application": "比较物镜、管镜和相机转接镜的倍率组合。",
+    "diagram": "microscope-camera",
+    "sceneId": "instruments-0",
+    "reference": "https://www.microscopyu.com/microscopy-basics/components",
+    "fields": [
+      {
+        "key": "fo",
+        "label": "物镜焦距 fₒ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 10
+      },
+      {
+        "key": "ft",
+        "label": "管镜焦距 fₜ",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 200
+      },
+      {
+        "key": "a",
+        "label": "相机转接倍率 a",
+        "unit": "倍",
+        "min": 0.001,
+        "max": 100000,
+        "default": 0.5
+      },
+      {
+        "key": "M",
+        "label": "相机光学放大率 M",
+        "unit": "倍",
+        "min": 0.001,
+        "max": 100000,
+        "default": 10
+      }
+    ],
+    "targets": [
+      "M",
+      "fo",
+      "ft",
+      "a"
+    ]
+  },
+  {
+    "id": "microscope-camera-field",
+    "title": "显微相机实际视场",
+    "categoryId": "instruments",
+    "latex": "L=\\frac{S}{M}",
+    "question": "相机能拍到多大的样品范围？",
+    "meaning": "感光面尺寸除以对焦时的光学放大率，就是对应的样品范围。S 和 L 必须选取同一方向：宽度对应水平视场，高度对应垂直视场。",
+    "conditions": "使用对焦时的尺寸放大率大小；假定光学系统覆盖整个感光面，不计算暗角或像差。",
+    "application": "根据样品大小选择相机尺寸与转接倍率。",
+    "diagram": "microscope-camera",
+    "sceneId": "instruments-0",
+    "reference": "https://www.teledynevisionsolutions.com/en-150/learn/learning-center/scientific-imaging/camera-mounts/",
+    "fields": [
+      {
+        "key": "S",
+        "label": "感光面尺寸 S",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 8.8
+      },
+      {
+        "key": "M",
+        "label": "相机光学放大率 M",
+        "unit": "倍",
+        "min": 0.001,
+        "max": 100000,
+        "default": 10
+      },
+      {
+        "key": "L",
+        "label": "样品视场 L",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 0.88
+      }
+    ],
+    "targets": [
+      "L",
+      "S",
+      "M"
+    ]
+  },
+  {
+    "id": "microscope-resolution",
+    "title": "显微镜横向分辨率",
+    "categoryId": "instruments",
+    "latex": "r=0.61\\frac{\\lambda}{\\mathrm{NA}}",
+    "question": "两个小点相隔多远，才能分清？",
+    "meaning": "按瑞利判据，两点间距达到 r 时，一个点像的主峰落在另一个点像的第一暗环。r 越小，能分辨的细节越小。",
+    "conditions": "理想均匀圆孔径，等强、非相干点源，单色光；不包含像差、照明匹配与探测器采样限制。λ 与 r 均使用 µm；场景中的 nm 会换算。",
+    "application": "比较波长和物镜数值孔径对细节分辨能力的影响。",
+    "diagram": "microscope-resolution",
+    "sceneId": "instruments-0",
+    "reference": "https://www.microscopyu.com/microscopy-basics/resolution",
+    "fields": [
+      {
+        "key": "r",
+        "label": "横向分辨率 r",
+        "unit": "µm",
+        "min": 0.001,
+        "max": 100,
+        "default": 0.83875
+      },
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "µm",
+        "min": 0.1,
+        "max": 10,
+        "default": 0.55
+      },
+      {
+        "key": "NA",
+        "label": "数值孔径 NA",
+        "unit": "",
+        "min": 0.01,
+        "max": 1.6,
+        "default": 0.4
+      }
+    ],
+    "targets": [
+      "r",
+      "lambda",
+      "NA"
+    ]
+  },
+  {
+    "id": "microscope-depth",
+    "title": "显微镜景深估计",
+    "categoryId": "instruments",
+    "latex": "D=\\frac{n\\lambda}{\\mathrm{NA}^2}+\\frac{ne}{M\\,\\mathrm{NA}}",
+    "question": "焦平面上下多厚的一层能保持清楚？",
+    "meaning": "D 表示物方全景深，上下范围分别为 D/2。第一项来自衍射，第二项来自相机采样。仅衍射判据取 e=0。景深边界是所选清晰度标准下的估计，不是突然模糊的界线。",
+    "conditions": "采用 Nikon 给出的非相干成像景深估计，均使用 µm。M 为对焦时相机尺寸放大率的绝对值，e 为感光面可分辨距离，此处按像元尺寸估计。眼睛调焦、像差和照明条件未包含。",
+    "application": "比较数值孔径与采样条件对调焦容差的影响。",
+    "diagram": "microscope-depth",
+    "sceneId": "instruments-0",
+    "reference": "https://www.microscopyu.com/microscopy-basics/depth-of-field-and-depth-of-focus",
+    "fields": [
+      {
+        "key": "D",
+        "label": "全景深 D",
+        "unit": "µm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 4.3
+      },
+      {
+        "key": "n",
+        "label": "介质折射率 n",
+        "unit": "",
+        "min": 1,
+        "max": 1.6,
+        "default": 1
+      },
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "µm",
+        "min": 0.1,
+        "max": 10,
+        "default": 0.55
+      },
+      {
+        "key": "NA",
+        "label": "数值孔径 NA",
+        "unit": "",
+        "min": 0.01,
+        "max": 1.6,
+        "default": 0.4
+      },
+      {
+        "key": "e",
+        "label": "感光面可分辨距离 e",
+        "unit": "µm",
+        "min": 0,
+        "max": 100,
+        "default": 3.45
+      },
+      {
+        "key": "M",
+        "label": "相机尺寸放大率 M",
+        "unit": "倍",
+        "min": 0.001,
+        "max": 10000,
+        "default": 10
+      }
+    ],
+    "targets": [
+      "D",
+      "NA",
+      "lambda",
+      "n",
+      "e",
+      "M"
+    ]
+  },
+  {
+    "id": "microscope-eye-field",
+    "title": "显微镜目视视场",
+    "categoryId": "instruments",
+    "latex": "L=\\frac{\\mathrm{FN}}{|m_o|}",
+    "question": "目镜里能看到多大范围的样品？",
+    "meaning": "目镜视场数 FN 是中间像面上的可见直径。除以物镜横向放大率大小，得到对应的样品视野直径 L。",
+    "conditions": "正常目视显微镜配置，物镜在两镜之间形成中间实像，最终像为虚像或无穷远像；不包含暗角、像差或实际目镜结构。",
+    "application": "比较物镜倍率和目镜视场数对观察范围的影响。",
+    "diagram": "microscope-field",
+    "sceneId": "instruments-0",
+    "reference": "https://www.microscopyu.com/microscopy-basics/field-of-view",
+    "fields": [
+      {
+        "key": "S",
+        "label": "目镜视场数 FN",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 10000,
+        "default": 18
+      },
+      {
+        "key": "M",
+        "label": "物镜横向放大率大小",
+        "unit": "倍",
+        "min": 0.001,
+        "max": 100000,
+        "default": 10
+      },
+      {
+        "key": "L",
+        "label": "目视视野直径 L",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 1.8
+      }
+    ],
+    "targets": [
+      "L",
+      "S",
+      "M"
+    ]
+  },
+  {
+    "categoryId": "instruments",
+    "sceneId": "instruments-1",
+    "id": "telescope-resolution",
+    "title": "望远镜物镜角分辨率",
+    "latex": "\\theta_R=1.22\\frac{\\lambda_{\\rm nm}}{10^6D_{\\rm mm}},\\quad \\theta_{\\rm arcsec}=\\theta_R\\frac{180}{\\pi}\\times3600",
+    "question": "口径为什么决定能否分开两个相邻星点？",
+    "meaning": "理想圆孔径会把星点展开成衍射光斑。瑞利判据以一个星点的主峰落在另一个星点的第一暗环处作为分辨参考。口径越大，所需的角间距越小。",
+    "conditions": "两个等强、非相干远方点源，理想物镜圆孔径；波长输入 nm，直径输入 mm，结果为角秒。未包含目镜截光、像差、大气和眼睛的分辨能力。",
+    "application": "估计物镜的衍射极限，比较不同口径与波长。",
+    "diagram": "telescope-resolution",
+    "reference": "https://labs.phys.utk.edu/mbreinig/phys136core/modules/m9/resolving_power.html",
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 1,
+        "max": 100000,
+        "default": 550
+      },
+      {
+        "key": "D",
+        "label": "物镜有效直径 D",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 20
+      },
+      {
+        "key": "r",
+        "label": "角分辨率 θᵣ",
+        "unit": "角秒",
+        "min": 1e-06,
+        "max": 100000,
+        "default": 6.920184249590083
+      }
+    ]
+  },
+  {
+    "categoryId": "instruments",
+    "sceneId": "instruments-1",
+    "id": "telescope-pupil-position",
+    "title": "物镜出瞳的位置",
+    "latex": "q=\\frac{f_e d}{d-f_e}",
+    "question": "眼睛应该在目镜之后的哪个位置观察？",
+    "meaning": "出瞳是从目镜之后看到的孔径像。这里把物镜作为孔径，计算它经目镜所成的像：q 从目镜量起，正值在目镜后，负值在镜组内部。伽利略结构的出瞳为虚像，眼睛不能移入镜内。",
+    "conditions": "理想薄透镜，物镜作为限制孔径。若目镜通光口径更小，实际限制孔径可变成目镜，此时出瞳位于目镜平面。d = fₑ 时，物镜的孔径像在无穷远。",
+    "application": "理解实出瞳、虚出瞳和观察位置。",
+    "diagram": "telescope-pupil",
+    "reference": "https://www.edmundoptics.com/knowledge-center/application-notes/optics/telescope-optics-for-hobbyists/",
+    "fields": [
+      {
+        "key": "fe",
+        "label": "目镜有向焦距 fₑ",
+        "unit": "mm",
+        "min": -100000,
+        "max": 100000,
+        "default": 30
+      },
+      {
+        "key": "d",
+        "label": "两镜间距 d",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 230
+      },
+      {
+        "key": "q",
+        "label": "出瞳距目镜 q",
+        "unit": "mm",
+        "min": -1000000,
+        "max": 1000000,
+        "default": 34.5
+      }
+    ]
+  },
+  {
+    "categoryId": "instruments",
+    "sceneId": "instruments-1",
+    "id": "telescope-pupil-diameter",
+    "title": "无焦望远镜的物镜出瞳直径",
+    "latex": "D_p=\\frac{D}{|M|}",
+    "question": "放大倍数提高后，出瞳为什么变小？",
+    "meaning": "出瞳直径是物镜孔径经目镜成像后的直径。无焦配置下，它等于物镜直径除以放大倍数的绝对值。眼瞳太小或没有对准时，会挡住部分光束。",
+    "conditions": "远物近轴、无焦配置，物镜作为限制孔径；不适用于目镜通光口径更小而成为限制孔径的情况。M 为放大倍数的正值。",
+    "application": "比较放大倍数、物镜口径与眼瞳的匹配。",
+    "diagram": "telescope-pupil",
+    "reference": "https://www.edmundoptics.com/knowledge-center/application-notes/optics/telescope-optics-for-hobbyists/",
+    "fields": [
+      {
+        "key": "D",
+        "label": "物镜有效直径 D",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 100000,
+        "default": 20
+      },
+      {
+        "key": "M",
+        "label": "放大倍数 |M|",
+        "unit": "倍",
+        "min": 0.001,
+        "max": 100000,
+        "default": 6.666666666666667
+      },
+      {
+        "key": "Dp",
+        "label": "出瞳直径 Dₚ",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 100000,
+        "default": 3
+      }
+    ]
+  },
+  {
+    "id": "camera-field",
+    "title": "相机取景范围",
+    "categoryId": "instruments",
+    "latex": "W=\\frac{Su}{s},\\quad f=\\frac{uS}{W+S}",
+    "question": "焦距、感光面尺寸和物距如何决定取景？",
+    "meaning": "W 是物方取景宽度，S 是感光面宽度。第一式按主光线投影，离焦时只表示几何覆盖范围。反求 f 使用对焦条件 s=v；可估算理论焦距。",
+    "conditions": "理想薄透镜；u 从薄透镜平面量起，不能直接当作真实镜头前端的工作距离。只反算宽度 W 或对焦焦距 f。",
+    "application": "比较理想成像参数；用于初步设计和教学，不代替真实镜头的性能测量。",
+    "diagram": "camera-field",
+    "sceneId": "instruments-2",
+    "fields": [
+      {
+        "key": "W",
+        "label": "物方取景宽度 W",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 61.6
+      },
+      {
+        "key": "S",
+        "label": "感光面宽度 S",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 8.8
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 400
+      },
+      {
+        "key": "s",
+        "label": "感光面距离 s",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 57.142857142857146
+      },
+      {
+        "key": "f",
+        "label": "理论焦距 f",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 50
+      }
+    ],
+    "targets": [
+      "W",
+      "f"
+    ],
+    "reference": "https://www.edmundoptics.com/knowledge-center/application-notes/imaging/basic-lens-selection/",
+    "inputs": {
+      "W": [
+        "S",
+        "u",
+        "s"
+      ],
+      "f": [
+        "W",
+        "S",
+        "u"
+      ]
+    }
+  },
+  {
+    "id": "camera-depth",
+    "title": "相机几何景深",
+    "categoryId": "instruments",
+    "latex": "\\frac{1}{u_n}=\\frac{1}{f}-\\frac{1}{s}+\\frac{c_0}{as},\\quad \\frac{1}{u_f}=\\frac{1}{f}-\\frac{1}{s}-\\frac{c_0}{as}",
+    "question": "感光面不动时，多远的物体仍能接受？",
+    "meaning": "从 c=a|1−s(1/f−1/u)|≤c₀ 得到近界 uₙ 和远界 u_f。远界分母不为正时，范围延伸到无穷远。c₀ 是人为设定的容许几何光斑，越小要求越严格。",
+    "conditions": "s>f，有有限正对焦物距。只计算几何离焦，未把衍射与像差合并进景深阈值。",
+    "application": "比较理想成像参数；用于初步设计和教学，不代替真实镜头的性能测量。",
+    "diagram": "camera-depth",
+    "sceneId": "instruments-2",
+    "fields": [
+      {
+        "key": "un",
+        "label": "景深近界 uₙ",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 393.39103068450004
+      },
+      {
+        "key": "uf",
+        "label": "景深远界 u_f",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 406.83482506102484
+      },
+      {
+        "key": "f",
+        "label": "镜头焦距 f",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 50
+      },
+      {
+        "key": "s",
+        "label": "感光面距离 s",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 57.142857142857146
+      },
+      {
+        "key": "a",
+        "label": "光圈直径 a",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 12.5
+      },
+      {
+        "key": "c0",
+        "label": "允许光斑直径 c₀",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 0.03
+      }
+    ],
+    "targets": [
+      "un",
+      "uf"
+    ],
+    "reference": "https://www.edmundoptics.com/knowledge-center/application-notes/imaging/depth-of-field-and-depth-of-focus/",
+    "inputs": {
+      "un": [
+        "f",
+        "s",
+        "a",
+        "c0"
+      ],
+      "uf": [
+        "f",
+        "s",
+        "a",
+        "c0"
+      ]
+    }
+  },
+  {
+    "id": "camera-diffraction",
+    "title": "对焦时的衍射光斑",
+    "categoryId": "instruments",
+    "latex": "d_A=2.44\\lambda\\frac{v}{a}",
+    "question": "光圈很小时，为什么仍然会模糊？",
+    "meaning": "d_A 是像面艾里斑到第一个暗环的直径；λ 用 μm，v 与 a 用 mm。有限物距时使用 v/a，而非直接用 f/a。",
+    "conditions": "有限正实像、理想圆孔径、近轴标量衍射、无像差且已对焦。场景离焦时读数仍表示最佳像面理论参考。",
+    "application": "比较理想成像参数；用于初步设计和教学，不代替真实镜头的性能测量。",
+    "diagram": "camera-diffraction",
+    "sceneId": "instruments-2",
+    "fields": [
+      {
+        "key": "dA",
+        "label": "艾里斑直径 d_A",
+        "unit": "μm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 6.134857142857143
+      },
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "μm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 0.55
+      },
+      {
+        "key": "v",
+        "label": "像距 v",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 57.142857142857146
+      },
+      {
+        "key": "a",
+        "label": "光圈直径 a",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 12.5
+      }
+    ],
+    "targets": [
+      "dA",
+      "a",
+      "v",
+      "lambda"
+    ],
+    "reference": "https://www.edmundoptics.com/knowledge-center/application-notes/imaging/limitations-on-resolution-and-contrast-the-airy-disk/"
+  },
+  {
+    "id": "camera-sampling",
+    "title": "像素采样与物方尺寸",
+    "categoryId": "instruments",
+    "latex": "\\nu_N=\\frac{500}{p},\\quad e=\\frac{pu}{s}",
+    "question": "像素大小怎样限制细节的记录？",
+    "meaning": "ν_N 是像方两像素一周期的采样上限（lp/mm）；p 为 μm。e 是一个像素对应的物方尺寸（μm），离焦时只表示投影比例，不表示能分辨的细节。",
+    "conditions": "规则方形像素的理论采样，未包含颜色滤镜、噪声及镜头对比度。达到采样条件不代表真实系统已达到该分辨率。",
+    "application": "比较理想成像参数；用于初步设计和教学，不代替真实镜头的性能测量。",
+    "diagram": "camera-sampling",
+    "sceneId": "instruments-2",
+    "fields": [
+      {
+        "key": "nu",
+        "label": "采样上限 ν_N",
+        "unit": "lp/mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 144.92753623188406
+      },
+      {
+        "key": "e",
+        "label": "物方像素尺寸 e",
+        "unit": "μm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 24.15
+      },
+      {
+        "key": "p",
+        "label": "像素尺寸 p",
+        "unit": "μm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 3.45
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 400
+      },
+      {
+        "key": "s",
+        "label": "感光面距离 s",
+        "unit": "mm",
+        "min": 1e-06,
+        "max": 1000000,
+        "default": 57.142857142857146
+      }
+    ],
+    "targets": [
+      "nu",
+      "e"
+    ],
+    "reference": "https://www.edmundoptics.com/knowledge-center/application-notes/imaging/resolution/",
+    "inputs": {
+      "nu": [
+        "p"
+      ],
+      "e": [
+        "p",
+        "u",
+        "s"
+      ]
+    }
+  },
+  {
+    "categoryId": "wave-fields",
+    "diagram": "wave-superposition",
+    "sceneId": "wave-fields-1",
+    "reference": "https://openstax.org/books/university-physics-volume-1/pages/16-5-interference-of-waves",
+    "conditions": "两束同频、同向、同偏振的完全相干平面光波；电场采用同一相对基准。",
+    "application": "理解相位差如何改变合成电场，为双缝干涉与干涉测量打基础。",
+    "id": "wave-field-sum",
+    "title": "光波的电场叠加",
+    "latex": "E_1=A_1\\cos\\theta,\\quad E_2=A_2\\cos(\\theta+\\Delta\\varphi),\\quad E=E_1+E_2,\\quad \\theta=2\\pi z/\\lambda",
+    "question": "两束光在同一位置的电场怎样相加？",
+    "meaning": "叠加的是带正负号的电场。图中两束光波与合成波共用一个坐标，显示固定时刻的电场；观察位置处的彩色点对应三条波形，旁边显示带正负号的 E₁+E₂=E；同号相加、异号抵消。这里 z 输入 μm，λ 输入 nm，计算时统一单位，角度换为弧度。",
+    "targets": [
+      "E"
+    ],
+    "fields": [
+      {
+        "key": "A1",
+        "label": "第一束振幅 A₁",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "A2",
+        "label": "第二束振幅 A₂",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "phi",
+        "label": "相位差 Δφ",
+        "unit": "°",
+        "min": 0,
+        "max": 360,
+        "default": 90
+      },
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 600
+      },
+      {
+        "key": "z",
+        "label": "观察位置 z",
+        "unit": "μm",
+        "min": 0,
+        "max": 10,
+        "default": 1.2
+      },
+      {
+        "key": "E",
+        "label": "合成电场 E",
+        "unit": "相对单位",
+        "min": -4,
+        "max": 4,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "wave-fields",
+    "diagram": "wave-superposition",
+    "sceneId": "wave-fields-1",
+    "reference": "https://openstax.org/books/university-physics-volume-1/pages/16-5-interference-of-waves",
+    "conditions": "两束同频、同向、同偏振的完全相干平面光波；电场采用同一相对基准。",
+    "application": "理解相位差如何改变合成电场，为双缝干涉与干涉测量打基础。",
+    "id": "wave-resultant-amplitude",
+    "title": "合成振幅",
+    "latex": "A=\\sqrt{A_1^2+A_2^2+2A_1A_2\\cos\\Delta\\varphi}",
+    "question": "合成后的振幅有多大？",
+    "meaning": "振幅是电场能达到的最大绝对值。同相时 A=A₁+A₂；反相时 A=|A₁−A₂|。只有振幅相等且反相，才能完全相消。反求相位差时通常有两个解；有一束振幅为零时，相位差无法由振幅唯一确定。",
+    "targets": [
+      "A",
+      "phi"
+    ],
+    "fields": [
+      {
+        "key": "A1",
+        "label": "第一束振幅 A₁",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "A2",
+        "label": "第二束振幅 A₂",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "phi",
+        "label": "相位差 Δφ",
+        "unit": "°",
+        "min": 0,
+        "max": 360,
+        "default": 90
+      },
+      {
+        "key": "A",
+        "label": "合成振幅 A",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 4,
+        "default": 1.4142135623730951
+      }
+    ]
+  },
+  {
+    "categoryId": "wave-fields",
+    "diagram": "wave-superposition",
+    "sceneId": "wave-fields-1",
+    "reference": "https://openstax.org/books/university-physics-volume-1/pages/16-5-interference-of-waves",
+    "conditions": "两束同频、同向、同偏振的完全相干平面光波；电场采用同一相对基准。",
+    "application": "理解相位差如何改变合成电场，为双缝干涉与干涉测量打基础。",
+    "id": "wave-average-intensity",
+    "title": "平均相对光强",
+    "latex": "I_{\\rm rel}=A_1^2+A_2^2+2A_1A_2\\cos\\Delta\\varphi=A^2",
+    "question": "为什么不能把两束光的光强直接相加？",
+    "meaning": "光强取一个光学周期内的平均值。本场景把振幅为1的单束光的平均光强设为1，所以 Irel=A²。它不是当前瞬时电场的平方；同向同频的两束光在这个模型中不产生空间明暗条纹，也没有真实功率单位。",
+    "targets": [
+      "I",
+      "phi"
+    ],
+    "fields": [
+      {
+        "key": "A1",
+        "label": "第一束振幅 A₁",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "A2",
+        "label": "第二束振幅 A₂",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "phi",
+        "label": "相位差 Δφ",
+        "unit": "°",
+        "min": 0,
+        "max": 360,
+        "default": 90
+      },
+      {
+        "key": "I",
+        "label": "平均相对光强 Irel",
+        "unit": "相对单位",
+        "min": 0,
+        "max": 16,
+        "default": 2
+      }
+    ]
+  },
+  {
+    "categoryId": "interference",
+    "diagram": "young-double-slit",
+    "sceneId": "interference-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-2-mathematics-of-interference",
+    "conditions": "空气中的单色、等强同相、同偏振完全相干光；理想窄缝，不计单缝衍射包络。",
+    "application": "通过条纹间距测量波长，并用光程差判断观察位置的亮暗。",
+    "id": "young-path-difference",
+    "title": "双缝光程差",
+    "latex": "r_1=\\sqrt{L^2+(y-d/2)^2},\\quad r_2=\\sqrt{L^2+(y+d/2)^2},\\quad \\delta=r_2-r_1\\approx dy/L",
+    "question": "到同一观察点的两条光路相差多少？",
+    "meaning": "S₁在上、S₂在下，y向上为正；δ=r₂−r₁为有向光程差，中央位置δ=0。场景用完整距离计算，dy/L是小角度近似。式中几何长度须统一单位；求解器自动把L的m与d、y的mm统一，并把δ换成μm。",
+    "targets": [
+      "delta"
+    ],
+    "fields": [
+      {
+        "key": "d",
+        "label": "双缝间距 d",
+        "unit": "mm",
+        "min": 0.1,
+        "max": 1,
+        "default": 0.5
+      },
+      {
+        "key": "L",
+        "label": "屏幕距离 L",
+        "unit": "m",
+        "min": 0.5,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "y",
+        "label": "观察位置 y",
+        "unit": "mm",
+        "min": -20,
+        "max": 20,
+        "default": 0
+      },
+      {
+        "key": "delta",
+        "label": "有向光程差 δ",
+        "unit": "μm",
+        "min": -40,
+        "max": 40,
+        "default": 0
+      }
+    ]
+  },
+  {
+    "categoryId": "interference",
+    "diagram": "young-double-slit",
+    "sceneId": "interference-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-2-mathematics-of-interference",
+    "conditions": "空气中的单色、等强同相、同偏振完全相干光；理想窄缝，不计单缝衍射包络。",
+    "application": "通过条纹间距测量波长，并用光程差判断观察位置的亮暗。",
+    "id": "young-fringe-spacing",
+    "title": "条纹间距",
+    "latex": "\\Delta y\\approx\\lambda L/d",
+    "question": "什么会让相邻亮纹离得更远？",
+    "meaning": "近轴时，相邻亮纹或相邻暗纹的间距约为λL/d。波长或屏幕距离增大，条纹变宽；双缝间距增大，条纹变窄。求解器统一nm、mm、m，结果使用mm；这是近轴间距，不把它当作所有位置的精确周期。",
+    "targets": [
+      "s",
+      "lambda",
+      "d",
+      "L"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 600
+      },
+      {
+        "key": "d",
+        "label": "双缝间距 d",
+        "unit": "mm",
+        "min": 0.1,
+        "max": 1,
+        "default": 0.5
+      },
+      {
+        "key": "L",
+        "label": "屏幕距离 L",
+        "unit": "m",
+        "min": 0.5,
+        "max": 2,
+        "default": 1
+      },
+      {
+        "key": "s",
+        "label": "条纹间距 Δy",
+        "unit": "mm",
+        "min": 0.19,
+        "max": 15.6,
+        "default": 1.2
+      }
+    ]
+  },
+  {
+    "categoryId": "interference",
+    "diagram": "young-double-slit",
+    "sceneId": "interference-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-2-mathematics-of-interference",
+    "conditions": "空气中的单色、等强同相、同偏振完全相干光；理想窄缝，不计单缝衍射包络。",
+    "application": "通过条纹间距测量波长，并用光程差判断观察位置的亮暗。",
+    "id": "young-intensity",
+    "title": "观察点光强与亮暗",
+    "latex": "\\Delta\\varphi=2\\pi\\delta/\\lambda,\\quad I/I_{\\max}=\\cos^2(\\pi\\delta/\\lambda)",
+    "question": "同一个观察位置为什么可能变亮或变暗？",
+    "meaning": "δ是整倍波长时形成亮纹，半整数倍波长时形成暗纹。这里I/Imax是时间平均光强与最亮光强之比，范围0到1；δ有正负号，但亮度关于中央位置对称。输入δ的μm与λ的nm，计算时自动统一；没有计算有限缝宽带来的衍射包络。",
+    "targets": [
+      "J"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 600
+      },
+      {
+        "key": "delta",
+        "label": "有向光程差 δ",
+        "unit": "μm",
+        "min": -40,
+        "max": 40,
+        "default": 0
+      },
+      {
+        "key": "J",
+        "label": "归一化光强 I/Imax",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "interference",
+    "diagram": "michelson",
+    "sceneId": "interference-2",
+    "reference": "https://lo-amrt.vlabs.ac.in/exp/michelsons-interferometer-wavelength/theory.html",
+    "conditions": "单色扩展光源；等强同偏振、玻璃光程已补偿、两镜等效平行；忽略衍射包络与有限相干长度。本输出端在等臂时取亮的相位参考。",
+    "application": "根据镜面位移测量微小长度或波长，理解往返光程的二倍关系。",
+    "id": "michelson-path",
+    "title": "往返光程差与圆环",
+    "latex": "s=s_2-s_1,\\quad \\Delta L=\\Delta L_0+s,\\quad r=f\\tan\\theta,\\quad \\delta=2\\Delta L\\cos\\theta",
+    "question": "为什么镜面移动会改变圆环的亮暗？",
+    "meaning": "两面镜子的微调都以向外为正；本卡的s=s₂−s₁。光在每一臂走一个往返，因此轴上光程差是两臂长度差的两倍。离轴观察时，等倾干涉取δ=2ΔL cosθ；焦平面半径满足tanθ=r/f。同一半径有相同光程差，形成圆环。",
+    "targets": [
+      "delta"
+    ],
+    "fields": [
+      {
+        "key": "D",
+        "label": "初始两臂长度差 ΔL₀",
+        "unit": "μm",
+        "min": -500,
+        "max": 500,
+        "default": 120
+      },
+      {
+        "key": "s",
+        "label": "两镜微调之差 s₂−s₁",
+        "unit": "μm",
+        "min": -2,
+        "max": 2,
+        "default": 0
+      },
+      {
+        "key": "f",
+        "label": "观察透镜焦距 f",
+        "unit": "mm",
+        "min": 75,
+        "max": 200,
+        "default": 100
+      },
+      {
+        "key": "r",
+        "label": "观察半径 r",
+        "unit": "mm",
+        "min": 0,
+        "max": 12,
+        "default": 0
+      },
+      {
+        "key": "delta",
+        "label": "有向光程差 δ",
+        "unit": "μm",
+        "min": -1004,
+        "max": 1004,
+        "default": 240
+      }
+    ]
+  },
+  {
+    "categoryId": "interference",
+    "diagram": "michelson",
+    "sceneId": "interference-2",
+    "reference": "https://lo-amrt.vlabs.ac.in/exp/michelsons-interferometer-wavelength/theory.html",
+    "conditions": "单色扩展光源；等强同偏振、玻璃光程已补偿、两镜等效平行；忽略衍射包络与有限相干长度。本输出端在等臂时取亮的相位参考。",
+    "application": "根据镜面位移测量微小长度或波长，理解往返光程的二倍关系。",
+    "id": "michelson-intensity",
+    "title": "观察点光强",
+    "latex": "\\Delta\\varphi=2\\pi\\delta/\\lambda,\\quad I/I_{\\max}=\\cos^2(\\pi\\delta/\\lambda)",
+    "question": "观察点落在亮环还是暗环？",
+    "meaning": "光程差与波长的比值为整数时是亮环，半整数时是暗环。光强是归一化时间平均值，最亮为1，最暗为0；圆环图和读数采用同一公式，颜色仅示意波长。",
+    "targets": [
+      "J"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 600
+      },
+      {
+        "key": "delta",
+        "label": "有向光程差 δ",
+        "unit": "μm",
+        "min": -1004,
+        "max": 1004,
+        "default": 240
+      },
+      {
+        "key": "J",
+        "label": "相对光强 I/Imax",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "interference",
+    "diagram": "michelson",
+    "sceneId": "interference-2",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-5-the-michelson-interferometer",
+    "conditions": "单色扩展光源；等强同偏振、玻璃光程已补偿、两镜等效平行；忽略衍射包络与有限相干长度。本输出端在等臂时取亮的相位参考。",
+    "application": "根据镜面位移测量微小长度或波长，理解往返光程的二倍关系。",
+    "id": "michelson-displacement",
+    "title": "移镜量与条纹位移",
+    "latex": "N=2s/\\lambda,\\quad s=N\\lambda/2",
+    "question": "移过一条条纹，需要把镜子移动多远？",
+    "meaning": "本卡s=s₂−s₁，表示两镜微调之差；向外移动第二镜增大光程差，向外移动第一镜减小光程差。轴上相对于两镜微调均为零的连续条纹位移N=2s/λ，带正负号，不是自动计数结果。只移动一镜λ/4使轴上亮暗交换，移动λ/2对应一个周期；离轴变化乘cosθ。求解器自动换算nm与μm，s和N均为0时不能唯一反求波长。",
+    "targets": [
+      "N",
+      "s",
+      "lambda"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 600
+      },
+      {
+        "key": "s",
+        "label": "两镜微调之差 s₂−s₁",
+        "unit": "μm",
+        "min": -2,
+        "max": 2,
+        "default": 0.3
+      },
+      {
+        "key": "N",
+        "label": "轴上条纹位移 N",
+        "unit": "",
+        "min": -11,
+        "max": 11,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "single-slit",
+    "sceneId": "diffraction-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/4-2-intensity-in-single-slit-diffraction",
+    "conditions": "单色平行光均匀正入射长狭缝；一维远场模型，a²/(λL)≤0.1。",
+    "application": "观察缝宽、波长与屏幕距离对衍射图样的影响。",
+    "id": "single-slit-intensity",
+    "title": "单缝衍射光强",
+    "latex": "\\beta=\\pi a\\sin\\theta/\\lambda,\\quad I/I_0=(\\sin\\beta/\\beta)^2",
+    "question": "为什么中央亮纹最亮，旁侧逐渐变暗？",
+    "meaning": "同一条缝内各处发出的光叠加，形成中央宽亮纹与两侧较暗条纹。I₀为中央光强；y=0时用极限值1，不出现除零。这里保持sinθ=y/√(L²+y²)，不把θ当作y/L。",
+    "targets": [
+      "J"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "a",
+        "label": "缝宽 a",
+        "unit": "mm",
+        "min": 0.02,
+        "max": 0.08,
+        "default": 0.05
+      },
+      {
+        "key": "L",
+        "label": "屏幕距离 L",
+        "unit": "m",
+        "min": 0.3,
+        "max": 0.8,
+        "default": 0.5
+      },
+      {
+        "key": "y",
+        "label": "观察位置 y",
+        "unit": "mm",
+        "min": -40,
+        "max": 40,
+        "default": 0
+      },
+      {
+        "key": "J",
+        "label": "相对光强 I/I₀",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "single-slit",
+    "sceneId": "diffraction-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/4-2-intensity-in-single-slit-diffraction",
+    "conditions": "单色平行光均匀正入射长狭缝；一维远场模型，a²/(λL)≤0.1。",
+    "application": "观察缝宽、波长与屏幕距离对衍射图样的影响。",
+    "id": "single-slit-width",
+    "title": "中央亮纹宽度",
+    "latex": "a\\sin\\theta_1=\\lambda,\\quad w=2L\\tan\\theta_1\\approx 2\\lambda L/a",
+    "question": "缝越窄，中央亮纹为什么越宽？",
+    "meaning": "中央亮纹宽度w是两侧第一暗纹之间的距离。第一暗纹位置y₁=w/2；求解器使用w=2Lλ/√(a²−λ²)，统一nm、mm、m的单位。缝宽减小、波长增大或屏幕移远，亮纹都会变宽。",
+    "targets": [
+      "w",
+      "lambda",
+      "a",
+      "L"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "a",
+        "label": "缝宽 a",
+        "unit": "mm",
+        "min": 0.02,
+        "max": 0.08,
+        "default": 0.05
+      },
+      {
+        "key": "L",
+        "label": "屏幕距离 L",
+        "unit": "m",
+        "min": 0.3,
+        "max": 0.8,
+        "default": 0.5
+      },
+      {
+        "key": "w",
+        "label": "中央亮纹宽度 w",
+        "unit": "mm",
+        "min": 2,
+        "max": 100,
+        "default": 10.640602326214315
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "single-slit",
+    "sceneId": "diffraction-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/4-2-intensity-in-single-slit-diffraction",
+    "conditions": "单色平行光均匀正入射长狭缝；一维远场模型，a²/(λL)≤0.1。",
+    "application": "观察缝宽、波长与屏幕距离对衍射图样的影响。",
+    "id": "single-slit-angle",
+    "title": "观察位置与衍射角",
+    "latex": "\\tan\\theta=y/L",
+    "question": "屏上的观察位置对应哪个方向？",
+    "meaning": "θ是从缝中心看向观察点的方向与光轴之间的夹角；屏中央为0，上方为正，下方为负。计算会将屏幕距离m和观察位置mm统一。",
+    "targets": [
+      "theta"
+    ],
+    "fields": [
+      {
+        "key": "L",
+        "label": "屏幕距离 L",
+        "unit": "m",
+        "min": 0.3,
+        "max": 0.8,
+        "default": 0.5
+      },
+      {
+        "key": "y",
+        "label": "观察位置 y",
+        "unit": "mm",
+        "min": -40,
+        "max": 40,
+        "default": 0
+      },
+      {
+        "key": "theta",
+        "label": "衍射角 θ",
+        "unit": "°",
+        "min": -10,
+        "max": 10,
+        "default": 0
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "circular-diffraction",
+    "sceneId": "diffraction-1",
+    "reference": "https://interactivetextbooks.tudelft.nl/interactive-optics/content/Chap6_Diffraction/DiffractiveOptics_2022_01Clean.html",
+    "conditions": "单色均匀平行光、理想圆孔及透镜、屏在后焦平面；近轴标量衍射，无像差或离焦。",
+    "application": "观察圆孔大小和波长对焦平面衍射光斑的影响。",
+    "id": "circular-intensity",
+    "title": "圆孔衍射光强",
+    "latex": "u=\\pi Dr/(\\lambda f),\\quad I/I_0=[2J_1(u)/u]^2",
+    "question": "中央亮斑和圆环怎样形成？",
+    "meaning": "圆孔内各处发出的光叠加，形成中央亮斑与同心圆环。J₁是描述圆孔图样的数学函数；中央r=0时，相对光强取极限1。相对光强不代表总功率。",
+    "targets": [
+      "J"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "D",
+        "label": "圆孔直径 D",
+        "unit": "mm",
+        "min": 1,
+        "max": 8,
+        "default": 2
+      },
+      {
+        "key": "f",
+        "label": "透镜焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "default": 120
+      },
+      {
+        "key": "r",
+        "label": "观察半径 r",
+        "unit": "μm",
+        "min": 0,
+        "max": 500,
+        "default": 0
+      },
+      {
+        "key": "J",
+        "label": "相对光强 I/I₀",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "circular-diffraction",
+    "sceneId": "diffraction-1",
+    "reference": "https://interactivetextbooks.tudelft.nl/interactive-optics/content/Chap6_Diffraction/DiffractiveOptics_2022_01Clean.html",
+    "conditions": "单色均匀平行光、理想圆孔及透镜、屏在后焦平面；近轴标量衍射，无像差或离焦。",
+    "application": "观察圆孔大小和波长对焦平面衍射光斑的影响。",
+    "id": "circular-diameter",
+    "title": "艾里斑直径",
+    "latex": "r_1\\approx1.22\\lambda f/D,\\quad d_{\\mathrm A}=2r_1",
+    "question": "圆孔缩小时，中央光斑为什么变大？",
+    "meaning": "艾里斑是第一条暗环以内的中央亮斑。其直径dₐ为第一暗环半径r₁的两倍，不是光强降到一半处的直径。求解器使用J₁的第一零点3.8317059702对应的系数1.21967，1.22是四舍五入的常用值。",
+    "targets": [
+      "dA",
+      "lambda",
+      "D",
+      "f"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "D",
+        "label": "圆孔直径 D",
+        "unit": "mm",
+        "min": 1,
+        "max": 8,
+        "default": 2
+      },
+      {
+        "key": "f",
+        "label": "透镜焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "default": 120
+      },
+      {
+        "key": "dA",
+        "label": "艾里斑直径 dₐ",
+        "unit": "μm",
+        "min": 1,
+        "max": 1000,
+        "default": 77.86372585845365
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "circular-diffraction",
+    "sceneId": "diffraction-1",
+    "reference": "https://interactivetextbooks.tudelft.nl/interactive-optics/content/Chap6_Diffraction/DiffractiveOptics_2022_01Clean.html",
+    "conditions": "单色均匀平行光、理想圆孔及透镜、屏在后焦平面；近轴标量衍射，无像差或离焦。",
+    "application": "观察圆孔大小和波长对焦平面衍射光斑的影响。",
+    "id": "circular-angle",
+    "title": "观察半径与方向",
+    "latex": "\\tan\\theta=r/f",
+    "question": "光斑上的观察点对应什么方向？",
+    "meaning": "r是观察点离光斑中央的距离，f是透镜到焦平面观察屏的距离。θ是观察方向与光轴的夹角。r使用μm，f使用mm，计算时统一单位。",
+    "targets": [
+      "theta"
+    ],
+    "fields": [
+      {
+        "key": "f",
+        "label": "透镜焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "default": 120
+      },
+      {
+        "key": "r",
+        "label": "观察半径 r",
+        "unit": "μm",
+        "min": 0,
+        "max": 500,
+        "default": 0
+      },
+      {
+        "key": "theta",
+        "label": "观察角 θ",
+        "unit": "°",
+        "min": 0,
+        "max": 1,
+        "default": 0
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "fourier-lens",
+    "sceneId": "spatial-spectrum-0",
+    "reference": "https://qiweb.tudelft.nl/aoi/coherentimaging/coherentimaging/",
+    "conditions": "相干单色光、理想透镜、输入面和频谱面分别在前后焦面；近轴标量模型，忽略透镜截光与像差。",
+    "application": "把输入条纹的周期与频谱屏上的位置联系起来。",
+    "id": "fourier-position",
+    "title": "周期与频谱位置",
+    "latex": "x_1=\\lambda f/d,\\quad \\nu_0=1/d",
+    "question": "条纹越密，频谱中的一级位置如何变化？",
+    "meaning": "d是一条条纹到下一条条纹的距离；ν₀表示每毫米的条纹周期数。±ν₀映射到频谱屏的±x₁。波长用nm，焦距和周期用mm，输出位置用μm。m=0时没有一级分量，这里仍可计算该频率的理论映射位置。",
+    "targets": [
+      "x1",
+      "d",
+      "lambda",
+      "f"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "d",
+        "label": "周期 d",
+        "unit": "mm",
+        "min": 0.08,
+        "max": 0.4,
+        "default": 0.16
+      },
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "default": 120
+      },
+      {
+        "key": "x1",
+        "label": "一级位置 x₁",
+        "unit": "μm",
+        "min": 1,
+        "max": 3000,
+        "default": 399
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "fourier-lens",
+    "sceneId": "spatial-spectrum-0",
+    "reference": "https://qiweb.tudelft.nl/aoi/coherentimaging/coherentimaging/",
+    "conditions": "相干单色光、理想透镜、输入面和频谱面分别在前后焦面；近轴标量模型，忽略透镜截光与像差。",
+    "application": "把输入条纹的周期与频谱屏上的位置联系起来。",
+    "id": "fourier-width",
+    "title": "光束半径与频谱宽度",
+    "latex": "w_F=\\frac{\\lambda f}{\\pi w}",
+    "question": "输入光场越宽，频谱光斑为什么越窄？",
+    "meaning": "w为输入高斯包络的1/e²光强半径，wF为单个高斯频谱分量的1/e²光强半径，不是直径。三个分量的振幅相干叠加，完整频谱用对应的光强公式计算。",
+    "targets": [
+      "wF",
+      "w",
+      "lambda",
+      "f"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "w",
+        "label": "光束半径 w",
+        "unit": "mm",
+        "min": 0.5,
+        "max": 2,
+        "default": 0.8
+      },
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "default": 120
+      },
+      {
+        "key": "wF",
+        "label": "频谱宽度 wF",
+        "unit": "μm",
+        "min": 1,
+        "max": 200,
+        "default": 25.401128917466
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "fourier-lens",
+    "sceneId": "spatial-spectrum-0",
+    "reference": "https://qiweb.tudelft.nl/aoi/coherentimaging/coherentimaging/",
+    "conditions": "相干单色光、理想透镜、输入面和频谱面分别在前后焦面；近轴标量模型，忽略透镜截光与像差。",
+    "application": "把输入条纹的周期与频谱屏上的位置联系起来。",
+    "id": "fourier-intensity",
+    "title": "振幅变换与光强",
+    "latex": "G(\\nu)=g(\\nu)+\\frac m2[g(\\nu-\\nu_0)+g(\\nu+\\nu_0)],\\quad g(\\nu)=e^{-(\\pi w\\nu)^2},\\quad I/I_0=\\left|\\frac{G(x_F/(\\lambda f))}{G(0)}\\right|^2",
+    "question": "透镜变换的是光强还是光场振幅？",
+    "meaning": "先对光场振幅作傅里叶变换，再取模平方得到频谱光强。ν₀=1/d。这里观察yF=0的横向剖面；输入是高斯包络下的余弦振幅条纹，m控制条纹对比。I₀为当前频谱中心光强，不代表总功率。",
+    "targets": [
+      "J"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "d",
+        "label": "周期 d",
+        "unit": "mm",
+        "min": 0.08,
+        "max": 0.4,
+        "default": 0.16
+      },
+      {
+        "key": "w",
+        "label": "光束半径 w",
+        "unit": "mm",
+        "min": 0.5,
+        "max": 2,
+        "default": 0.8
+      },
+      {
+        "key": "m",
+        "label": "振幅调制度 m",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      },
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "default": 120
+      },
+      {
+        "key": "xF",
+        "label": "观察位置 xF",
+        "unit": "μm",
+        "min": -3000,
+        "max": 3000,
+        "default": 0
+      },
+      {
+        "key": "J",
+        "label": "相对光强 I/I₀",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "four-f",
+    "sceneId": "spatial-spectrum-1",
+    "reference": "https://qiweb.tudelft.nl/aoi/coherentimaging/coherentimaging/",
+    "conditions": "相干单色光、两片等焦距的理想无限薄透镜；滤波片在公共焦面。",
+    "application": "联系滤波片位置、通过的频率与输出图样。",
+    "id": "four-f-length",
+    "title": "4f 系统间距",
+    "latex": "L=4f,\\quad d_{12}=2f,\\quad M=-1",
+    "question": "为什么两镜之间是 2f？",
+    "meaning": "两片透镜共用中间焦面，各距该面 f。输入距第一镜 f，输出距第二镜 f，总长为4f。全通时得到等大小倒像。",
+    "targets": [
+      "L",
+      "f"
+    ],
+    "fields": [
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 130,
+        "default": 120
+      },
+      {
+        "key": "L",
+        "label": "总长 L",
+        "unit": "mm",
+        "min": 320,
+        "max": 520,
+        "default": 480
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "four-f",
+    "sceneId": "spatial-spectrum-1",
+    "reference": "https://qiweb.tudelft.nl/aoi/coherentimaging/coherentimaging/",
+    "conditions": "相干单色光、两片等焦距的理想无限薄透镜；滤波片在公共焦面。",
+    "application": "联系滤波片位置、通过的频率与输出图样。",
+    "id": "four-f-bandwidth",
+    "title": "滤波宽度与频率",
+    "latex": "\\nu_c=\\frac{a}{2\\lambda f},\\quad \\nu_{\\rm center}=\\frac{c}{\\lambda f}",
+    "question": "滤波片宽度决定哪些频率通过？",
+    "meaning": "a为全宽，因此半宽是a/2。居中通光狭缝保留−νc到+νc；偏移c后变成以c/(λf)为中心的频率区间。遮光挡片阻挡同一区间。另一方向不滤波。",
+    "targets": [
+      "nu",
+      "a",
+      "lambda",
+      "f"
+    ],
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 130,
+        "default": 120
+      },
+      {
+        "key": "a",
+        "label": "滤波全宽 a",
+        "unit": "μm",
+        "min": 10,
+        "max": 5000,
+        "default": 200
+      },
+      {
+        "key": "nu",
+        "label": "半带宽 ν꜀",
+        "unit": "mm⁻¹",
+        "min": 0.01,
+        "max": 100,
+        "default": 1.5664160401002505
+      }
+    ]
+  },
+  {
+    "categoryId": "diffraction",
+    "diagram": "four-f",
+    "sceneId": "spatial-spectrum-1",
+    "reference": "https://qiweb.tudelft.nl/aoi/coherentimaging/coherentimaging/",
+    "conditions": "相干单色光、两片等焦距的理想无限薄透镜；滤波片在公共焦面。",
+    "application": "联系滤波片位置、通过的频率与输出图样。",
+    "id": "four-f-output",
+    "title": "滤波后的输出",
+    "latex": "U_{\\rm out}(x\\prime)=\\int\\widetilde U_{\\rm in}(\\nu)H(\\lambda f\\nu)e^{-i2\\pi\\nu x\\prime}\\,d\\nu,\\quad I=|U_{\\rm out}|^2",
+    "question": "为什么不能直接把频谱屏图片当成输出图样？",
+    "meaning": "滤波片作用于复振幅，第二片透镜继续变换。全通为输入的倒像；狭缝或挡片改变输出的条纹与亮度。输出相对光强以输入中心为基准，滤波后不重新归一化。本例另一方向保持高斯形状。",
+    "targets": [
+      "J"
+    ],
+    "inputs": {
+      "J": [
+        "lambda",
+        "d",
+        "w",
+        "m",
+        "f",
+        "a",
+        "c",
+        "mode",
+        "x"
+      ]
+    },
+    "fields": [
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "default": 532
+      },
+      {
+        "key": "d",
+        "label": "条纹周期 d",
+        "unit": "mm",
+        "min": 0.08,
+        "max": 0.4,
+        "default": 0.16
+      },
+      {
+        "key": "w",
+        "label": "光束半径 w",
+        "unit": "mm",
+        "min": 0.5,
+        "max": 2,
+        "default": 0.8
+      },
+      {
+        "key": "m",
+        "label": "条纹对比 m",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 1
+      },
+      {
+        "key": "f",
+        "label": "焦距 f",
+        "unit": "mm",
+        "min": 80,
+        "max": 130,
+        "default": 120
+      },
+      {
+        "key": "a",
+        "label": "滤波全宽 a",
+        "unit": "μm",
+        "min": 10,
+        "max": 5000,
+        "default": 200
+      },
+      {
+        "key": "c",
+        "label": "滤波位置 c",
+        "unit": "μm",
+        "min": -2200,
+        "max": 2200,
+        "default": 0
+      },
+      {
+        "key": "mode",
+        "label": "滤波方式 H",
+        "unit": "",
+        "min": 0,
+        "max": 2,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "通光狭缝"
+          },
+          {
+            "value": 1,
+            "label": "遮光挡片"
+          },
+          {
+            "value": 2,
+            "label": "全通"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "观察位置 x′",
+        "unit": "mm",
+        "min": -3,
+        "max": 3,
+        "default": 0
+      },
+      {
+        "key": "J",
+        "label": "相对光强 I/Iᵢₙ(0)",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 0.25
+      }
+    ]
+  },
+{
+  "id": "point-source-illuminance",
+  "title": "点光源照度",
+  "categoryId": "radiometric-quantities",
+  "latex": "E=\\frac{I}{r^2}",
+  "question": "光源远一点，接收面会暗多少？",
+  "meaning": "光强不变时，照度与距离的平方成反比。距离加倍，照度变为原来的四分之一。",
+  "conditions": "理想点光源；接收面中心垂直接收；距离远大于真实光源尺寸。不含环境光、吸收和反射。I 的单位为 cd，E 的单位为 lx；不与辐照度 W/m² 混用。",
+  "application": "理解照明距离变化，估算垂直接收点的照度。",
+  "diagram": "point-source",
+  "sceneId": "radiometric-quantities-0",
+  "reference": "https://www.nist.gov/pml/sensor-science/optical-radiation/realization-candela",
+  "fields": [
+    {
+      "key": "E",
+      "label": "照度 E",
+      "unit": "lx",
+      "min": 0,
+      "max": 50000,
+      "default": 25
+    },
+    {
+      "key": "I",
+      "label": "光强 I",
+      "unit": "cd",
+      "min": 0,
+      "max": 2000,
+      "default": 100
+    },
+    {
+      "key": "r",
+      "label": "距离 r",
+      "unit": "m",
+      "min": 0.2,
+      "max": 10,
+      "default": 2
+    }
+  ]
+},
+  {
+    "id": "directional-illuminance",
+    "title": "定向光源照度",
+    "categoryId": "photometric-quantities",
+    "latex": "E=\\frac{I_0[\\max(0,\\cos\\alpha)]^n\\cos\\gamma}{r^2},\\quad n=\\frac{\\ln(1/2)}{\\ln(\\cos\\beta)}",
+    "question": "转动光源，为什么亮区会移动？",
+    "meaning": "观察点的照度同时取决于光源朝向、到光源的距离和入射角。半强角β处，光强降为主轴光强的一半；β越小，照明越集中。",
+    "conditions": "简化定向点光源、水平接收面。α是相对光源主轴的离轴角，γ是相对接收面法线的入射角。后半空间无光，半强角不是截止角。固定主轴光强，不固定总光通量；不含环境光、吸收和反射。",
+    "application": "比较射灯位置和朝向对接收面亮暗分布的影响。",
+    "diagram": "illumination-map",
+    "sceneId": "photometric-quantities-0",
+    "reference": "https://www.pbr-book.org/4ed/Light_Sources/Point_Lights",
+    "targets": [
+      "E",
+      "I0"
+    ],
+    "inputs": {
+      "E": [
+        "I0",
+        "alpha",
+        "gamma",
+        "r",
+        "beta"
+      ],
+      "I0": [
+        "E",
+        "alpha",
+        "gamma",
+        "r",
+        "beta"
+      ]
+    },
+    "fields": [
+      {
+        "key": "E",
+        "label": "照度 E",
+        "unit": "lx",
+        "min": 0,
+        "max": 8000,
+        "default": 125
+      },
+      {
+        "key": "I0",
+        "label": "主轴光强 I₀",
+        "unit": "cd",
+        "min": 0,
+        "max": 2000,
+        "default": 500
+      },
+      {
+        "key": "alpha",
+        "label": "离轴角 α",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "default": 0
+      },
+      {
+        "key": "gamma",
+        "label": "入射角 γ",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 0
+      },
+      {
+        "key": "r",
+        "label": "距离 r",
+        "unit": "m",
+        "min": 0.5,
+        "max": 20,
+        "default": 2
+      },
+      {
+        "key": "beta",
+        "label": "半强角 β",
+        "unit": "°",
+        "min": 10,
+        "max": 60,
+        "default": 30
+      }
+    ]
+  },
+  {
+    "id": "fiber-na",
+    "title": "光纤数值孔径",
+    "latex": "\\mathrm{NA}=\\sqrt{n_1^2-n_2^2}",
+    "question": "光纤能接收多大角度范围的光？",
+    "meaning": "数值孔径刻画理想过轴光线的接收范围。空气中接收半角满足 sin θₐ=NA；它不等于单模光纤的实际耦合效率。",
+    "conditions": "直圆形阶跃型光纤，n₁>n₂，空气入射。θₐ从轴线量起，临界角从纤芯与包层界面法线量起。",
+    "application": "比较纤芯与包层折射率对接收范围的影响。",
+    "diagram": "fiber-modes",
+    "categoryId": "fiber-modes",
+    "sceneId": "fiber-modes-0",
+    "reference": "https://www.rp-photonics.com/acceptance_angle_in_fiber_optics.html",
+    "fields": [
+      {
+        "key": "n1",
+        "symbol": "n_1",
+        "label": "纤芯折射率 n₁",
+        "unit": "",
+        "min": 1.44,
+        "max": 1.47,
+        "default": 1.46
+      },
+      {
+        "key": "n2",
+        "symbol": "n_2",
+        "label": "包层折射率 n₂",
+        "unit": "",
+        "min": 1.44,
+        "max": 1.47,
+        "default": 1.455
+      },
+      {
+        "key": "NA",
+        "symbol": "\\mathrm{NA}",
+        "label": "数值孔径 NA",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "default": 0.12072696467649507
+      }
+    ]
+  },
+  {
+    "id": "fiber-v",
+    "title": "归一化频率 V",
+    "latex": "V=\\frac{2\\pi a}{\\lambda}\\mathrm{NA}",
+    "question": "纤芯大小和波长怎样改变导模条件？",
+    "meaning": "V把纤芯半径、波长和数值孔径合在一起。弱导近似下，V小于约2.405为单模区，超过此值允许高阶模式。模式是稳定传播的横向光场形状，不是光线反弹次数。",
+    "conditions": "直圆形阶跃型光纤、弱导近似，n₁>n₂。λ为真空波长，a和λ须使用相同长度单位。忽略材料色散，不计算模场分布和精确模式数。",
+    "application": "判断给定纤芯与波长是否处于单模区。",
+    "diagram": "fiber-modes",
+    "categoryId": "fiber-modes",
+    "sceneId": "fiber-modes-0",
+    "reference": "https://www.rp-photonics.com/v_number.html",
+    "fields": [
+      {
+        "key": "a",
+        "symbol": "a",
+        "label": "纤芯半径 a",
+        "unit": "μm",
+        "min": 1,
+        "max": 25,
+        "default": 4.1
+      },
+      {
+        "key": "lambda",
+        "symbol": "\\lambda",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 400,
+        "max": 1700,
+        "default": 1550
+      },
+      {
+        "key": "NA",
+        "symbol": "\\mathrm{NA}",
+        "label": "数值孔径 NA",
+        "unit": "",
+        "min": 1e-06,
+        "max": 1,
+        "default": 0.12072696467649507
+      },
+      {
+        "key": "V",
+        "symbol": "V",
+        "label": "归一化频率 V",
+        "unit": "",
+        "min": 1e-06,
+        "max": 1000,
+        "default": 2.0064868074880935
+      }
+    ]
+  },
+  {
+    "id": "fiber-cutoff",
+    "title": "单模截止波长",
+    "latex": "\\lambda_c\\approx\\frac{2\\pi a\\,\\mathrm{NA}}{2.405}",
+    "question": "波长多长时进入单模区？",
+    "meaning": "固定纤芯和折射率时，波长大于λc进入单模区；短于λc允许高阶模式。等于λc时单列为截止边界，不是基模消失。",
+    "conditions": "直圆形阶跃型光纤、弱导近似，折射率固定。边界采用J₀的首个零点；不代表实际弯曲光纤或光缆的测量截止波长。",
+    "application": "比较工作波长与单模截止波长。",
+    "diagram": "fiber-modes",
+    "categoryId": "fiber-modes",
+    "sceneId": "fiber-modes-0",
+    "reference": "https://www.rp-photonics.com/single_mode_fibers.html",
+    "fields": [
+      {
+        "key": "a",
+        "symbol": "a",
+        "label": "纤芯半径 a",
+        "unit": "μm",
+        "min": 1,
+        "max": 25,
+        "default": 4.1
+      },
+      {
+        "key": "NA",
+        "symbol": "\\mathrm{NA}",
+        "label": "数值孔径 NA",
+        "unit": "",
+        "min": 1e-06,
+        "max": 1,
+        "default": 0.12072696467649507
+      },
+      {
+        "key": "lambdaC",
+        "symbol": "\\lambda_c",
+        "label": "截止波长 λc",
+        "unit": "nm",
+        "min": 1e-06,
+        "max": 100000,
+        "default": 1293.2557796776327
+      }
+    ]
+  },
+  {
+    "id": "fiber-coupling-efficiency",
+    "title": "高斯光束耦合效率",
+    "latex": "\\eta=\\left(\\frac{2ww_f}{S}\\right)^2\\exp\\!\\left(-\\frac{2d^2}{S}-\\frac{k^2w^2w_f^2\\sin^2\\theta}{2S}\\right),\\quad S=w^2+w_f^2,\\quad k=\\frac{2\\pi}{\\lambda}",
+    "question": "光斑大小、偏移和倾角怎样影响耦合？",
+    "meaning": "效率由光场的重叠决定。尺寸相同、中心重合且方向对准时，理想效率为100%。",
+    "conditions": "高斯光场近似，同偏振、小倾角，束腰在端面。半径取光强降至中心约13.5%的位置；模场半径不是纤芯半径。不计端面反射。",
+    "application": "比较光斑尺寸、位置和倾角对耦合效率的影响。",
+    "diagram": "fiber-coupling",
+    "categoryId": "fiber-modes",
+    "sceneId": "fiber-modes-1",
+    "reference": "https://www.rp-photonics.com/fiber_joints.html",
+    "targets": [
+      "eta"
+    ],
+    "fields": [
+      {
+        "key": "w",
+        "label": "光斑半径 w",
+        "symbol": "w",
+        "unit": "μm",
+        "min": 1,
+        "max": 15,
+        "default": 4
+      },
+      {
+        "key": "wf",
+        "label": "模场半径 w_f",
+        "symbol": "w_f",
+        "unit": "μm",
+        "min": 1,
+        "max": 10,
+        "default": 5.2
+      },
+      {
+        "key": "d",
+        "label": "横向偏移 d",
+        "symbol": "d",
+        "unit": "μm",
+        "min": -15,
+        "max": 15,
+        "default": 1.5
+      },
+      {
+        "key": "theta",
+        "label": "入射倾角 θ",
+        "symbol": "\\theta",
+        "unit": "°",
+        "min": -5,
+        "max": 5,
+        "default": 1
+      },
+      {
+        "key": "lambda",
+        "label": "波长 λ",
+        "symbol": "\\lambda",
+        "unit": "nm",
+        "min": 400,
+        "max": 1700,
+        "default": 1550
+      },
+      {
+        "key": "eta",
+        "label": "耦合效率 η",
+        "symbol": "\\eta",
+        "unit": "%",
+        "min": 0,
+        "max": 100,
+        "default": 82.0559536482555
+      }
+    ]
+  },
+  {
+    "id": "fiber-coupled-power",
+    "title": "光纤耦合功率",
+    "latex": "P_{\\mathrm{out}}=\\eta P_{\\mathrm{in}}",
+    "question": "有多少光功率进入导模？",
+    "meaning": "耦合功率等于入射功率乘以耦合效率。提高入射功率不改变效率。",
+    "conditions": "理想光场耦合，不含端面反射和光纤后续传播损耗。",
+    "application": "由入射功率与效率估算进入光纤导模的功率。",
+    "diagram": "fiber-coupling",
+    "categoryId": "fiber-modes",
+    "sceneId": "fiber-modes-1",
+    "reference": "https://www.rp-photonics.com/mode_matching.html",
+    "fields": [
+      {
+        "key": "Pin",
+        "label": "入射功率 P_in",
+        "symbol": "P_{\\mathrm{in}}",
+        "unit": "mW",
+        "min": 0.1,
+        "max": 20,
+        "default": 1
+      },
+      {
+        "key": "eta",
+        "label": "耦合效率 η",
+        "symbol": "\\eta",
+        "unit": "%",
+        "min": 0,
+        "max": 100,
+        "default": 82.0559536482555
+      },
+      {
+        "key": "Pout",
+        "label": "耦合功率 P_out",
+        "symbol": "P_{\\mathrm{out}}",
+        "unit": "mW",
+        "min": 0,
+        "max": 20,
+        "default": 0.820559536482555
+      }
+    ]
+  },
+  {
+    "id": "malus-power",
+    "title": "马吕斯定律",
+    "categoryId": "polarization",
+    "latex": "P_{\\mathrm{out}}=P_{\\mathrm{in}}\\cos^2\\theta",
+    "question": "转动偏振片，透射功率怎样变化？",
+    "meaning": "只有沿透光轴的电场分量能通过。功率正比于电场幅度的平方，因此透过比例为夹角余弦的平方。",
+    "conditions": "线偏振光正入射理想偏振片，轴向透过率为1，光束未截断。θ取两条轴的较小夹角0–90°；未偏振光不能直接使用此式。",
+    "application": "调节激光功率、检查偏振方向与检偏片消光。",
+    "diagram": "malus",
+    "sceneId": "polarization-0",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/1-7-polarization",
+    "targets": [
+      "Pout",
+      "Pin",
+      "theta"
+    ],
+    "fields": [
+      {
+        "key": "Pin",
+        "label": "入射功率 Pin",
+        "symbol": "P_{\\mathrm{in}}",
+        "unit": "mW",
+        "min": 0,
+        "max": 20,
+        "default": 10
+      },
+      {
+        "key": "theta",
+        "label": "夹角 θ",
+        "symbol": "\\theta",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 45
+      },
+      {
+        "key": "Pout",
+        "label": "透射功率 Pout",
+        "symbol": "P_{\\mathrm{out}}",
+        "unit": "mW",
+        "min": 0,
+        "max": 20,
+        "default": 5
+      }
+    ]
+  },
+  {
+    "id": "waveplate-s3",
+    "title": "波片的圆偏振分量",
+    "categoryId": "polarization",
+    "latex": "S_3=-\\sin\\!\\left[2(\\alpha-\\beta)\\right]\\sin\\delta",
+    "question": "快轴方向怎样影响输出偏振态？",
+    "meaning": "S₃表示归一化圆偏振分量。对本场景的完全偏振光，绝对值1为圆偏振，0为线偏振，中间值为椭圆偏振；正负区分转动方向。",
+    "conditions": "线偏振输入、理想无损波片。慢轴延迟δ，时间因子exp(−iωt)，S₃=2Im(Ex Ey共轭)；符号取决于基底与时间约定。",
+    "application": "选择波片类型与快轴角，检查线偏振到圆或椭圆偏振的转换。",
+    "diagram": "waveplate",
+    "sceneId": "polarization-1",
+    "reference": "https://labs.phys.utk.edu/mbreinig/phys421/modules/m10/Jones.html",
+    "targets": [
+      "S3"
+    ],
+    "fields": [
+      {
+        "key": "alpha",
+        "label": "偏振方向 α",
+        "symbol": "\\alpha",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "default": 0
+      },
+      {
+        "key": "beta",
+        "label": "快轴角 β",
+        "symbol": "\\beta",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "default": 45
+      },
+      {
+        "key": "delta",
+        "label": "相位延迟 δ",
+        "symbol": "\\delta",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "default": 90
+      },
+      {
+        "key": "S3",
+        "label": "圆偏振分量 S₃",
+        "symbol": "S_3",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "default": 1
+      }
+    ]
+  },
+  {
+    "id": "brewster-angle",
+    "title": "布儒斯特角",
+    "categoryId": "polarization",
+    "latex": "\\theta_{\\mathrm B}=\\arctan\\!\\left(\\frac{n_2}{n_1}\\right)",
+    "question": "p 偏振光在哪个角度不反射？",
+    "meaning": "入射角从法线量起。在这个角度，p 偏振反射率为零，反射光与折射光成直角；s 偏振仍可能反射。",
+    "conditions": "各向同性、无吸收、非磁介质的单个平面界面。两侧折射率不同；相等时没有特定布儒斯特角。",
+    "application": "选择低反射入射方向，理解反射光的偏振。",
+    "diagram": "brewster",
+    "sceneId": "polarization-2",
+    "reference": "https://webs.optics.arizona.edu/gsmith/Fresnel.html",
+    "targets": [
+      "thetaB"
+    ],
+    "fields": [
+      {
+        "key": "n1",
+        "label": "入射侧折射率 n₁",
+        "symbol": "n_1",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "default": 1
+      },
+      {
+        "key": "n2",
+        "label": "透射侧折射率 n₂",
+        "symbol": "n_2",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "default": 1.5
+      },
+      {
+        "key": "thetaB",
+        "label": "布儒斯特角 θB",
+        "symbol": "\\theta_{\\mathrm B}",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 56.309932474020215
+      }
+    ]
+  },
+  {
+    "id": "crystal-separation",
+    "title": "晶体走离与分束",
+    "categoryId": "polarization",
+    "latex": "\\tan\\rho=\\frac{(n_e^2-n_o^2)\\sin\\gamma\\cos\\gamma}{n_e^2\\cos^2\\gamma+n_o^2\\sin^2\\gamma},\\qquad d=L|\\tan\\rho|",
+    "question": "晶体出射的两束光相隔多远？",
+    "meaning": "e 光的能量流可偏离直行方向；ρ是这个偏角。出射间距等于晶体厚度乘偏角正切的绝对值。",
+    "conditions": "单轴晶体平行平板、正入射，光轴在剖面内；γ从入射法线量起。no、ne为主折射率，忽略表面反射和色散。",
+    "application": "理解晶体分束、波片中的光束走离。",
+    "diagram": "birefringence",
+    "sceneId": "polarization-2",
+    "reference": "https://galileoandeinstein.phys.virginia.edu/Elec_Mag/2022_Lectures/EM_52_Anisotropic_Medium.html",
+    "targets": [
+      "d"
+    ],
+    "fields": [
+      {
+        "key": "no",
+        "label": "o 光折射率 nₒ",
+        "symbol": "n_o",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "default": 1.658
+      },
+      {
+        "key": "ne",
+        "label": "e 主折射率 nₑ",
+        "symbol": "n_e",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "default": 1.486
+      },
+      {
+        "key": "gamma",
+        "label": "光轴角 γ",
+        "symbol": "\\gamma",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "default": 45
+      },
+      {
+        "key": "L",
+        "label": "晶体厚度 L",
+        "symbol": "L",
+        "unit": "mm",
+        "min": 1,
+        "max": 20,
+        "default": 10
+      },
+      {
+        "key": "d",
+        "label": "出射间距 d",
+        "symbol": "d",
+        "unit": "mm",
+        "min": 0,
+        "max": 30,
+        "default": 1.0908826828264562
+      }
+    ]
+  },
+  {
+    "id": "film-path",
+    "title": "薄膜的光程差",
+    "categoryId": "interference",
+    "latex": "\\delta=2nt\\cos\\theta_2",
+    "question": "膜厚和入射方向怎样影响两束反射光？",
+    "meaning": "θ₂从膜内法线量起。δ是传播造成的光程差，反射时的相位反转另行计算。",
+    "conditions": "平行单层膜、同方向比较两束反射光。",
+    "application": "在场景中改变膜厚或观察位置，与曲线和圆环对照。",
+    "diagram": "thin-film",
+    "sceneId": "interference-1",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-4-interference-in-thin-films",
+    "fields": [
+      {
+        "key": "n",
+        "label": "薄膜折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.2,
+        "step": 0.01,
+        "default": 1.38,
+        "symbol": "n"
+      },
+      {
+        "key": "t",
+        "label": "薄膜厚度",
+        "unit": "nm",
+        "min": 0,
+        "max": 1500,
+        "step": 1,
+        "default": 100,
+        "symbol": "t"
+      },
+      {
+        "key": "theta",
+        "label": "膜内折射角",
+        "unit": "°",
+        "min": 0,
+        "max": 60,
+        "step": 0.1,
+        "default": 17.83308882559988,
+        "symbol": "θ₂"
+      },
+      {
+        "key": "delta",
+        "label": "光程差",
+        "unit": "nm",
+        "min": 0,
+        "max": 6600,
+        "step": 1,
+        "default": 262.73894304752537,
+        "symbol": "δ"
+      }
+    ],
+    "targets": [
+      "delta",
+      "t"
+    ],
+    "inputs": {
+      "delta": [
+        "n",
+        "t",
+        "theta"
+      ],
+      "t": [
+        "n",
+        "delta",
+        "theta"
+      ]
+    }
+  },
+  {
+    "id": "film-reflection",
+    "title": "单层膜的反射率",
+    "categoryId": "interference",
+    "latex": "\\mathcal R=\\frac{r_{01}^2+r_{12}^2+2r_{01}r_{12}\\cos\\psi}{1+(r_{01}r_{12})^2+2r_{01}r_{12}\\cos\\psi},\\quad\\psi=\\frac{2\\pi\\delta}{\\lambda}",
+    "question": "反射最弱时为什么不一定完全没有光？",
+    "meaning": "r₀₁、r₁₂是上下界面的振幅反射系数；负值表示反射时相位反转π。结果包含膜内多次反射。",
+    "conditions": "无吸收、单色平面波；此处用s偏振的菲涅耳系数。输入θ₀后由折射定律求膜内角度。",
+    "application": "在场景中改变膜厚或观察位置，与曲线和圆环对照。",
+    "diagram": "thin-film",
+    "sceneId": "interference-1",
+    "reference": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6592382/",
+    "fields": [
+      {
+        "key": "n",
+        "label": "薄膜折射率",
+        "unit": "",
+        "min": 1.05,
+        "max": 2.1,
+        "step": 0.01,
+        "default": 1.38,
+        "symbol": "n"
+      },
+      {
+        "key": "ns",
+        "label": "基底折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.2,
+        "step": 0.01,
+        "default": 1.52,
+        "symbol": "nₛ"
+      },
+      {
+        "key": "theta0",
+        "label": "入射角",
+        "unit": "°",
+        "min": 0,
+        "max": 60,
+        "step": 1,
+        "default": 25,
+        "symbol": "θ₀"
+      },
+      {
+        "key": "t",
+        "label": "膜厚",
+        "unit": "nm",
+        "min": 0,
+        "max": 1500,
+        "step": 1,
+        "default": 100,
+        "symbol": "t"
+      },
+      {
+        "key": "lambda",
+        "label": "真空波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 600,
+        "symbol": "λ"
+      },
+      {
+        "key": "reflectance",
+        "label": "反射率",
+        "unit": "%",
+        "min": 0,
+        "max": 100,
+        "step": 0.01,
+        "default": 1.888449447254692,
+        "symbol": "ℛ"
+      }
+    ],
+    "targets": [
+      "reflectance"
+    ],
+    "inputs": {
+      "reflectance": [
+        "n",
+        "ns",
+        "theta0",
+        "t",
+        "lambda"
+      ]
+    }
+  },
+  {
+    "id": "newton-thickness",
+    "title": "牛顿环的膜厚",
+    "categoryId": "interference",
+    "latex": "t=t_0+R-\\sqrt{R^2-r^2}\\;\\approx\\;t_0+\\frac{r^2}{2R}",
+    "question": "为什么越靠近边缘，条纹越密？",
+    "meaning": "镜片下表面是球面，r是离圆心的距离。场景使用完整球面间隙；小半径时近似为r²/(2R)。",
+    "conditions": "近轴区域；计算器R、r用mm，t、t₀用nm，已换算单位。",
+    "application": "在场景中改变膜厚或观察位置，与曲线和圆环对照。",
+    "diagram": "newton-rings",
+    "sceneId": "interference-1",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-4-interference-in-thin-films",
+    "fields": [
+      {
+        "key": "R",
+        "label": "镜片曲率半径",
+        "unit": "mm",
+        "min": 500,
+        "max": 3000,
+        "step": 10,
+        "default": 1000,
+        "symbol": "R"
+      },
+      {
+        "key": "r",
+        "label": "观察半径",
+        "unit": "mm",
+        "min": 0,
+        "max": 3,
+        "step": 0.01,
+        "default": 1,
+        "symbol": "r"
+      },
+      {
+        "key": "t0",
+        "label": "中心间隙",
+        "unit": "nm",
+        "min": 0,
+        "max": 1000,
+        "step": 1,
+        "default": 0,
+        "symbol": "t₀"
+      },
+      {
+        "key": "t",
+        "label": "此处膜厚",
+        "unit": "nm",
+        "min": 0,
+        "max": 10000,
+        "step": 1,
+        "default": 500.0001250000625,
+        "symbol": "t"
+      }
+    ],
+    "targets": [
+      "t",
+      "r"
+    ],
+    "inputs": {
+      "t": [
+        "R",
+        "r",
+        "t0"
+      ],
+      "r": [
+        "R",
+        "t",
+        "t0"
+      ]
+    }
+  },
+  {
+    "id": "newton-dark-radius",
+    "title": "一阶暗环半径",
+    "categoryId": "interference",
+    "latex": "2nt(r_1)=\\lambda,\\qquad r_1\\approx\\sqrt{R(\\lambda/n-2t_0)}",
+    "question": "中心接触时为什么是暗的？",
+    "meaning": "玻璃→薄膜和薄膜→玻璃只有一次反射相位反转。接触圆心光程差为零，反射相消；一阶暗环的传播光程差为一个波长。",
+    "conditions": "玻璃折射率1.52，膜内折射率低于玻璃；正入射。计算器使用完整球面式。当t₀>λ/(2n)时该阶暗环不存在。",
+    "application": "在场景中改变膜厚或观察位置，与曲线和圆环对照。",
+    "diagram": "newton-rings",
+    "sceneId": "interference-1",
+    "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-4-interference-in-thin-films",
+    "fields": [
+      {
+        "key": "R",
+        "label": "镜片曲率半径",
+        "unit": "mm",
+        "min": 500,
+        "max": 3000,
+        "step": 10,
+        "default": 1000,
+        "symbol": "R"
+      },
+      {
+        "key": "n",
+        "label": "膜内折射率",
+        "unit": "",
+        "min": 1,
+        "max": 1.45,
+        "step": 0.01,
+        "default": 1,
+        "symbol": "n"
+      },
+      {
+        "key": "lambda",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 600,
+        "symbol": "λ"
+      },
+      {
+        "key": "t0",
+        "label": "中心间隙",
+        "unit": "nm",
+        "min": 0,
+        "max": 1000,
+        "step": 1,
+        "default": 0,
+        "symbol": "t₀"
+      },
+      {
+        "key": "r1",
+        "label": "一阶暗环半径",
+        "unit": "mm",
+        "min": 0,
+        "max": 3,
+        "step": 0.001,
+        "default": 0.774596611146731,
+        "symbol": "r₁"
+      }
+    ],
+    "targets": [
+      "r1"
+    ],
+    "inputs": {
+      "r1": [
+        "R",
+        "n",
+        "lambda",
+        "t0"
+      ]
+    }
+  }
+]

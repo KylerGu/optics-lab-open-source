@@ -1,0 +1,16 @@
+.young-double-slit-scene .gs-plot .young-symbol{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.young-double-slit-scene .resonator-parameter-line>.resonator-quantity-label,.young-double-slit-scene .resonator-parameter-line>.resonator-quantity-text{font-size:16px!important;line-height:1.65;min-width:0;flex:1}
+.young-double-slit-scene .resonator-parameter-line .gs-quantity-symbol{font-size:15px;margin-left:4px}
+.young-double-slit-scene .resonator-parameter-line .gs-number{width:106px;flex-shrink:0}
+.young-double-slit-scene .gs-sidebar-scroll .gs-number input{font-size:16px}
+.young-double-slit-scene .gs-number>span{font-size:13px}
+.young-double-slit-scene .gs-plot .young-title{font-size:13px;font-weight:500}
+.young-double-slit-scene .gs-plot .young-tick{stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.young-double-slit-scene .gs-plot [role=slider]:focus-visible{outline:2px solid #6e9aca;outline-offset:4px}
+.young-double-slit-scene .gs-readouts dt button.resonator-quantity-label{width:auto;height:auto;border:0;border-radius:0;padding:0;background:transparent;color:inherit;font:inherit}
+.young-double-slit-scene .gs-visual-footer>span{font-size:11px;color:#71849a}
+.young-observation-handle{cursor:ns-resize}
+.young-status{font-size:12px;color:#71849a;line-height:1.7;margin-top:9px}
+.young-details{padding:17px 0;font-size:12px;color:#71849a;line-height:1.8}
+.young-details summary{cursor:pointer}.young-details p{margin-top:12px}
+.young-primary-note{font-size:11px;color:#71849a;display:block;margin-top:5px}

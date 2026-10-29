@@ -1,0 +1,12 @@
+.fiber-modes-scene .quantity-color .resonator-quantity-label[aria-pressed],
+.fiber-modes-scene .quantity-color .fiber-quantity-text,
+.fiber-modes-scene .quantity-color .gs-quantity-symbol,
+.fiber-modes-scene .quantity-color .gs-number input,
+.fiber-modes-scene .quantity-color>strong{color:var(--quantity-color)}
+.fiber-modes-scene .quantity-color .resonator-quantity-label[aria-pressed=false]{opacity:.65}
+.fiber-modes-scene .quantity-color input[type=range]{background:linear-gradient(to right,var(--quantity-color) 0%,var(--quantity-color) var(--range-fill),#e8eef6 var(--range-fill),#e8eef6 100%)}
+.fiber-modes-scene .quantity-color input[type=range]::-webkit-slider-thumb{border-color:var(--quantity-color)}
+.fiber-modes-scene .quantity-color input[type=range]::-moz-range-thumb{border-color:var(--quantity-color)}
+.fiber-canvas .quantity-annotation{pointer-events:none}
+.fiber-modes-scene .fiber-canvas .quantity-annotation text{fill:var(--quantity-color)}
+.fiber-canvas .quantity-annotation path,.fiber-canvas .quantity-annotation polyline,.fiber-canvas .quantity-annotation line{stroke:var(--quantity-color)}

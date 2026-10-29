@@ -1,0 +1,30 @@
+.gs-tone-source{--quantity-color:#b38336}
+.point-source-scene .gs-plot{min-height:300px}
+.point-source-scene .point-equation{padding:12px 0 15px;color:#526c87;font-size:19px}
+.point-source-scene .point-equation .katex-display{margin:0}
+.point-source-scene .resonator-parameter-line>.resonator-quantity-label{font-size:14px!important}
+.point-label-hint{font-size:12px;line-height:1.8;color:#7c8fa4;margin:9px 0 0}
+.point-source-scene .point-reading .gs-primary-reading>button{font-size:14px}
+.point-source-scene .point-reading .gs-primary-reading strong{font-size:28px}
+.point-conditions{font-size:12px;line-height:1.8;color:#74879c;padding:18px 0}
+.point-conditions summary{cursor:pointer}.point-conditions p{margin:12px 0}
+.point-source-scene .gs-plot .point-symbol{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:16px;stroke:#fbfdff;stroke-width:4px;paint-order:stroke fill;fill:#62748a}
+.point-source-scene .gs-plot .point-source-symbol{fill:#b38336}
+.point-source-scene .gs-plot .point-result-symbol{fill:#26836a}
+.point-receiver{cursor:ew-resize;touch-action:none}
+.point-annotation{pointer-events:none}
+.point-receiver:focus-visible{outline:2px solid #6e9aca;outline-offset:5px}
+.point-source-scene .gs-visual-footer>span{font-size:11px;color:#74879c}
+.point-curve{padding:18px 0 10px}.point-curve-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.point-curve-heading h3{margin:0!important;white-space:nowrap}
+.point-curve .gs-plot-switch{display:flex;gap:2px;padding:2px;border:1px solid #e0e8f1;border-radius:6px}
+.point-curve .gs-plot-switch button{font-size:11px;padding:4px 6px}
+.point-curve .gs-plot-switch .active{background:#eef5fc;color:#4276aa;border-radius:4px}
+.point-curve svg{width:100%;display:block;margin:14px 0 4px;overflow:visible}
+.point-curve svg text{font-size:10px;fill:#72869b;font-variant-numeric:tabular-nums}
+.point-curve p,.point-comparison p{font-size:12px;color:#7c8fa4;line-height:1.8;margin-top:7px}
+.point-comparison{padding:20px 0!important;border-top:1px solid #e6edf5}
+.point-comparison>div{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:#657c92;margin-top:15px}
+.point-comparison strong{font-size:17px;font-weight:500;color:#26836a}.point-comparison small{font-size:12px;font-weight:400}
+@media(max-width:760px){.point-source-scene .gs-workspace{flex-wrap:wrap;overflow:auto}.point-source-scene .gs-sidebar{width:100%!important;flex:0 0 100%;max-height:none}.point-source-scene .gs-sidebar-scroll{overflow:visible}.point-source-scene .gs-panel-resizer{display:none}.point-source-scene .gs-visual{flex:0 0 100%;height:430px;margin:12px 0}.point-source-scene .gs-sidebar-scroll>section{padding:12px 0}.point-source-scene .point-results .gs-sidebar-scroll{display:grid;grid-template-columns:1fr 1fr;gap:20px}.point-source-scene .point-results .point-comparison{border-top:0}.point-source-scene .gs-title h1{font-size:17px}.point-source-scene .gs-heading-actions .outline-button{font-size:11px;padding:7px}.point-source-scene .point-conditions{padding:10px 0}}
+@media(max-width:600px){body:has(.point-source-scene){min-width:0}.app-shell:has(.point-source-scene)>.topbar{height:auto;min-height:100px;flex-wrap:wrap;padding:10px 14px;gap:8px}.app-shell:has(.point-source-scene)>.topbar .mode-switch{order:3;max-width:100%;overflow-x:auto}.app-shell:has(.point-source-scene)>.topbar .mode-switch button{padding:7px 9px;font-size:11px}.point-source-scene .gs-heading{padding:0 12px;flex-wrap:wrap;height:auto;min-height:75px;gap:4px}.point-source-scene .gs-heading-actions{margin-left:auto}.point-source-scene .gs-sidebar{height:auto}.point-source-scene .point-results .gs-sidebar-scroll{display:block}.point-source-scene .gs-model-strip{font-size:9px;padding:0 12px}.point-source-scene .gs-drawer{left:12px;right:12px;top:78px;width:auto;max-width:none}.point-source-scene .gs-plot .point-symbol{font-size:13px}}

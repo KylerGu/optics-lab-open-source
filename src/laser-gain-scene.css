@@ -1,0 +1,31 @@
+.gain-parameter-line{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.gain-parameter-line>.gain-quantity-label,.gain-parameter-line>.gain-quantity-text{font-size:12px!important;color:var(--quantity-color,#4c607a)!important}
+.gain-quantity-label{display:inline;background:transparent;border:0;padding:0;border-radius:0;color:inherit;font:inherit;text-align:left;cursor:pointer;line-height:inherit}
+.gain-quantity-label:hover{text-decoration:underline;text-underline-offset:3px}
+.gain-quantity-label[aria-pressed=true]{color:var(--quantity-color,#426d9a)}
+.gain-quantity-label:focus-visible{outline:2px solid #6e9aca;outline-offset:3px}
+.laser-gain-scene .gs-sidebar-scroll .gs-number input{font-size:13px}
+.gain-targets{display:flex;justify-content:flex-end;gap:13px;margin-top:4px}
+.gain-targets .text-button{font-size:11px;color:#537da7}
+.gain-tabs{display:flex;gap:4px;white-space:nowrap}
+.gain-tabs button{padding:6px 9px;background:transparent;border:0;color:#8093a8;font:inherit;font-size:12px;border-radius:5px;cursor:pointer}
+.gain-tabs button[aria-selected=true]{color:#537da7;background:#eef4fa}
+.gain-tabs button:focus-visible{outline:2px solid #6e9aca}
+.gain-cavity{flex:0 0 108px;border-bottom:1px solid #f0f4f8;display:flex;justify-content:center;overflow:hidden}
+.gain-cavity svg{height:108px;width:100%;max-width:900px}
+.gain-cavity text{font-size:11px;fill:#7890aa}
+.gain-status{padding-top:18px}
+.gain-state{font-size:13px;margin:0 0 17px;font-weight:600}
+.gain-state.is-above{color:#26836a}
+.gain-state.is-below{color:#b27b43}
+.gain-status .gs-primary-reading+.gs-primary-reading{margin-top:19px}
+.gain-secondary{padding:18px 0;font-size:12px;color:#7890aa}
+.gain-secondary>div{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.gain-secondary strong{font-size:18px;font-weight:500;color:#537da7}
+.gain-secondary strong small{font-size:10px;font-weight:400;color:#8699ad}
+.laser-gain-scene .gs-plot .gain-annotation-text{font-size:12px;stroke:#fbfdff;stroke-width:4px;paint-order:stroke fill;stroke-linejoin:round}
+.laser-gain-scene .gs-plot .gain-empty{font-size:13px;fill:#9b7d62}
+.laser-gain-scene .gs-drag-handle:focus{outline:none}
+.laser-gain-scene .gs-drag-handle:focus-visible>circle:last-child{stroke:#1b527c;stroke-width:3px}
+.gain-formula .fk-concept-grid{grid-template-columns:1fr}
+@media(max-width:1100px){.gain-tabs button{padding:5px;font-size:11px}.laser-gain-scene .gs-toolbar{gap:4px;padding-left:8px;padding-right:8px}.laser-gain-scene .gs-toolbar-left{gap:4px}.laser-gain-scene .gs-toolbar-right{gap:1px}.gain-cavity text{font-size:18px}.gain-cavity{flex-basis:90px}.gain-cavity svg{height:90px}}

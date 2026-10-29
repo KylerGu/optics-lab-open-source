@@ -1,0 +1,44 @@
+{
+  "name": "optics-lab",
+  "private": true,
+  "version": "0.6.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:frontend": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "dev:backend": "python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "tsx --test src/spatialCamera.test.ts src/spatialDistant.test.tsx src/telescopeLinkage.test.ts src/spatialImaging.test.tsx src/researchVisual.test.tsx src/polarizationRefraction.test.ts src/waveplate.test.ts src/malus.test.ts src/fiberCoupling.test.ts src/fiberModes.test.ts src/illumination.test.ts src/pointSource.test.ts src/model.test.ts src/simulation.test.ts src/agent.test.ts src/AssistantAnswer.test.tsx src/research.test.ts src/researchSession.test.ts src/tolerance.test.ts src/teaching.test.ts src/gaussianBeam.test.ts src/gaussianFocus.test.ts src/gaussianExpander.test.ts src/resonator.test.ts src/laserGain.test.ts src/formulaCatalog.test.ts src/builderModel.test.ts src/builderTabs.test.ts src/researchBuilderLink.test.ts src/researchConversation.test.ts src/SpatialMeasurements.test.tsx src/sphericalLensGeometry.test.ts src/physicalLensGeometry.test.ts src/spatialAgent.test.ts src/sceneRuntime.test.ts src/sceneInteraction.test.ts src/geometricalInteraction.test.ts src/microscopeAnswerQuantities.test.ts src/microscopeFocus.test.ts src/sceneImmediate.test.ts src/cameraModel.test.ts src/apertureModel.test.ts src/cameraImage.test.ts src/prismAnnotations.test.ts src/waveSuperposition.test.ts src/youngDoubleSlit.test.ts src/michelson.test.ts src/singleSlit.test.ts src/circularDiffraction.test.ts src/fourierLens.test.ts src/fourF.test.ts src/filmInterference.test.ts",
+    "test:film": "tsx --test src/filmInterference.test.ts && python -m unittest backend.tests.test_film_interference_scene -v",
+    "test:physics": "python -m unittest discover -s backend/tests -v",
+    "test:research-results": "tsx --test src/researchVisual.test.tsx src/ResearchResults.test.tsx src/researchModels.test.tsx src/researchResultRecords.test.tsx src/researchBuilderLink.test.ts src/researchConversation.test.ts src/builderTabs.test.ts src/ResearchSidebar.test.tsx src/AssistantAnswer.test.tsx src/researchSession.test.ts src/research.test.ts src/tolerance.test.ts"
+  },
+  "dependencies": {
+    "katex": "^0.19.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "three": "^0.174.0"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.174.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.19.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.1.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KylerGu/optics-lab-open-source.git"
+  }
+}

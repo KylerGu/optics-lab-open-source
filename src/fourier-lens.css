@@ -1,0 +1,37 @@
+.fourier-lens-scene .gs-plot .fourier-symbol{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.fourier-lens-scene .gs-plot .fourier-title{font-size:13px;font-weight:500}
+.fourier-lens-scene .gs-plot [role=slider]:focus-visible{outline:2px solid #6e9aca;outline-offset:4px}
+.fourier-lens-scene .gs-readouts dt button.resonator-quantity-label{width:auto;height:auto;border:0;border-radius:0;padding:0;background:transparent;color:inherit;font:inherit}
+.fourier-lens-scene .gs-visual-footer>span{font-size:11px;color:#71849a}
+.fourier-lens-scene .gs-plot-controls{gap:8px}
+.fourier-details{padding:17px 0;font-size:12px;color:#71849a;line-height:1.8}
+.fourier-details summary{cursor:pointer}.fourier-details p{margin:10px 0}.fourier-details a{color:#357fc6}
+.fourier-insight{border-left:2px solid #8a5eac;padding:9px 12px;margin-top:16px;color:#61768e;font-size:12px;line-height:1.8;background:#f7f5fa}
+@media(max-width:900px){.fourier-lens-scene .gs-heading-actions{flex-wrap:wrap;justify-content:flex-end}.fourier-lens-scene .gs-visual-footer{flex-wrap:wrap;gap:8px}}
+
+body:has(.fourier-lens-scene){min-width:0}
+.fourier-lens-scene .gs-workspace{position:relative}
+@media(max-width:1279px){.fourier-lens-scene .gs-workspace>.gfocus-results{position:absolute;right:16px;top:0;bottom:0;z-index:6;box-shadow:-12px 0 35px #23436120}.fourier-lens-scene .gs-panel-resizer:has(+.gfocus-results){display:none}}
+@media(max-width:999px){.fourier-lens-scene .gs-workspace>.gs-sidebar:not(.gfocus-results){position:absolute;left:12px;top:0;bottom:0;z-index:6;box-shadow:12px 0 35px #23436120}.fourier-lens-scene .gs-panel-resizer{display:none}.fourier-lens-scene .gs-visual-footer>span{display:block;font-size:10px;max-width:none}}
+@media(max-width:640px){body:has(.fourier-lens-scene) .topbar{padding:0 10px;gap:6px}body:has(.fourier-lens-scene) .brand{gap:5px}body:has(.fourier-lens-scene) .brand-mark{width:25px;height:25px}body:has(.fourier-lens-scene) .brand strong{font-size:14px;white-space:nowrap}body:has(.fourier-lens-scene) .mode-switch{padding:2px;gap:0}body:has(.fourier-lens-scene) .mode-switch button{padding:7px 5px;gap:0;font-size:10px}body:has(.fourier-lens-scene) .mode-switch button svg{display:none}body:has(.fourier-lens-scene) .assistant-toggle{padding:6px;font-size:0;gap:0}.fourier-lens-scene .gs-heading-actions .gs-copy-button,.fourier-lens-scene .gs-heading-actions .outline-button{font-size:0;gap:0;padding:8px}.fourier-lens-scene .gs-heading{padding:0 12px}.fourier-lens-scene .gs-heading h1{font-size:18px}.fourier-lens-scene .gs-model-strip{font-size:10px}.fourier-lens-scene .gs-model-strip>span:first-child{display:none}}
+.fourier-dimension path{stroke:#6689b5;stroke-width:1.2;fill:none}
+.fourier-stage .fourier-title{fill:#61768e;font-size:13px}
+.fourier-screen .gs-spot-heading>span{font-size:11px;color:#8b9cb2}
+.fourier-screen svg{touch-action:none;user-select:none}
+.fourier-screen .fourier-dark-symbol{font-family:Georgia,serif;font-size:14px;font-style:italic;fill:#e4edf5;stroke:#07110a;stroke-width:2;paint-order:stroke fill;pointer-events:none}
+.fourier-screen-controls{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.fourier-screen-controls>.text-button{font-size:11px}
+.fourier-screen-controls .gs-plot-controls{position:static;border:0;box-shadow:none;padding:0;background:transparent;gap:0}
+.fourier-curve>svg{display:block;width:100%;height:auto;margin-top:15px}
+.fourier-curve svg text{font-size:11px;font-family:inherit;fill:#7b8da2}
+
+.fourier-inactive{opacity:.45}
+.fourier-vertical-handle{cursor:ns-resize;touch-action:none}
+.fourier-horizontal-handle{cursor:ew-resize;touch-action:none}
+.fourier-vertical-handle:focus-visible,.fourier-horizontal-handle:focus-visible{outline:2px solid #8db4da;outline-offset:3px}
+.fourier-stage .fourier-symbol{font-family:Georgia,serif;font-size:17px;font-style:italic;fill:#5578a7;stroke:#fbfdff;stroke-width:3;paint-order:stroke fill}
+.fourier-stage .fourier-title{font-size:13px;fill:#61768e}
+.fourier-screen-image{position:relative;aspect-ratio:1;max-width:280px;margin:0 auto;overflow:hidden;border-radius:12px;background:#070e17}
+.fourier-screen-image canvas,.fourier-screen-image svg{position:absolute;inset:0;display:block;width:100%;height:100%}
+.fourier-outside{font-size:11px;margin-top:8px}
+.fourier-lens-scene .gs-copy-button:disabled{opacity:.45;cursor:default}

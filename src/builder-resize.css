@@ -1,0 +1,22 @@
+.spatial-builder .sb-body.sb-resizable-body{display:flex;gap:0;min-width:0}
+.sb-resizable-body>.sb-library{flex:none;min-width:0}
+.sb-resizable-body>.sb-stage{flex:1;min-width:0}
+.sb-resizable-body>.sb-right-panel{flex:none;min-width:0;min-height:0;display:flex}
+.sb-resizable-body>.sb-library[hidden],.sb-resizable-body>.sb-right-panel[hidden]{display:none}
+.sb-right-panel>.sb-inspector,.sb-right-panel>.sb-assistant{position:relative;inset:auto;width:100%;max-height:none;flex:1;box-shadow:none;min-width:0}
+.sb-panel-resizer{flex:0 0 12px;position:relative;touch-action:none;cursor:col-resize;outline-offset:-2px}
+.sb-panel-resizer:after{content:"";position:absolute;left:4px;top:50%;width:4px;height:44px;border-radius:4px;background:#b9cbe0;transform:translateY(-50%)}
+.sb-panel-resizer:hover:after,.sb-panel-resizer:focus-visible:after{background:#2563eb}
+.sb-panel-resizing{user-select:none;cursor:col-resize}
+.sb-resizable-body .sb-stage-toolbar{height:auto;min-height:62px;flex-wrap:wrap;padding:9px;gap:8px}
+
+/* Keep document actions beside the tabs so the canvas receives the freed height. */
+.sb-document-strip{display:flex;align-items:center;gap:16px;padding:10px 20px;flex-shrink:0;min-width:0}
+.sb-document-strip .sb-document-tabs{flex:1;min-width:0;margin:0;padding:0;border:0}
+.sb-document-strip .sb-project-actions{flex-shrink:0;gap:6px}
+.sb-document-strip .sb-autosave{margin:0 6px}
+.sb-rename{display:flex;flex-direction:column;gap:6px;padding:8px;color:#52647e;font-size:13px}
+.sb-rename input{width:220px;max-width:100%;padding:8px;border:1px solid #dbe3ed;border-radius:5px;color:#334155}
+.sb-viewport:fullscreen,.sb-viewport.sb-viewport-fullscreen{position:fixed;inset:0;width:100vw;height:100vh;min-height:0;z-index:1000;flex:none;background:#f6f8fb}
+@media(max-width:1200px){.sb-document-strip .sb-autosave{display:none}}
+@media(max-width:760px){.sb-document-strip{flex-wrap:wrap;gap:6px;padding:8px 12px}.sb-document-strip .sb-document-tabs{flex-basis:100%}.sb-document-strip .sb-project-actions{margin-left:auto}}

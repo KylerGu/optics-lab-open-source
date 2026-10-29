@@ -1,0 +1,42 @@
+.gaussian-focus-scene .gs-title h1{font-size:22px;white-space:nowrap}
+.gs-tone-lens{--quantity-color:#357fc6}.gs-tone-output{--quantity-color:#8a5eac}
+.gaussian-focus-scene .gs-heading{gap:10px}
+.gaussian-focus-scene .gs-workspace{gap:0}
+.gaussian-focus-scene .gs-panel-resizer{position:relative;flex:0 0 16px;cursor:col-resize;touch-action:none;outline:none;border-radius:5px}
+.gaussian-focus-scene .gs-panel-resizer::before{content:'';position:absolute;left:6px;top:calc(50% - 24px);width:4px;height:48px;background:#c0cddd;border-radius:4px}
+.gaussian-focus-scene .gs-panel-resizer:hover::before,.gaussian-focus-scene .gs-panel-resizer:focus-visible::before{background:#5b8fc2}
+.gaussian-focus-scene .gs-panel-resizer:focus-visible{outline:2px solid #6e9aca;outline-offset:-3px}
+.gaussian-focus-scene.gs-panel-resizing,.gaussian-focus-scene.gs-panel-resizing *{cursor:col-resize!important;user-select:none!important}
+.gaussian-focus-scene .gs-copy-button{display:flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #a9c5e3;border-radius:7px;background:#eaf3ff;color:#346794;font-size:13px;font-weight:550;white-space:nowrap}
+.gaussian-focus-scene .gs-copy-button:hover{background:#dcecff;border-color:#7fa8d1}
+.gaussian-focus-scene .gs-copy-button:focus-visible{outline:2px solid #5b8fc2;outline-offset:2px}
+.gaussian-focus-scene .gs-copy-button:disabled{opacity:.5;cursor:not-allowed}
+.gaussian-focus-scene .gs-sidebar-scroll{padding:0 18px}
+.gaussian-focus-scene .gs-sidebar-scroll .gs-parameter label>span{font-size:13px}
+.gaussian-focus-scene .gs-sidebar-scroll .gs-number input{font-size:14px;padding-top:5px;padding-bottom:5px}
+.gaussian-focus-scene .gs-sidebar-scroll .gs-parameter input[type=range]{margin-top:8px;margin-bottom:4px}
+.gaussian-focus-scene .gs-sidebar-scroll h3{font-size:13px;color:#61768e}
+.gaussian-focus-scene .gs-number{width:102px;flex-shrink:0}
+.gaussian-focus-scene .gs-sidebar-scroll .gs-parameter{margin-top:15px;margin-bottom:15px}
+.gaussian-focus-scene .gs-sidebar-scroll>section{padding-top:12px;padding-bottom:12px}
+.gfocus-view-title{font-size:13px;color:#536c8e;white-space:nowrap}
+.gaussian-focus-scene .gs-plot .gfocus-dimension-label{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.gfocus-outside{position:absolute;top:7px;left:12px;right:12px;display:flex;flex-wrap:wrap;gap:5px;z-index:1;pointer-events:none}
+.gfocus-outside button{pointer-events:auto;font-size:11px;line-height:1.5;background:#f5f3fa;color:#8a5eac;border:1px solid #ddd2eb;border-radius:5px;padding:4px 7px}
+.gfocus-results .gs-sidebar-scroll .gfocus-main-readouts{border-top:0;padding:10px 0 14px}
+.gfocus-results .gs-primary-reading{display:block;padding:13px 0 6px}
+.gfocus-results .gs-primary-reading small{font-size:13px;line-height:1.8}
+.gfocus-results .gs-primary-reading strong{margin-top:3px;font-size:29px;font-weight:550;white-space:normal;overflow-wrap:anywhere}
+.gfocus-result-note{font-size:12px;color:#71849a;line-height:1.6}
+.gfocus-spot .gs-spot-heading{margin-bottom:12px}
+.gfocus-spot .gs-spot-image{max-width:280px;margin:0 auto}
+.gfocus-formula-diagram text{font-size:13px;fill:#61768e}.gfocus-formula-diagram .gfocus-figure-output{fill:#8a5eac}
+.gfocus-formula-sheet .fk-expression{display:flex;flex-direction:column;align-items:stretch;font-size:20px;gap:16px;overflow:hidden}
+.gfocus-formula-sheet .fk-expression>div{overflow-x:auto;overflow-y:hidden;text-align:center;padding:4px 0}
+.gfocus-calculator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.gfocus-calculator-grid label>span{display:block;font-size:12px;margin-bottom:5px;color:#61768e}
+.gfocus-calculator-grid label>div{display:flex;border:1px solid #dce5ef;border-radius:6px;overflow:hidden}
+.gfocus-calculator-grid input{width:100%;min-width:0;padding:8px;border:0;font-size:13px}
+.gfocus-calculator-grid label>div>span{padding:8px 6px;font-size:11px;color:#8195ae}
+@media(max-width:1150px){.gaussian-focus-scene .gs-title h1{font-size:19px}.gaussian-focus-scene .gs-heading-actions{gap:7px}.gaussian-focus-scene .gs-copy-button{padding:8px;font-size:12px}.gfocus-results .gs-primary-reading strong{font-size:26px}.gaussian-focus-scene .gs-sidebar-scroll{padding:0 14px}}
+@media(max-height:800px){.gaussian-focus-scene .gs-sidebar-scroll .gs-parameter{margin-top:10px;margin-bottom:10px}.gaussian-focus-scene .gs-sidebar-scroll>section{padding:9px 0}.gfocus-results .gs-primary-reading{padding:8px 0 4px}}

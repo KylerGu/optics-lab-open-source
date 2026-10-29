@@ -1,0 +1,6 @@
+.four-f-screen-tabs{margin-bottom:10px}
+.four-f-screen-tabs button[aria-pressed=true]{background:#eaf2fb;color:#357fc6;border-color:#c5d8ed}
+.four-f-scene .four-f-mode{margin-bottom:12px}
+.four-f-scene .gs-presets button[aria-pressed=true]{background:#eaf2fb;color:#357fc6;border-color:#c5d8ed}
+.four-f-scene .gs-plot .fourier-title{font-size:12px}
+.four-f-scene .gs-visual-footer>span{font-size:10px}

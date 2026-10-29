@@ -1,0 +1,35 @@
+.circular-diffraction-scene .gs-plot .circular-symbol{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.circular-diffraction-scene .gs-plot .circular-title{font-size:13px;font-weight:500}
+.circular-diffraction-scene .gs-plot .circular-tick{stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.circular-diffraction-scene .gs-plot [role=slider]:focus-visible{outline:2px solid #6e9aca;outline-offset:4px}
+.circular-diffraction-scene .gs-readouts dt button.resonator-quantity-label{width:auto;height:auto;border:0;border-radius:0;padding:0;background:transparent;color:inherit;font:inherit}
+.circular-diffraction-scene .gs-visual-footer>span{font-size:11px;color:#71849a}
+.circular-diffraction-scene .gs-plot-controls{gap:8px}
+.circular-observation-handle{cursor:ew-resize;touch-action:none}
+.circular-status{font-size:12px;color:#71849a;line-height:1.7;margin-top:10px}
+.circular-details{padding:17px 0;font-size:12px;color:#71849a;line-height:1.8}
+.circular-details summary{cursor:pointer}.circular-details p{margin:10px 0}.circular-details a{color:#357fc6}
+.circular-meter{height:4px;background:#ede7f2;border-radius:3px;margin-top:12px;overflow:hidden}
+.circular-meter i{display:block;height:100%;background:#8a5eac;border-radius:3px}
+.circular-insight{border-left:2px solid #8a5eac;padding:9px 12px;margin-top:16px;color:#61768e;font-size:12px;line-height:1.8;background:#f7f5fa}
+@media(max-width:900px){.circular-diffraction-scene .gs-heading-actions{flex-wrap:wrap;justify-content:flex-end}.circular-diffraction-scene .gs-visual-footer{flex-wrap:wrap;gap:8px}}
+
+body:has(.circular-diffraction-scene){min-width:0}
+.circular-diffraction-scene .gs-workspace{position:relative}
+@media(max-width:1279px){.circular-diffraction-scene .gs-workspace>.gfocus-results{position:absolute;right:16px;top:0;bottom:0;z-index:6;box-shadow:-12px 0 35px #23436120}.circular-diffraction-scene .gs-panel-resizer:has(+.gfocus-results){display:none}}
+@media(max-width:999px){.circular-diffraction-scene .gs-workspace>.gs-sidebar:not(.gfocus-results){position:absolute;left:12px;top:0;bottom:0;z-index:6;box-shadow:12px 0 35px #23436120}.circular-diffraction-scene .gs-panel-resizer{display:none}.circular-diffraction-scene .gs-visual-footer>span{display:block;font-size:10px;max-width:none}}
+@media(max-width:640px){body:has(.circular-diffraction-scene) .topbar{padding:0 10px;gap:6px}body:has(.circular-diffraction-scene) .brand{gap:5px}body:has(.circular-diffraction-scene) .brand-mark{width:25px;height:25px}body:has(.circular-diffraction-scene) .brand strong{font-size:14px;white-space:nowrap}body:has(.circular-diffraction-scene) .mode-switch{padding:2px;gap:0}body:has(.circular-diffraction-scene) .mode-switch button{padding:7px 5px;gap:0;font-size:10px}body:has(.circular-diffraction-scene) .mode-switch button svg{display:none}body:has(.circular-diffraction-scene) .assistant-toggle{padding:6px;font-size:0;gap:0}.circular-diffraction-scene .gs-heading-actions .gs-copy-button,.circular-diffraction-scene .gs-heading-actions .outline-button{font-size:0;gap:0;padding:8px}.circular-diffraction-scene .gs-heading{padding:0 12px}.circular-diffraction-scene .gs-heading h1{font-size:18px}.circular-diffraction-scene .gs-model-strip{font-size:10px}.circular-diffraction-scene .gs-model-strip>span:first-child{display:none}}
+.circular-dimension path{stroke:#6689b5;stroke-width:1.2;fill:none}
+.circular-aperture-handle{cursor:ns-resize;touch-action:none}
+.circular-focus-handle{cursor:ew-resize;touch-action:none}
+.circular-aperture-handle:focus-visible,.circular-focus-handle:focus-visible{outline:2px solid #8db4da;outline-offset:3px}
+.circular-device-stage .circular-title{fill:#61768e;font-size:13px}
+.circular-screen .gs-spot-heading>span{font-size:11px;color:#8b9cb2}
+.circular-screen svg{touch-action:none;user-select:none}
+.circular-screen .circular-dark-symbol{font-family:Georgia,serif;font-size:14px;font-style:italic;fill:#e4edf5;stroke:#07110a;stroke-width:2;paint-order:stroke fill;pointer-events:none}
+.circular-screen-controls{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.circular-screen-controls>.text-button{font-size:11px}
+.circular-screen-controls .gs-plot-controls{position:static;border:0;box-shadow:none;padding:0;background:transparent;gap:0}
+.circular-curve>svg{display:block;width:100%;height:auto;margin-top:15px}
+.circular-curve svg text{font-size:11px;font-family:inherit;fill:#7b8da2}
+.circular-screen .circular-observation-handle:focus-visible{outline:2px solid #8db4da}

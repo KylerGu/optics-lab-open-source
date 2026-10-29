@@ -1,0 +1,12 @@
+.malus-scene .fiber-mode-summary{display:flex;flex-direction:column;gap:6px}
+.malus-efficiency-label{font-size:13px;color:#278752}
+.malus-scene .fiber-mode-summary strong{font-size:34px;color:#278752;font-variant-numeric:lining-nums tabular-nums}
+.malus-scene .fiber-mode-summary strong small{font-size:16px;margin-left:6px}
+.malus-axis-control{cursor:grab;outline:none;touch-action:none}.malus-axis-control:active{cursor:grabbing}
+.malus-axis-control:focus-visible circle{stroke-width:3px}.malus-axis-control:hover circle{fill:#eaf3ff}
+.malus-scene .fiber-canvas text{font-size:14px}.malus-scene .fiber-canvas .fiber-symbol{font-size:15px}
+.malus-scene .fiber-banner{font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif}
+.malus-curve h3{font-size:14px;font-weight:500;color:#61768b}
+.malus-curve svg text{font-size:12px}
+.malus-expression{font-size:16px;text-align:center;margin-top:12px;color:#566e86}.malus-expression .fk-typeset{font-size:16px}
+@media(max-width:600px){.malus-scene .gs-heading-actions{flex-wrap:wrap}.malus-scene .gs-heading{padding-bottom:8px}.malus-scene .fiber-canvas .fiber-symbol{font-size:13px}}

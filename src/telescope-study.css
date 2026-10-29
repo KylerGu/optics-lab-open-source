@@ -1,0 +1,17 @@
+.os-telescope-tabs button{white-space:nowrap;padding:6px 10px}
+.os-telescope-types{margin:8px 0 14px}.os-telescope-types button{flex:1;justify-content:center}
+.os-telescope-study-diagram{display:block;width:100%;height:100%;touch-action:none;user-select:none;cursor:grab}
+.os-telescope-study-diagram:active{cursor:grabbing}
+.gs-plot .os-telescope-study-diagram text{font-size:var(--study-font-size,14px);fill:#637d98}
+.os-telescope-stars{display:block;width:100%;height:100%;border-radius:12px}
+.optics-scene:has(.os-telescope-tabs) .gs-number>span{white-space:nowrap;flex-shrink:0}
+@media(max-width:1050px){.os-telescope-tabs button{padding:6px;font-size:11px}.optics-scene:has(.os-telescope-tabs) .gs-toolbar{height:auto;min-height:42px;flex-wrap:wrap;padding-top:5px;padding-bottom:5px}}
+
+.os-telescope-ray-annotation text{paint-order:stroke;stroke:#fbfdff;stroke-width:3px;stroke-linejoin:round}
+.optics-scene .os-telescope-ray-results dd{white-space:nowrap}
+.os-telescope-observation-field .os-telescope-field-switch{width:max-content;margin:0 auto 12px}
+.os-telescope-observation-field .os-telescope-field-frame{height:auto;max-width:340px}
+.os-telescope-observation-field h3{margin-top:0}
+.gs-plot .os-telescope-field-frame .os-telescope-field-scale,.gs-plot .os-telescope-field-frame .os-telescope-field-message{fill:#d7e7f2;font-size:12px}
+.gs-plot .os-telescope-field-frame .os-telescope-field-annotation text{fill:#77d3b9;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-style:italic;paint-order:stroke;stroke:#193754;stroke-width:3px}
+.optics-scene .os-telescope-field-results dd{white-space:nowrap}

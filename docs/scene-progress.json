@@ -1,0 +1,729 @@
+{
+  "started": "2026-10-04",
+  "inventoryCount": 54,
+  "initiallyAvailable": 1,
+  "scenes": [
+    {
+      "id": "reflection-refraction-0",
+      "title": "平面界面的反射与折射",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "backend/tests/test_scene_physics.py: known values, energy conservation, critical boundary, ray intersections, inverse formulas and parameter limits",
+        "interaction": "Actual browser: live inputs, presets, save/load, undo/redo, formula linkage; shared import/export verified on lens; scene isolation verified by unit tests",
+        "browserScreenshots": [
+          "output/playwright/interface.png",
+          "output/playwright/tir.png",
+          "output/playwright/prism.png",
+          "output/playwright/lens.png"
+        ],
+        "assistant": "shared interface and existing model connection; concept without tools, numerical comparison and verified mutation unit tests; real lens target 300 mm, undo and concept-only conversation passed"
+      }
+    },
+    {
+      "id": "reflection-refraction-1",
+      "title": "全反射与临界角",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "backend/tests/test_scene_physics.py: known values, energy conservation, critical boundary, ray intersections, inverse formulas and parameter limits",
+        "interaction": "Actual browser: live inputs, presets, save/load, undo/redo, formula linkage; shared import/export verified on lens; scene isolation verified by unit tests",
+        "browserScreenshots": [
+          "output/playwright/interface.png",
+          "output/playwright/tir.png",
+          "output/playwright/prism.png",
+          "output/playwright/lens.png"
+        ],
+        "assistant": "shared interface and existing model connection; concept without tools, numerical comparison and verified mutation unit tests; real lens target 300 mm, undo and concept-only conversation passed"
+      }
+    },
+    {
+      "id": "reflection-refraction-2",
+      "title": "棱镜偏折",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "backend/tests/test_scene_physics.py: known values, energy conservation, critical boundary, ray intersections, inverse formulas and parameter limits",
+        "interaction": "Actual browser: live inputs, presets, save/load, undo/redo, formula linkage; shared import/export verified on lens; scene isolation verified by unit tests",
+        "browserScreenshots": [
+          "output/playwright/interface.png",
+          "output/playwright/tir.png",
+          "output/playwright/prism.png",
+          "output/playwright/lens.png"
+        ],
+        "assistant": "shared interface and existing model connection; concept without tools, numerical comparison and verified mutation unit tests; real lens target 300 mm, undo and concept-only conversation passed"
+      }
+    },
+    {
+      "id": "paraxial-0",
+      "title": "薄透镜成像",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "backend/tests/test_scene_physics.py: known values, energy conservation, critical boundary, ray intersections, inverse formulas and parameter limits",
+        "interaction": "Actual browser: live inputs, presets, save/load, undo/redo, formula linkage; shared import/export verified on lens; scene isolation verified by unit tests",
+        "browserScreenshots": [
+          "output/playwright/interface.png",
+          "output/playwright/tir.png",
+          "output/playwright/prism.png",
+          "output/playwright/lens.png"
+        ],
+        "assistant": "shared interface and existing model connection; concept without tools, numerical comparison and verified mutation unit tests; real lens target 300 mm, undo and concept-only conversation passed"
+      }
+    },
+    {
+      "id": "paraxial-1",
+      "title": "球面镜成像",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "17 scene checks passed: known mirror images, ray intersections, determinant and conjugates, relaxed-eye/finite-virtual/projected microscope, both afocal telescopes, camera aperture scaling, inverse formula branches, 500 random states and invalid target guards",
+        "interaction": "Actual browser checked every scene presets and linked formula values; camera save/load, export/import, undo/redo verified; shared isolated state validation passed",
+        "browserScreenshots": [
+          "output/playwright/mirror.png",
+          "output/playwright/double-lens.png",
+          "output/playwright/microscope.png",
+          "output/playwright/telescope.png",
+          "output/playwright/camera.png",
+          "output/playwright/camera-ai.png"
+        ],
+        "assistant": "Each new scene numerical comparison verified without mutation and scene-specific targets checked; actual model camera focus moved sensor from 65 to 400/7 mm and undo restored 65 mm."
+      }
+    },
+    {
+      "id": "paraxial-2",
+      "title": "双透镜光学系统",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "17 scene checks passed: known mirror images, ray intersections, determinant and conjugates, relaxed-eye/finite-virtual/projected microscope, both afocal telescopes, camera aperture scaling, inverse formula branches, 500 random states and invalid target guards",
+        "interaction": "Actual browser checked every scene presets and linked formula values; camera save/load, export/import, undo/redo verified; shared isolated state validation passed",
+        "browserScreenshots": [
+          "output/playwright/mirror.png",
+          "output/playwright/double-lens.png",
+          "output/playwright/microscope.png",
+          "output/playwright/telescope.png",
+          "output/playwright/camera.png",
+          "output/playwright/camera-ai.png"
+        ],
+        "assistant": "Each new scene numerical comparison verified without mutation and scene-specific targets checked; actual model camera focus moved sensor from 65 to 400/7 mm and undo restored 65 mm."
+      }
+    },
+    {
+      "id": "instruments-0",
+      "title": "显微镜成像",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "17 scene checks passed: known mirror images, ray intersections, determinant and conjugates, relaxed-eye/finite-virtual/projected microscope, both afocal telescopes, camera aperture scaling, inverse formula branches, 500 random states and invalid target guards",
+        "interaction": "Actual browser checked every scene presets and linked formula values; camera save/load, export/import, undo/redo verified; shared isolated state validation passed",
+        "browserScreenshots": [
+          "output/playwright/mirror.png",
+          "output/playwright/double-lens.png",
+          "output/playwright/microscope.png",
+          "output/playwright/telescope.png",
+          "output/playwright/camera.png",
+          "output/playwright/camera-ai.png"
+        ],
+        "assistant": "Each new scene numerical comparison verified without mutation and scene-specific targets checked; actual model camera focus moved sensor from 65 to 400/7 mm and undo restored 65 mm."
+      }
+    },
+    {
+      "id": "instruments-1",
+      "title": "望远镜成像",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "17 scene checks passed: known mirror images, ray intersections, determinant and conjugates, relaxed-eye/finite-virtual/projected microscope, both afocal telescopes, camera aperture scaling, inverse formula branches, 500 random states and invalid target guards",
+        "interaction": "Actual browser checked every scene presets and linked formula values; camera save/load, export/import, undo/redo verified; shared isolated state validation passed",
+        "browserScreenshots": [
+          "output/playwright/mirror.png",
+          "output/playwright/double-lens.png",
+          "output/playwright/microscope.png",
+          "output/playwright/telescope.png",
+          "output/playwright/camera.png",
+          "output/playwright/camera-ai.png"
+        ],
+        "assistant": "Each new scene numerical comparison verified without mutation and scene-specific targets checked; actual model camera focus moved sensor from 65 to 400/7 mm and undo restored 65 mm."
+      }
+    },
+    {
+      "id": "instruments-2",
+      "title": "相机成像",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "17 scene checks passed: known mirror images, ray intersections, determinant and conjugates, relaxed-eye/finite-virtual/projected microscope, both afocal telescopes, camera aperture scaling, inverse formula branches, 500 random states and invalid target guards",
+        "interaction": "Actual browser checked every scene presets and linked formula values; camera save/load, export/import, undo/redo verified; shared isolated state validation passed",
+        "browserScreenshots": [
+          "output/playwright/mirror.png",
+          "output/playwright/double-lens.png",
+          "output/playwright/microscope.png",
+          "output/playwright/telescope.png",
+          "output/playwright/camera.png",
+          "output/playwright/camera-ai.png"
+        ],
+        "assistant": "Each new scene numerical comparison verified without mutation and scene-specific targets checked; actual model camera focus moved sensor from 65 to 400/7 mm and undo restored 65 mm."
+      }
+    },
+    {
+      "id": "aberrations-0",
+      "title": "光阑与光瞳",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "backend/tests/test_scene_aperture.py: active aperture stop, real/virtual/infinite pupils; circular overlap checked by separate numerical integration; blocked/pass ray endpoints; sphere intersections, both Snell interfaces, symmetry and thick-lens paraxial limit; spherical/chromatic trends, RMS minimizer and sampling convergence; 160 random states; all inverse branches and invalid targets; full-precision API revision survives",
+        "interaction": "Actual browser: both scene preset boundaries; linked formulas and independent formula-library page; slider changing aperture 12 to 13 mm updated throughput from 16% to 18.7778%; save/load in both scenes; aberration export/import/undo/redo; importing aberration into aperture rejected without changing state",
+        "browserScreenshots": [
+          "output/playwright/aperture.png",
+          "output/playwright/aberration.png",
+          "output/playwright/aperture-ai.png",
+          "output/playwright/aberration-ai.png"
+        ],
+        "assistant": "Actual existing model: aperture target entrance position 150 mm moved stop 50 to 60 mm with diameter unchanged, undo restored; aberration minimum RMS screen 60 to 53.2020674458 mm reduced radius 1.33130694 to .292340906 mm without changing lens, undo restored; comparisons and target guards verified separately"
+      }
+    },
+    {
+      "id": "aberrations-1",
+      "title": "球差与色差",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "backend/tests/test_scene_aperture.py: active aperture stop, real/virtual/infinite pupils; circular overlap checked by separate numerical integration; blocked/pass ray endpoints; sphere intersections, both Snell interfaces, symmetry and thick-lens paraxial limit; spherical/chromatic trends, RMS minimizer and sampling convergence; 160 random states; all inverse branches and invalid targets; full-precision API revision survives",
+        "interaction": "Actual browser: both scene preset boundaries; linked formulas and independent formula-library page; slider changing aperture 12 to 13 mm updated throughput from 16% to 18.7778%; save/load in both scenes; aberration export/import/undo/redo; importing aberration into aperture rejected without changing state",
+        "browserScreenshots": [
+          "output/playwright/aperture.png",
+          "output/playwright/aberration.png",
+          "output/playwright/aperture-ai.png",
+          "output/playwright/aberration-ai.png"
+        ],
+        "assistant": "Actual existing model: aperture target entrance position 150 mm moved stop 50 to 60 mm with diameter unchanged, undo restored; aberration minimum RMS screen 60 to 53.2020674458 mm reduced radius 1.33130694 to .292340906 mm without changing lens, undo restored; comparisons and target guards verified separately"
+      }
+    },
+    {
+      "id": "wave-fields-0",
+      "title": "平面波与球面波",
+      "status": "pending"
+    },
+    {
+      "id": "wave-fields-1",
+      "title": "光波叠加",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Coherent same-frequency, co-propagating, same-polarization plane waves. Independent 512-point period integration for random amplitudes/phase agrees with relative average intensity; constructive/destructive/unequal/zero limits; inverse phase reachability, undefined resultant phase, API identity, read-only comparisons and edit guards verified.",
+        "interaction": "Actual Chromium: full-height single-axis overlaid waveforms; selected-position dots with a compact adjacent signed-field sum, no separate arrow diagram; independent Chinese quantity switches, live amplitude/observation drag, whole-gesture undo/redo, fixed plot scale, pointer zoom, pan, static snapshot, saved draft migration, formula trial isolation and panel resize/collapse.",
+        "assistant": "Actual configured model applied only phase 90 -> 180 degrees; amplitude and average relative intensity became 0; assistant undo restored 90 degrees.",
+        "browserScreenshots": [
+          "output/playwright/wave-inline-2560.png",
+          "output/playwright/wave-inline-1440.png",
+          "output/playwright/wave-inline-1024.png",
+          "output/playwright/wave-inline-constructive.png",
+          "output/playwright/wave-inline-destructive.png"
+        ],
+        "parameterTypography": "2026-10-08: fixed inherited important 12 px quantity-label rule and more-specific number rule, matching Michelson: actual labels/numbers 16 px, symbols 15 px, units 13 px; 106 px numeric groups. Chromium checked 2560/1440/1024, no parameter label/input collision or overflow; diagram interaction remains unchanged.",
+        "resultGrouping": "2026-10-08: separate collapsed 两束光强 readings from 模型条件 explanation; remove generic combined heading, shorten model copy, details 14 px. Chromium verified independent expansion/collapse, first-amplitude 1.2 gives first-intensity 1.44 with second intensity unchanged, quantity toggle remains operable. Build passed; no browser errors."
+      }
+    },
+    {
+      "id": "interference-0",
+      "title": "杨氏双缝干涉",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Exact geometric r2-r1 with rationalized subtraction, equal-amplitude coherent time-averaged I/Imax; independent electric-field period integration and direct distance subtraction; parameter corners, signed symmetry, exact bright/dark target inversion, approximate spacing units and inverse solver, API state identity, read-only comparisons and edit guards verified. Ideal narrow slits without diffraction envelope or partial coherence.",
+        "interaction": "Actual Chromium: shared scene styling; two paths to one draggable screen point; fringe strip and intensity curve share a millimetre vertical scale; six Chinese annotation switches, immediate sliders/inputs, exact three presets, gesture undo/redo, keyboard, zoom, outside-view locating, autosave/reload, invalid-input reset, panel resize/collapse. No animation. Rounded displayed observation does not replace exact preset precision.",
+        "formulas": "Three formula cards use the current scene snapshot; inverse wavelength returns 600 nm; dark-point path difference is 0.3 micrometres and normalized intensity is 0. Nine formula layouts at 2560/1440/1024 checked without overflow or KaTeX errors.",
+        "assistant": "Actual configured model moved only observation to the exact first dark fringe, intensity 0; retained wavelength 600 nm, separation 0.5 mm and screen distance 1 m; assistant undo restored the central observation.",
+        "checks": {
+          "frontendRegression": "170 passed",
+          "backendRegression": "278 passed",
+          "build": "tsc + Vite passed; existing bundle size warning"
+        },
+        "browserScreenshots": [
+          "output/playwright/young-dark-2560.png",
+          "output/playwright/young-dark-1440.png",
+          "output/playwright/young-dark-1024.png",
+          "output/playwright/young-ai-dark.png",
+          "output/playwright/young-final.png"
+        ],
+        "reference": "https://openstax.org/books/university-physics-volume-3/pages/3-2-mathematics-of-interference",
+        "parameterTypography": "2026-10-08: fixed inherited important 12 px quantity-label rule and more-specific number rule, matching Michelson: actual labels/numbers 16 px, symbols 15 px, units 13 px; 106 px numeric groups. Chromium checked 2560/1440/1024, no parameter label/input collision or overflow; diagram interaction remains unchanged."
+      }
+    },
+    {
+      "id": "interference-1",
+      "title": "薄膜干涉与牛顿环",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Lossless single-layer s-polarized Fresnel/Airy reflection, independent internal-bounce complex-amplitude reference and R+T=1 checks. Newton reflection uses glass 1.52, gap index below glass, one reflection phase reversal, exact stable spherical sag with mm/nm conversion. Contact darkness, quarter-wave lifted-center brightness, degenerate matched interface, absent one-order rings, and mode-specific reachable extrema verified. Forty complete frontend/backend 1501-point curve comparisons passed.",
+        "interaction": "Two 2D modes share Michelson panel appearance, resizable/collapsible sidebars, independent mode parameters, live diagram/results, grouped gesture undo/redo, full-precision autosave and assistant snapshot guards. Direct film-boundary, Newton lens-lift, section observation-point and right curve/ring dragging. Chinese-name quantity buttons map to geometric dimensions, media or output curves. No fake curvature/optical-path dimensions. Absent first-order ring has a non-toggle label, out-of-view points have a locator; ring zoom is independent of physical parameters.",
+        "typography": "Chromium 2560/1440/1024: actual parameter labels and numeric inputs 16px, central diagram labels 16px at every scale, right plot labels at least 13px. No parameter collision, frame overflow or main-value unit wrapping in both modes. Default Newton view ±1.5mm shows a few legible rings, with optional zoom.",
+        "formulas": "Four cards; each mode shows its own two cards, with exact current physical inputs and independent calculators. nm/mm conversions, invertible path/thickness relations and impossible-ring errors verified. Formula defaults satisfy forward/inverse calculations to full precision. Full Airy reference is the original NBS/NIST single-film derivation.",
+        "assistant": "Actual configured assistant in Chromium applied only radius 0→0.5477225369655698mm for Newton brightness and only thickness 100→114.18177926739043nm for minimal film reflection; all other inputs retained and assistant undo restored exact snapshots. Applied feedback is generated from verified numerical readings and reflection signs, after the initial model explanation confused phase reversals. Read-only comparisons and mutation gates verified.",
+        "builder": "No copy entry: builder has a plano-convex lens but lacks a glass plane plate/film layer or lens-plane contact apparatus. Waveplates and neutral filters are not substituted for these devices.",
+        "checks": {
+          "frontend": "5 new tests including forty complete cross-runtime curve comparisons; shared interference/runtime regression and full existing npm suite passed.",
+          "backend": "8 new physics/API/assistant tests; shared formula catalog roundtrip and all-preset validation passed.",
+          "browser": "Both modes at three window widths, direct drags/undo, Chinese annotation toggles, presets, zero-film/absent-interface/absent-order cases, output zoom/locator, formula layouts, actual assistant targets and undo.",
+          "build": "TypeScript and Vite passed."
+        },
+        "browserScreenshots": [
+          "output/playwright/film-final-1440.png",
+          "output/playwright/newton-final-1440.png",
+          "output/playwright/film-final-1024.png",
+          "output/playwright/newton-final-1024.png",
+          "output/playwright/film-angle-limit.png",
+          "output/playwright/newton-lifted-center.png",
+          "output/playwright/film-ai.png",
+          "output/playwright/newton-ai.png"
+        ],
+        "sources": [
+          "https://openstax.org/books/university-physics-volume-3/pages/3-4-interference-in-thin-films",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC6592382/"
+        ]
+      }
+    },
+    {
+      "id": "interference-2",
+      "title": "迈克耳孙干涉仪",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Compensated equal-inclination Michelson with two independent mirror adjustments: delta=2(D+s2-s1)cos(theta). Common mirror motion cancels; source translation and focal-plane lens/screen translation preserve arm interference. Sixty complete frontend/backend metric and 1201-point curve comparisons cover first-mirror and layout boundaries. Independent period integration, geometry, units and reachable targets passed. Spatial copy independently traced: both mirror round trips reach one detector, with geometric sampled power 5 mW from 10 mW input; no coherent intensity is claimed in the builder.",
+        "interaction": "True Three.js apparatus reuses the spatial builder optical meshes and supports. Central canvas contains only 3D hardware/light paths and enabled world annotations; orbit, wheel zoom, top view, reset, direct optical-mesh dragging and accessible name/keyboard handles. Mirrors/source/lens move along their optical axes, the screen follows the focal plane, each gesture supports undo. Rendering occurs only on parameters/camera/size changes, with cached hardware meshes. Observed interference model, full-precision builder copy, formula linkage, assistant guards and autosave remain intact.",
+        "formulas": "Three cards use both mirror adjustments via net s=s2-s1; delta=240.3 micrometres and N=0.5 verified at s1=.37, s2=.52. Field bounds include net movement plus/minus 2 micrometres. Nine formula layouts passed with no overflow or KaTeX errors. Zero/zero wavelength inverse remains rejected.",
+        "assistant": "Actual configured model kept first mirror at .37 micrometres and changed only M2 from 0 to -.08 micrometres to reach darkness. All six other settings retained, exact intensity 0; assistant undo restored M2 to 0. Numerical and edit/read-only guards passed.",
+        "checks": {
+          "frontendRegression": "178 passed",
+          "backendRegression": "285 passed",
+          "build": "tsc + Vite passed; existing bundle size warning",
+          "quantityPresentation": "Actual Chromium: 12 independent toggle round-trips; optional definitions; quarter-wavelength brightness, baseline action and undo; direct mirror and observation dragging; saved preference migration preserves physical parameters. Eight default layouts across 2560/1440/1024 and short 1440 windows, plus two optional-annotation layouts passed. No runtime errors. Final tsc/Vite build passed; physics unchanged in this presentation-only revision.",
+          "threeDimensionalPresentation": "2026-10-08: Chromium passed 8 original layouts across 2560/1440/1024 and short windows; after final camera/mesh caching update, 4 1440/1024 perspective/top layouts, all-annotation narrow layout, 12 independent toggle round-trips, actual mirror mesh drag, 4 device label drags/undo, keyboard, orbit/zoom with unchanged physics, observation drag, panel reopen, baseline, quarter-wave darkness, formula dialog and parameter extremes. Final event-driven-render check passed camera/input/toggle/undo redraw without a runtime error. 8 Michelson physics/copy tests and tsc/Vite build passed.",
+          "parameterTypography": "2026-10-08: actual computed font checked in 12 combinations (2560/1440/1024 widths × mirrors/source/lens); parameter names and numbers 16 px, no label/input intersection or parameter overflow."
+        },
+        "browserScreenshots": [
+          "output/playwright/michelson-operable-2560-iso.png",
+          "output/playwright/michelson-operable-2560-top.png",
+          "output/playwright/michelson-operable-1440-iso.png",
+          "output/playwright/michelson-operable-1440-top.png",
+          "output/playwright/michelson-operable-1024-iso.png",
+          "output/playwright/michelson-operable-1024-top.png",
+          "output/playwright/michelson-operable-ai-dark.png",
+          "output/playwright/michelson-operable-final.png",
+          "output/playwright/michelson-builder-copy.png",
+          "output/playwright/michelson-annotations-final.png",
+          "output/playwright/michelson-annotations-clear-1024-iso.png",
+          "output/playwright/michelson-annotations-clear-1024-top.png",
+          "output/playwright/michelson-annotations-all-1440-1000-iso.png",
+          "output/playwright/michelson-light-final.png",
+          "output/playwright/michelson-light-2560-1250-iso.png",
+          "output/playwright/michelson-light-1024-1000-iso.png",
+          "output/playwright/michelson-light-selected-1024.png",
+          "output/playwright/michelson-3d-final.png",
+          "output/playwright/michelson-3d-1440-1000-iso.png",
+          "output/playwright/michelson-3d-1024-1000-iso.png",
+          "output/playwright/michelson-3d-all-annotations.png"
+        ],
+        "references": [
+          "https://openstax.org/books/university-physics-volume-3/pages/3-5-the-michelson-interferometer",
+          "https://lo-amrt.vlabs.ac.in/exp/michelsons-interferometer-wavelength/theory.html"
+        ],
+        "quantityPresentation": "Right result panel defaults to 400 px with its own persisted/resizable width. It contains the interference circle, radial intensity curve, draggable observation point, ring zoom and two primary readings. Chinese quantity names still independently toggle twelve annotations, with physical geometry in 3D or corresponding point/curve marks in the result panel. Default still shows four core quantities. Controls retain one contextual device sentence; repeated parameter help removed. Secondary readings and comparison are optional; model conditions reduced to three concise sentences. Body/control labels 14–15 px, main readings 28 px, collision-aware device labels with leaders. Parameter-name and input font cascade corrected: actual browser-computed 16 px, symbols 15 px, units 13 px. A narrower 106 px numeric group keeps labels readable without overlap."
+      }
+    },
+    {
+      "id": "interference-3",
+      "title": "法布里–珀罗干涉仪",
+      "status": "pending"
+    },
+    {
+      "id": "coherence-0",
+      "title": "有限相干长度与条纹可见度",
+      "status": "pending"
+    },
+    {
+      "id": "diffraction-0",
+      "title": "单缝衍射",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Independent complex aperture integration, parameter corners, dark minima, width inverse units, API validation and existing builder diffraction agreement. Full backend 291 and frontend 181 checks passed.",
+        "interaction": "Browser: eight quantity annotation switches; narrower slit broadens central maximum; undo/redo, refresh persistence, upper/lower dark presets, keyboard observation, invalid value guard, linked formulas, laptop layout, three-device builder copy and matching diffraction profile.",
+        "browserScreenshots": [
+          "output/playwright/single-slit.png",
+          "output/playwright/single-slit-dark.png",
+          "output/playwright/single-slit-formula.png",
+          "output/playwright/single-slit-laptop.png",
+          "output/playwright/single-slit-builder.png"
+        ],
+        "assistant": "Existing configured model compared three widths without mutation and moved only the observation point to the exact first minimum with independently checked zero intensity. Shared panel, evidence validation and undo callbacks connected."
+      }
+    },
+    {
+      "id": "diffraction-1",
+      "title": "圆孔衍射与艾里斑",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Independent projected disk area integration, first dark ring, corners, Bessel reference values, formula inverse units and API checks. Backend 297 and frontend 184 checks passed.",
+        "interaction": "Simple 2D apparatus and rays in the center; observation screen in the right results. Drag aperture edges to change D, drag focal plane to change f with screen distance equal to f, drag observation point on the right. Actual pointer drags and single-step undo, keyboard parameter bounds, eight annotation toggles, aperture/diameter relationship and dark-ring zero verified. Collapsed curve and responsive panels; AI, formulas and existing copy preserved.",
+        "assistant": "Actual configured model moved only observation radius to exact first dark ring; UI undo restored it; compared diameters 1/2/4 mm without changing scene.",
+        "browserScreenshots": [
+          "output/playwright/circular-2d-main.jpg",
+          "output/playwright/circular-2d-narrow.jpg",
+          "output/playwright/circular-builder.jpg"
+        ]
+      }
+    },
+    {
+      "id": "diffraction-2",
+      "title": "衍射光栅",
+      "status": "pending"
+    },
+    {
+      "id": "diffraction-3",
+      "title": "菲涅耳衍射",
+      "status": "pending"
+    },
+    {
+      "id": "polarization-0",
+      "title": "偏振片与马吕斯定律",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Independent electric-field vector projection, 64 scene/backend/full-apparatus-copy cases, exact parallel/crossed/zero-power limits, acute undirected axis convention, formula inverses and unreachable/degenerate target checks. Frontend 211 and backend 351 checks passed; production build passed.",
+        "interaction": "Actual Chromium: both axis rotations live, gesture undo, three Chinese annotation switches with matching text/numeric/geometry colors, presets, invalid input/reset, formula calculator, saved reload, 2048/1440/1024/390 layouts and full builder copy. A 12 mW source with 20/80 degree axes yields 3 mW in both scene and copied power meter.",
+        "assistant": "Actual configured model readonly 0/45/90 degree axis comparison; axis-only target to 6 mW preserved 12 mW incident power and 20 degree input polarization, applied and undone.",
+        "browserScreenshots": [
+          "output/playwright/malus-1440.png",
+          "output/playwright/malus-2048.png",
+          "output/playwright/malus-1024.png",
+          "output/playwright/malus-formula.png",
+          "output/playwright/malus-builder.png",
+          "output/playwright/malus-ai.png"
+        ]
+      }
+    },
+    {
+      "id": "polarization-1",
+      "title": "波片与偏振态",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "frontend 4 scene tests with independent polarization, forward spatial field and synchronized output plane; 160 complete apparatus copies; backend 3 scene tests; initial full frontend 215 and backend 354 passed; 3D build passed",
+        "interaction": "Actual 3D browser: centered waveplate and all handles in canvas at 2048/1440/1024/390; two direct plane-angle drags, whole gesture undo/redo, keyboard controls, independent orbit and view reset, colors and annotation toggles, synchronized front projection, pause, presets, plate types and zero-power; initial validation/formula/save and copy retain 12mW and circular S3=1",
+        "browserScreenshots": [
+          "output/playwright/waveplate-3d-1440.png",
+          "output/playwright/waveplate-3d-2048.png",
+          "output/playwright/waveplate-3d-ellipse.png",
+          "output/playwright/waveplate-3d-half.png",
+          "output/playwright/waveplate-formula.png",
+          "output/playwright/waveplate-builder.png",
+          "output/playwright/waveplate-ai.png"
+        ],
+        "assistant": "Actual configured model: only fast axis 30 to 62 degrees, retaining 12mW, 17-degree input and quarter-wave plate; circular output applied and undone"
+      }
+    },
+    {
+      "id": "polarization-2",
+      "title": "布儒斯特角与双折射",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "frontend 4 scene tests: independent Fresnel limits and differentiated crystal energy-flow ellipse; 327 frontend/backend parameter cases; full frontend 220 and backend 357 passed; build passed",
+        "interaction": "Actual browser: both angle drags and whole-gesture undo/redo; thin-crystal control, parameter and diagram color/toggle correspondence, Brewster p-only null, unpolarized reflection, TIR/critical, matched indices, optic-axis endpoints, thickness scaling, model-specific curve, invalid/reset, formula and saved mode; centered diagrams without overflow at 2048/1440/1024/390",
+        "assistant": "Actual configured AI: only incidence to Brewster or only crystal optic-axis to maximum separation; mode, indices, polarization and thickness preserved; both applications undone",
+        "builder": "No copy: existing prisms do not calculate angle-dependent polarization Fresnel reflection; wave plates do not simulate uniaxial spatial beam walk-off",
+        "browserScreenshots": [
+          "output/playwright/pr-brewster-1440.png",
+          "output/playwright/pr-crystal-1440.png",
+          "output/playwright/pr-brewster-p.png",
+          "output/playwright/pr-crystal-1024.png",
+          "output/playwright/pr-crystal-390.png",
+          "output/playwright/pr-formulas.png",
+          "output/playwright/pr-ai-brewster.png",
+          "output/playwright/pr-ai-crystal.png"
+        ]
+      }
+    },
+    {
+      "id": "spatial-spectrum-0",
+      "title": "透镜的傅里叶变换",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "18 random conditions independently checked by direct input-field integration; coherent amplitude Fourier model, 2D symmetry, Gaussian limit, inverse formula units, parameter bounds and API precision. Frontend 187 and backend 302 checks passed; production build passed.",
+        "interaction": "Actual browser: ten independent letter toggles; four pointer drags changing d/w/f/xF with single-step undo; focal keyboard maximum; order presets, three formula cards, invalid input rejection, reload persistence, library entry, 515/1100/1440 responsive layouts. Screen and readings kept in right results with optional curve.",
+        "assistant": "Actual configured model changed only observation position to +399 um with intensity 0.25, and UI undo restored zero. Backend checks cover read-only comparisons and rejection of first-order targeting without stripes.",
+        "copy": "Striped and unmodulated inputs copy four actual devices, retaining wavelength/period/waist/modulation/focal length/probe. Builder derives coherent f/f Fourier spectrum from actual geometry; finite circular-screen power is integrated separately. Real browser verified +399 um / intensity .25, period edit to 200 um gives 319.2 um, undo, invalid lens spacing removes wave result, reload persistence and AI entry.",
+        "browserScreenshots": [
+          "output/playwright/fourier-main.jpg",
+          "output/playwright/fourier-narrow.jpg",
+          "output/playwright/fourier-ai.jpg",
+          "output/playwright/fourier-builder.jpg",
+          "output/playwright/fourier-copy-complete.png"
+        ]
+      }
+    },
+    {
+      "id": "spatial-spectrum-1",
+      "title": "4f 系统与空间滤波",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "12 random cases checked against independent direct input-field convolution with complex sinc kernel; independent spectral power integral, Gaussian limit, complementary masks, common intensity reference, formula inverse units, API precision and full-pass Gaussian builder radius. Frontend 190 and backend 307 passed; production build passed.",
+        "interaction": "Actual browser: 11 independent quantity letter toggles; full-width/offset/focal/output-observer pointer drags and single-step undo; period/radius/focal keyboard bounds; all-pass/low-pass/high-pass/first-order presets; input/spectrum/output screen tabs; three linked formula cards with named mask dropdown; invalid input rejection, reload persistence, library entry and 515/1100/1280 responsive layouts.",
+        "assistant": "Actual configured model set only mask fields to centered high pass (a=239.4 um,c=0,mode=1), T=1/3 and central I/Iin(0)=0.25; UI undo restored default low pass. Backend verified read-only comparison and no-stripe order rejection.",
+        "copy": "All filter modes copy actual Gaussian source, sinusoidal amplitude grating, equal lenses, focal-plane pass/stop mask and output screen; all-pass omits mask. Builder derives coherent 4f output from actual geometry, retains period/modulation/filter/probe parameters, and integrates finite screen power; invalid spacing/alignment/apertures remove wave output.",
+        "browserScreenshots": [
+          "output/playwright/four-f-main.jpg",
+          "output/playwright/four-f-narrow.jpg",
+          "output/playwright/four-f-high.jpg",
+          "output/playwright/four-f-ai.jpg",
+          "output/playwright/four-f-builder.jpg"
+        ]
+      }
+    },
+    {
+      "id": "optical-transfer-0",
+      "title": "点扩散函数与成像分辨率",
+      "status": "pending"
+    },
+    {
+      "id": "optical-transfer-1",
+      "title": "光学传递函数",
+      "status": "pending"
+    },
+    {
+      "id": "holography-0",
+      "title": "全息记录与再现",
+      "status": "pending"
+    },
+    {
+      "id": "gaussian-0",
+      "title": "高斯光束自由传播",
+      "status": "existing"
+    },
+    {
+      "id": "beam-transformation-0",
+      "title": "高斯光束透镜聚焦",
+      "status": "pending"
+    },
+    {
+      "id": "beam-transformation-1",
+      "title": "激光扩束与准直",
+      "status": "pending"
+    },
+    {
+      "id": "beam-transformation-2",
+      "title": "光束模式匹配",
+      "status": "pending"
+    },
+    {
+      "id": "resonators-0",
+      "title": "两镜谐振腔稳定性",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "src/resonator.test.ts and backend/tests/test_resonator_scene.py: independent round-trip matrix, both mirror curvatures, plane/convex mirrors, confocal branch, boundary states, stable distance and observer domain",
+        "interaction": "Actual browser: name-based geometric labels, dragging, fixed drag view, zoom/pan, reset, undo/redo, formula trial calculator, responsive layout and directory entrance",
+        "browserScreenshots": [
+          "output/playwright/resonator/default-2560.png",
+          "output/playwright/resonator/default-1440.png",
+          "output/playwright/resonator/default-1024.png"
+        ],
+        "assistant": "Real existing-model calls: 1200 to 750 mm distance-only stable target, undo/redo, readonly 300/500/1000 mm comparison; numerical evidence matches the scene"
+      }
+    },
+    {
+      "id": "resonators-1",
+      "title": "谐振腔模式",
+      "status": "pending"
+    },
+    {
+      "id": "laser-gain-0",
+      "title": "激光阈值与增益",
+      "status": "accepted",
+      "catalogVisible": false,
+      "withdrawalNote": "按用户要求撤下场景库入口，保留场景代码、相关公式、计算功能和已保存数据。",
+      "acceptance": {
+        "physics": "src/laserGain.test.ts and backend/tests/test_laser_gain_scene.py: independent two-pass intensity propagation, threshold equality, gain clamping, saturation, reflector losses, full reflection, lossless limit and parameter ranges",
+        "interaction": "Actual browser: six meaningful name-based layers, output/saturation plots, atomic drag and undo/redo, parameter targets, formula calculator, responsive width and directory entrance",
+        "browserScreenshots": [
+          "output/playwright/gain/default-2560.png",
+          "output/playwright/gain/default-1440.png",
+          "output/playwright/gain/default-1024.png",
+          "output/playwright/gain/saturation-1440.png"
+        ],
+        "assistant": "Real existing-model calls: small-signal gain only from 0.1 to 1.2 times threshold, undo/redo; readonly output-mirror reflectivity comparison 80/90/99 percent, evidence independently verified against live calculation API"
+      }
+    },
+    {
+      "id": "planar-waveguide-0",
+      "title": "平面介质波导模式",
+      "status": "pending"
+    },
+    {
+      "id": "fiber-modes-0",
+      "title": "光纤数值孔径与导模",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Independent Snell/TIR, V/cutoff boundary, 245 frontend/backend states, ray intersections, invalid API inputs, all formula inverses and authorized AI target checks.",
+        "interaction": "Actual Chromium: simple equal-scale ray diagram with only direct launch-angle drag, live updates, other parameters preserved and one-gesture undo; geometric annotations at corresponding lines/materials, no diagram sliders, curves or zoom inset; AI drawer retained.",
+        "assistant": "Actual configured model compared 0/5/15 degree launch angles without changing parameters; adjusted only radius to V=2 and applied with undo.",
+        "browserScreenshots": [
+          "output/playwright/fiber-simple-default.png",
+          "output/playwright/fiber-simple-angles.png",
+          "output/playwright/fiber-simple-1024.png",
+          "output/playwright/fiber-ai.png"
+        ]
+      }
+    },
+    {
+      "id": "fiber-modes-1",
+      "title": "单模光纤耦合",
+      "status": "accepted",
+      "acceptance": {
+        "physics": "Independent complex Gaussian overlap integration, exact aligned/offset/size/angle cases, 729 frontend/backend parameter states, power conservation, formula roundtrips and input validation. Frontend 208 and backend 348 checks passed; production build passed.",
+        "interaction": "Actual Chromium: direct offset, spot-radius and source-angle dragging with live updates and one-gesture undo; four corresponding geometric annotation toggles, invalid-input reset, saved reload, related formulas and 1440/1024/390 viewport checks. No in-diagram sliders or extra plots.",
+        "assistant": "Actual configured model: readonly 0/2/5 micrometre offset comparison; spot-radius-only match preserved offset and tilt, applied in the scene and undone.",
+        "browserScreenshots": [
+          "output/playwright/coupling-default.png",
+          "output/playwright/coupling-aligned.png",
+          "output/playwright/coupling-1024.png",
+          "output/playwright/coupling-mobile.png",
+          "output/playwright/coupling-ai.png",
+          "output/playwright/coupling-formula.png"
+        ]
+      }
+    },
+    {
+      "id": "fiber-dispersion-0",
+      "title": "光纤脉冲展宽",
+      "status": "pending"
+    },
+    {
+      "id": "absorption-0",
+      "title": "介质吸收与透射",
+      "status": "pending"
+    },
+    {
+      "id": "material-dispersion-0",
+      "title": "折射率色散与棱镜分光",
+      "status": "pending"
+    },
+    {
+      "id": "scattering-0",
+      "title": "瑞利散射",
+      "status": "pending"
+    },
+    {
+      "id": "radiometric-quantities-0",
+      "title": "点光源辐照度与距离",
+      "status": "pending"
+    },
+    {
+      "id": "radiometric-quantities-1",
+      "title": "朗伯辐射与能量接收",
+      "status": "pending"
+    },
+    {
+      "id": "photometric-quantities-0",
+      "title": "照度分布与光源方向",
+      "status": "pending"
+    },
+    {
+      "id": "detector-response-0",
+      "title": "光电二极管响应",
+      "status": "pending"
+    },
+    {
+      "id": "detector-response-1",
+      "title": "相机光子计数与饱和",
+      "status": "pending"
+    },
+    {
+      "id": "detector-noise-0",
+      "title": "探测器噪声与信噪比",
+      "status": "pending"
+    },
+    {
+      "id": "frequency-conversion-0",
+      "title": "二次谐波产生与相位匹配",
+      "status": "pending"
+    },
+    {
+      "id": "optical-kerr-0",
+      "title": "自相位调制",
+      "status": "pending"
+    },
+    {
+      "id": "photon-energy-0",
+      "title": "光电效应与截止频率",
+      "status": "pending"
+    },
+    {
+      "id": "photon-statistics-0",
+      "title": "光子计数统计",
+      "status": "pending"
+    }
+  ],
+  "batches": [
+    {
+      "number": 1,
+      "sceneIds": [
+        "reflection-refraction-0",
+        "reflection-refraction-1",
+        "reflection-refraction-2",
+        "paraxial-0"
+      ],
+      "status": "accepted",
+      "checks": {
+        "frontendRegression": "86 passed",
+        "sceneFrontend": "3 passed",
+        "backendRegression": "180 passed before adding API test",
+        "sceneBackend": "10 passed incl API test",
+        "build": "tsc + Vite passed; bundle size warning remains"
+      },
+      "sources": [
+        "https://openstax.org/books/university-physics-volume-3/pages/2-4-thin-lenses",
+        "https://openstax.org/books/university-physics-volume-3/pages/1-4-total-internal-reflection",
+        "https://ocw.mit.edu/courses/6-974-fundamentals-of-photonics-quantum-electronics-spring-2006/bf3bdeb971819ddc9c68719d28bb2745_classnotes.pdf"
+      ],
+      "preview": {
+        "frontend": "http://127.0.0.1:5175",
+        "backend": "http://127.0.0.1:8011",
+        "note": "Isolated verification servers; existing services on 5173/8000 were preserved without restart."
+      }
+    },
+    {
+      "id": "geometrical-instruments",
+      "scenes": [
+        "paraxial-1",
+        "paraxial-2",
+        "instruments-0",
+        "instruments-1",
+        "instruments-2"
+      ],
+      "status": "accepted",
+      "checks": {
+        "frontendRegression": "87 passed",
+        "sceneFrontend": "3 passed",
+        "backendRegression": "191 passed before new comparison test; 17 scene checks passed afterwards",
+        "build": "tsc + Vite passed; existing bundle size warning remains"
+      },
+      "sources": [
+        "https://openstax.org/books/university-physics-volume-3/pages/2-2-spherical-mirrors",
+        "https://openstax.org/books/university-physics-volume-3/pages/2-8-microscopes-and-telescopes",
+        "https://www.rp-photonics.com/abcd_matrix.html"
+      ]
+    },
+    {
+      "id": "aperture-aberration",
+      "scenes": [
+        "aberrations-0",
+        "aberrations-1"
+      ],
+      "status": "accepted",
+      "checks": {
+        "backendRegression": "215 passed",
+        "frontendRegression": "89 passed",
+        "sceneFrontend": "3 passed",
+        "batchPhysicsAndApi": "15 passed",
+        "build": "tsc + Vite passed; final label/availability edits checked by tsc",
+        "browser": "presets, formula cards/library, slider, saving and file roundtrip, rejected cross-scene import, both real assistant targets and undo"
+      },
+      "sources": [
+        "https://www.rp-photonics.com/entrance_and_exit_pupil.html",
+        "https://www.rp-photonics.com/lenses.html",
+        "https://www.rp-photonics.com/chromatic_dispersion.html",
+        "https://openstax.org/books/college-physics-2e/pages/26-6-aberrations"
+      ]
+    }
+  ],
+  "nextBatch": [
+    "wave-fields-0",
+    "interference-3",
+    "coherence-0"
+  ],
+  "constraints": "Keep unrelated edits and services; only commit changes belonging to this thread."
+}

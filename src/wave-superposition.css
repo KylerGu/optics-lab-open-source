@@ -1,0 +1,20 @@
+.gs-tone-wave-first{--quantity-color:#357fc6}.gs-tone-wave-second{--quantity-color:#c16b37}
+.wave-superposition-scene .resonator-parameter-line>.resonator-quantity-label,.wave-superposition-scene .resonator-parameter-line>.resonator-quantity-text{font-size:16px!important;line-height:1.65;min-width:0;flex:1}
+.wave-superposition-scene .resonator-parameter-line .gs-quantity-symbol{font-size:15px;margin-left:4px}
+.wave-superposition-scene .resonator-parameter-line .gs-number{width:106px;flex-shrink:0}
+.wave-superposition-scene .gs-sidebar-scroll .gs-number input{font-size:16px}
+.wave-superposition-scene .gs-number>span{font-size:13px}
+.wave-superposition-scene .gs-plot .wave-row-title{font-size:13px;font-weight:500;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.wave-superposition-scene .gs-plot .wave-annotation{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.wave-superposition-scene .gs-plot [role=slider]:focus-visible{outline:2px solid #6e9aca;outline-offset:4px}
+.wave-amplitude-handle{cursor:ns-resize}
+.wave-status{font-size:12px;color:#71849a;line-height:1.7;margin-top:9px}
+.wave-details{padding:17px 0;font-size:14px;color:#71849a;line-height:1.8}
+.wave-details summary{cursor:pointer;font-size:14px}
+.wave-details dl{margin:12px 0}.wave-details dl>div{display:flex;justify-content:space-between;gap:8px}.wave-details dd{margin:0}
+.wave-details p{margin-top:12px}
+
+.wave-superposition-scene .gs-readouts dt button.resonator-quantity-label{width:auto;height:auto;border:0;border-radius:0;padding:0;background:transparent;color:inherit;font:inherit}
+.wave-superposition-scene .gs-visual-footer>span{font-size:11px;color:#71849a}
+.wave-superposition-scene .gs-plot .wave-equation-symbols{font-family:Georgia,serif;font-size:14px;font-style:italic}
+.wave-superposition-scene .gs-plot .wave-equation-values{font-size:12px;font-variant-numeric:tabular-nums}

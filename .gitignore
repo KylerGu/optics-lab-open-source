@@ -1,0 +1,17 @@
+node_modules/
+dist/
+output/
+.playwright-cli/
+.env
+.env.*
+!.env.example
+*.local
+*.log
+*.tsbuildinfo
+__pycache__/
+.venv/
+.DS_Store
+
+# Local review artifacts
+tmp/
+.chart-data-*/

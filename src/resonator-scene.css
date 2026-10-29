@@ -1,0 +1,28 @@
+.resonator-type{padding:8px 0 14px;font-size:12px;color:#61768e}
+.resonator-type label{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.resonator-type select{max-width:140px;border:1px solid #dce5ef;border-radius:6px;background:#fff;padding:6px 8px;color:#536d88;font-size:12px}
+.resonator-stabilize{display:flex;justify-content:flex-end;margin-top:-7px}
+.resonator-stabilize .text-button{font-size:12px;color:#537da7}
+.resonator-parameter-line{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.resonator-parameter-line>.resonator-quantity-label,.resonator-parameter-line>.resonator-quantity-text{font-size:12px!important;color:var(--quantity-color,#4c607a)!important}
+.resonator-quantity-label{display:inline;background:transparent;border:0;padding:0;border-radius:0;color:inherit;font:inherit;text-align:left;cursor:pointer;line-height:inherit}
+.resonator-quantity-label:hover{text-decoration:underline;text-underline-offset:3px}
+.resonator-quantity-label[aria-pressed=true]{color:var(--quantity-color,#426d9a)}
+.resonator-quantity-label:focus-visible{outline:2px solid #6e9aca;outline-offset:3px}
+.resonator-scene .gs-sidebar-scroll .gs-number input{font-size:13px}
+.resonator-scene .gs-plot .resonator-annotation-text{font-size:12px;stroke:#fbfdff;stroke-width:4px;paint-order:stroke fill;stroke-linejoin:round}
+.resonator-status{padding-top:17px}
+.resonator-state{font-size:13px;margin:0 0 13px;font-weight:600}
+.resonator-state.is-stable{color:#26836a}
+.resonator-state.is-unstable{color:#b46e38}
+.resonator-pair{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#71849a}
+.resonator-stability{margin:3px auto 10px;max-width:220px}
+.resonator-stability svg{display:block;width:100%}
+.resonator-stability text{font-size:10px;fill:#7890aa}
+.resonator-stability figcaption{font-size:10px;color:#8699ad;text-align:center}
+.resonator-mirror-readings .gs-primary-reading{min-width:0}
+.resonator-mirror-readings .gs-primary-reading strong{font-size:20px!important}
+.resonator-scene .gs-readouts{padding-bottom:4px}
+.resonator-scene .gfocus-spot{padding-top:16px}
+.resonator-scene .gs-plot .resonator-empty{font-size:14px;fill:#9b7d62}
+.resonator-formula .fk-concept-grid{grid-template-columns:1fr}

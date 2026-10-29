@@ -1,0 +1,20 @@
+.agent-markdown .answer-quantity {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--answer-quantity-color);
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.agent-markdown .answer-quantity:hover,
+.agent-markdown .answer-quantity[aria-pressed="true"] {
+  text-decoration-style: solid;
+  background: color-mix(in srgb, var(--answer-quantity-color) 10%, transparent);
+}
+.agent-markdown .answer-quantity:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

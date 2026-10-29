@@ -1,0 +1,6 @@
+.polarization-refraction-scene .fiber-mode-summary strong{color:#527492;font-size:23px}
+.pr-angle-control{cursor:grab;touch-action:none;outline:none}.pr-angle-control:active{cursor:grabbing}.pr-angle-control:hover>circle:last-child{stroke-width:3}.pr-angle-control:focus-visible>circle:last-child{stroke-width:3;filter:drop-shadow(0 0 3px #80a0cb)}
+.pr-output-note{font-size:12px;line-height:1.9;color:#788ca4;border-top:1px solid #e2eaf3;padding-top:16px}
+.pr-plot .fiber-symbol{font-size:13px!important}.pr-curve svg{max-height:230px}.pr-curve text{font-size:11px}.pr-curve p{font-size:11px}
+.polarization-refraction-scene .fiber-readings>div{padding:8px 0}.polarization-refraction-scene .waveplate-type button{font-size:11px}
+@media(min-width:901px) and (max-width:1200px){.polarization-refraction-scene .gs-sidebar{max-width:240px}}

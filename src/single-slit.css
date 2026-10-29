@@ -1,0 +1,18 @@
+.single-slit-scene .gs-sidebar[aria-label="单缝参数"] .resonator-parameter-line>.resonator-quantity-label,.single-slit-scene .gs-sidebar[aria-label="单缝参数"] .resonator-parameter-line>.resonator-quantity-text{font-size:16px!important;line-height:1.65;min-width:0;flex:1}
+.single-slit-scene .gs-sidebar[aria-label="单缝参数"] .gs-quantity-symbol,.single-slit-scene .gs-sidebar[aria-label="单缝参数"] .gs-number input{font-size:16px}
+.single-slit-scene .gs-sidebar[aria-label="单缝参数"] .gs-number{width:106px;flex-shrink:0}
+.single-slit-scene .gs-plot .slit-symbol{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.single-slit-scene .gs-plot .slit-title{font-size:13px;font-weight:500}
+.single-slit-scene .gs-plot .slit-tick{stroke:#fbfdff;stroke-width:4;paint-order:stroke fill}
+.single-slit-scene .gs-plot [role=slider]:focus-visible{outline:2px solid #6e9aca;outline-offset:4px}
+.single-slit-scene .gs-readouts dt button.resonator-quantity-label{width:auto;height:auto;border:0;border-radius:0;padding:0;background:transparent;color:inherit;font:inherit}
+.single-slit-scene .gs-visual-footer>span{font-size:11px;color:#71849a}
+.single-slit-scene .gs-plot-controls{gap:8px}
+.slit-observation-handle{cursor:ns-resize;touch-action:none}
+.slit-status{font-size:12px;color:#71849a;line-height:1.7;margin-top:10px}
+.slit-details{padding:17px 0;font-size:12px;color:#71849a;line-height:1.8}
+.slit-details summary{cursor:pointer}.slit-details p{margin:10px 0}.slit-details a{color:#357fc6}
+.slit-meter{height:4px;background:#ede7f2;border-radius:3px;margin-top:12px;overflow:hidden}
+.slit-meter i{display:block;height:100%;background:#8a5eac;border-radius:3px}
+.slit-insight{border-left:2px solid #8a5eac;padding:9px 12px;margin-top:16px;color:#61768e;font-size:12px;line-height:1.8;background:#f7f5fa}
+@media(max-width:900px){.single-slit-scene .gs-heading-actions{flex-wrap:wrap;justify-content:flex-end}.single-slit-scene .gs-visual-footer{flex-wrap:wrap;gap:8px}}

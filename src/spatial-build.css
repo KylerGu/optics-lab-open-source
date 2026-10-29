@@ -1,0 +1,16 @@
+/* Construction annotations are screen-space UI, never optical geometry. */
+.sb-build-labels { position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
+.sb-build-labels > button { visibility:hidden; position:absolute; transform:translateX(-50%); display:flex; align-items:center; gap:7px; max-width:176px; height:30px; padding:0 10px 0 7px; border:1px solid #cfdae6; border-radius:6px; background:#ffffffed; color:#344f68; box-shadow:0 2px 6px #23466b08; pointer-events:auto; cursor:pointer; white-space:nowrap; }
+.sb-build-labels > button::after { content:""; position:absolute; top:100%; left:50%; width:1px; height:var(--leader-height,16px); background:linear-gradient(#8fa8be,#8fa8be30); pointer-events:none; }
+.sb-build-labels > button[data-below=true]::after { top:auto; bottom:100%; background:linear-gradient(#8fa8be30,#8fa8be); }
+.sb-build-labels > button > span { display:grid; place-items:center; min-width:21px; height:20px; border-radius:4px; background:#edf3f8; font-size:10px; color:#647e96; font-variant-numeric:tabular-nums; }
+.sb-build-labels strong { font-size:12px; font-weight:550; overflow:hidden; text-overflow:ellipsis; }
+.sb-build-labels > button:hover { border-color:#7b9fc9; background:#f3f8ff; }
+.sb-build-labels > button.selected { border-color:#729ade; background:#edf4ff; color:#1f52b0; box-shadow:0 0 0 2px #2563eb10; }
+.sb-build-labels > button.selected > span { color:#fff; background:#2c62bf; }
+.sb-build-labels > button.selected::after { background:linear-gradient(#4e83d3,#4e83d350); }
+.sb-principle-canvas .sb-coordinate-widget { width:80px; padding-top:5px; background:#ffffffc9; }
+.sb-principle-canvas .sb-coordinate-widget svg { width:80px; height:74px; }
+.sb-principle-canvas .sb-object-preview { box-shadow:0 4px 16px #28435e0b; border-color:#d0dde7; }
+.sb-principle-canvas .sb-object-preview summary { color:#405e77; }
+@media(max-width:800px) { .sb-build-labels strong { font-size:11px; } .sb-build-labels > button { max-width:130px; } }

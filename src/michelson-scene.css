@@ -1,0 +1,60 @@
+/* Michelson keeps the library's panels and colours; only its teaching layout is widened. */
+.michelson-scene .gs-sidebar-title h2{font-size:16px}
+.michelson-scene .gs-sidebar-scroll h3{font-size:14px;color:#64788f}
+.michelson-scene .resonator-quantity-label,.michelson-scene .resonator-quantity-text{font-size:14px}
+.michelson-scene .resonator-parameter-line>.resonator-quantity-label,.michelson-scene .resonator-parameter-line>.resonator-quantity-text{font-size:16px!important;line-height:1.65;min-width:0;flex:1}
+.michelson-scene .resonator-parameter-line .gs-quantity-symbol{font-size:15px;margin-left:4px}
+.michelson-scene .resonator-parameter-line .gs-number{width:106px;flex-shrink:0}
+.michelson-scene .resonator-quantity-label{text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px;text-decoration-color:#b3c3d5;line-height:1.6}
+.michelson-scene .resonator-quantity-label[aria-pressed=true]{color:var(--quantity-color);text-decoration-style:solid;text-decoration-color:currentColor}
+.michelson-scene .resonator-quantity-label[aria-pressed=false]{color:#687b92}
+.michelson-scene .gs-readouts dt button.resonator-quantity-label{width:auto;height:auto;border:0;border-radius:0;padding:0;background:transparent;color:var(--quantity-color);font:inherit}
+.michelson-scene .gs-sidebar-scroll .gs-number input{font-size:16px}.michelson-scene .gs-number>span{font-size:13px}
+.michelson-scene .gs-presets button{font-size:13px;padding:7px 3px}
+.michelson-device-select{width:100%;height:38px;border:1px solid #dce6f2;border-radius:6px;background:#f8fbff;color:#435b74;font-size:14px;padding:0 8px;margin-top:13px}
+.michelson-device-hint{font-size:14px;line-height:1.65;color:#6b7e94;margin:10px 0 0}
+.michelson-path-switch,.michelson-view-switch{display:flex;gap:4px;align-items:center}
+.michelson-path-switch{position:absolute;left:16px;top:16px;z-index:3;padding:3px;border:1px solid #e2eaf4;border-radius:6px;background:#ffffffec}
+.michelson-path-switch button,.michelson-view-switch button{border:0;background:transparent;color:#71849a;font-size:14px;padding:6px 10px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.michelson-path-switch button[aria-pressed=true],.michelson-view-switch button[aria-pressed=true]{background:#edf4fc;color:#357fc6}
+.michelson-3d{position:absolute;inset:0;touch-action:none}
+.michelson-3d-host,.michelson-3d-overlay{position:absolute;inset:0}
+.michelson-3d-host canvas{display:block;width:100%;height:100%;touch-action:none}
+.michelson-3d-overlay{pointer-events:none;overflow:hidden}
+.michelson-3d-name,.michelson-3d-quantity{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:14px 'Microsoft YaHei',sans-serif;line-height:1.5}
+.michelson-3d-name{pointer-events:auto;cursor:grab;color:#4b637e;border:1px solid transparent;border-radius:5px;padding:2px 5px;background:#f8fbfed9;touch-action:none}
+.michelson-3d-name.is-selected{color:#286fc0;font-weight:600;border-color:#c5dcf3;background:#edf5fe}
+.michelson-3d-name:active{cursor:grabbing}.michelson-3d-name:focus-visible{outline:2px solid #6e9aca;outline-offset:2px}
+.michelson-3d-quantity{font-size:14px;background:#f8fbfee8;border-radius:4px;padding:2px 5px}
+.michelson-3d-error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#71849a;font-size:15px;gap:15px}
+.michelson-3d-error button{padding:8px 15px;background:#edf4fc;color:#357fc6;border-radius:6px}
+.michelson-scene .gs-visual-footer>span{font-size:13px;color:#71849a;max-width:none;display:block}
+.michelson-scene .gs-visual-footer .text-button{font-size:13px;white-space:nowrap}
+.michelson-scene .michelson-results-plot{flex:none;margin:8px -4px 0;min-height:0;background:transparent;overflow:visible}
+.michelson-scene .michelson-results-plot text{font-size:14px}
+.michelson-scene .michelson-results-plot .michelson-title{font-size:15px;fill:#536c87}
+.michelson-scene .michelson-results-plot .gs-axis-label{font-size:13px}
+.michelson-scene .michelson-results-plot .michelson-screen-label{fill:#e8fff3;font-size:13px;stroke:#152a26;stroke-width:2.5px;paint-order:stroke fill;stroke-linejoin:round;pointer-events:none}
+.michelson-scene .michelson-results-plot .michelson-diagram-reading{fill:#8a5eac;font-size:13px}
+.michelson-observation-handle{cursor:ew-resize;outline:none}.michelson-observation-handle:focus-visible>circle[data-testid]{stroke:#69a7ef;stroke-width:3}
+.michelson-ring-tools{display:flex;justify-content:center;align-items:center;gap:9px;color:#6b7e94;font-size:13px;padding:0 0 8px}
+.michelson-ring-tools .icon-button{width:28px;height:28px}
+.michelson-scene .gfocus-main-readouts{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;padding:12px 0}
+.michelson-scene .gs-primary-reading{padding:5px 0}
+.michelson-scene .gs-primary-reading strong{font-size:28px;margin-top:4px}
+.michelson-scene .gs-primary-reading strong span{font-size:13px;margin-left:2px}
+.michelson-scene .gs-primary-reading small .resonator-quantity-label{font-size:14px;white-space:normal;text-align:left}
+.michelson-status{font-size:14px;color:#71849a;line-height:1.7;margin:4px 0 0;grid-column:1/-1}
+.michelson-details{padding:14px 0;font-size:14px;color:#64788f;line-height:1.75;border-bottom:1px solid #eef2f7}
+.michelson-details summary{cursor:pointer;font-size:14px}.michelson-details p{margin-top:10px}
+.michelson-scene .michelson-details .gs-readouts{padding:8px 0 0}
+.michelson-scene .michelson-details .gs-readouts dt{min-width:0;display:block;flex:1;font-size:14px}
+.michelson-scene .michelson-details .gs-readouts dt small{display:block;font-size:13px;line-height:1.65;color:#71849a;margin-top:3px;font-weight:400}
+.michelson-scene .michelson-details .gs-readouts dd{flex-shrink:0;font-size:14px;align-self:flex-start;padding-top:2px}
+.michelson-scene .michelson-details .gs-readouts dl>div{align-items:flex-start;gap:10px;flex-wrap:nowrap;padding:8px 0}
+.michelson-scene .michelson-comparison{padding:12px 0}
+.michelson-compare-bar{display:flex;align-items:center;gap:8px;font-size:14px;color:#71849a;margin-top:13px}
+.michelson-compare-bar>span{flex-shrink:0}.michelson-compare-bar>div{flex:1;height:6px;background:#eef2f7;border-radius:3px;overflow:hidden}.michelson-compare-bar i{display:block;height:100%;background:#a5b6c8}.michelson-compare-bar.is-current i{background:#8a5eac}.michelson-compare-bar b{font-weight:400;min-width:42px;text-align:right}
+.michelson-comparison>.text-button{margin-top:12px;font-size:14px}
+@media(max-width:1100px){.michelson-scene .gs-visual-footer{height:54px;padding:0 10px;gap:6px}.michelson-scene .gs-visual-footer>span{font-size:12px;max-width:180px;text-align:left}.michelson-path-switch{left:8px;top:10px}.michelson-path-switch button{padding:5px 7px;font-size:13px}}
+.michelson-3d-leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.michelson-3d-leaders line{opacity:.7}

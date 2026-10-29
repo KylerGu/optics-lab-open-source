@@ -1,0 +1,3072 @@
+{
+  "reflection-refraction-0": {
+    "title": "平面界面的反射与折射",
+    "topic": "reflection-refraction",
+    "model": "interface",
+    "description": "从法线量角，观察传播方向和反射、透射的能量分配。",
+    "scope": "平整、无吸收、各向同性介质；单色平面波，未偏振光的平均功率。忽略界面粗糙度和有限光束效应。",
+    "parameters": [
+      {
+        "key": "n1",
+        "label": "入射介质折射率 n₁",
+        "unit": "",
+        "min": 1,
+        "max": 2.5,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "n2",
+        "label": "透射介质折射率 n₂",
+        "unit": "",
+        "min": 1,
+        "max": 2.5,
+        "step": 0.01,
+        "default": 1.5
+      },
+      {
+        "key": "angle",
+        "label": "入射角 θᵢ",
+        "unit": "°",
+        "min": 0,
+        "max": 89.9,
+        "step": 0.1,
+        "default": 45
+      }
+    ],
+    "formulas": [
+      "reflection-law",
+      "snell-law",
+      "fresnel-power"
+    ],
+    "presets": [
+      {
+        "label": "空气到玻璃",
+        "values": {
+          "n1": 1,
+          "n2": 1.5,
+          "angle": 45
+        }
+      },
+      {
+        "label": "垂直入射",
+        "values": {
+          "angle": 0
+        }
+      },
+      {
+        "label": "等折射率",
+        "values": {
+          "n1": 1.5,
+          "n2": 1.5
+        }
+      }
+    ]
+  },
+  "reflection-refraction-1": {
+    "title": "全反射与临界角",
+    "topic": "reflection-refraction",
+    "model": "interface",
+    "description": "由高折射率介质进入低折射率介质，跨过临界角时观察折射光的变化。",
+    "scope": "平整、无吸收、各向同性介质；光线图不表示全反射时界面外的倏逝场，即不向远处传输能量的局部电磁场。",
+    "parameters": [
+      {
+        "key": "n1",
+        "label": "入射介质折射率 n₁",
+        "unit": "",
+        "min": 1,
+        "max": 2.5,
+        "step": 0.01,
+        "default": 1.5
+      },
+      {
+        "key": "n2",
+        "label": "透射介质折射率 n₂",
+        "unit": "",
+        "min": 1,
+        "max": 2.5,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "angle",
+        "label": "入射角 θᵢ",
+        "unit": "°",
+        "min": 0,
+        "max": 89.9,
+        "step": 0.1,
+        "default": 50
+      }
+    ],
+    "formulas": [
+      "critical-angle",
+      "snell-law",
+      "fresnel-power"
+    ],
+    "presets": [
+      {
+        "label": "临界角以下",
+        "values": {
+          "n1": 1.5,
+          "n2": 1,
+          "angle": 35
+        }
+      },
+      {
+        "label": "全反射",
+        "values": {
+          "n1": 1.5,
+          "n2": 1,
+          "angle": 50
+        }
+      },
+      {
+        "label": "反向进入玻璃",
+        "values": {
+          "n1": 1,
+          "n2": 1.5,
+          "angle": 50
+        }
+      }
+    ]
+  },
+  "reflection-refraction-2": {
+    "title": "棱镜偏折",
+    "topic": "reflection-refraction",
+    "model": "prism",
+    "description": "调整棱镜顶角、入射角和折射率，观察两次折射及无法出射的情形。",
+    "scope": "均匀无吸收棱镜，外侧介质相同；主图追迹一个主光线，到第二面出射或第一次内反射为止，不计算多次反射光束及色散。",
+    "parameters": [
+      {
+        "key": "n",
+        "label": "棱镜折射率 n",
+        "unit": "",
+        "min": 1,
+        "max": 2.5,
+        "step": 0.01,
+        "default": 1.5
+      },
+      {
+        "key": "outside",
+        "label": "外侧介质折射率 n₀",
+        "unit": "",
+        "min": 1,
+        "max": 2.5,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "apex",
+        "label": "棱镜顶角 A",
+        "unit": "°",
+        "min": 10,
+        "max": 80,
+        "step": 0.1,
+        "default": 60
+      },
+      {
+        "key": "angle",
+        "label": "第一面入射角 i",
+        "unit": "°",
+        "min": 0,
+        "max": 89,
+        "step": 0.1,
+        "default": 48.59037789072914
+      }
+    ],
+    "formulas": [
+      "snell-law",
+      "prism-deviation"
+    ],
+    "presets": [
+      {
+        "label": "60°玻璃棱镜",
+        "values": {
+          "n": 1.5,
+          "outside": 1,
+          "apex": 60,
+          "angle": 48.59037789072914
+        }
+      },
+      {
+        "label": "第二面全反射",
+        "values": {
+          "n": 1.5,
+          "outside": 1,
+          "apex": 60,
+          "angle": 10
+        }
+      }
+    ]
+  },
+  "paraxial-0": {
+    "title": "薄透镜成像",
+    "topic": "paraxial",
+    "model": "lens",
+    "description": "改变物距与焦距，观察实像、虚像和焦平面处的平行出射。",
+    "scope": "空气中理想薄透镜、近轴成像，即光线靠近光轴且倾角较小。示意图保留物像位置和高度比例；不计算像差、厚度和衍射。",
+    "parameters": [
+      {
+        "key": "f",
+        "label": "焦距大小 |f|",
+        "unit": "mm",
+        "min": 10,
+        "max": 250,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "kind",
+        "label": "透镜类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 2,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "会聚透镜"
+          },
+          {
+            "value": -1,
+            "label": "发散透镜"
+          }
+        ]
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 10,
+        "max": 600,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "h",
+        "label": "物体高度 h",
+        "unit": "mm",
+        "min": 1,
+        "max": 40,
+        "step": 0.5,
+        "default": 10
+      }
+    ],
+    "formulas": [
+      "thin-lens",
+      "magnification"
+    ],
+    "presets": [
+      {
+        "label": "二倍焦距",
+        "values": {
+          "kind": 1,
+          "f": 100,
+          "u": 200
+        }
+      },
+      {
+        "label": "正立虚像",
+        "values": {
+          "kind": 1,
+          "f": 100,
+          "u": 60
+        }
+      },
+      {
+        "label": "物在焦平面",
+        "values": {
+          "kind": 1,
+          "f": 100,
+          "u": 100
+        }
+      },
+      {
+        "label": "发散透镜",
+        "values": {
+          "kind": -1,
+          "f": 100,
+          "u": 200
+        }
+      }
+    ]
+  },
+  "paraxial-1": {
+    "title": "球面镜成像",
+    "topic": "paraxial",
+    "model": "mirror",
+    "description": "改变球面镜曲率和物距，观察反射光形成的实像、虚像及平行光。",
+    "scope": "理想球面镜的近轴成像；凹面镜 f > 0，凸面镜 f < 0，实像像距为正且位于镜前。图中镜面为外形示意，不计算大孔径球差。",
+    "parameters": [
+      {
+        "key": "R",
+        "label": "曲率半径大小 |R|",
+        "unit": "mm",
+        "min": 20,
+        "max": 500,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "kind",
+        "label": "镜面类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 2,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "凹面镜"
+          },
+          {
+            "value": -1,
+            "label": "凸面镜"
+          }
+        ]
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 10,
+        "max": 800,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "h",
+        "label": "物体高度 h",
+        "unit": "mm",
+        "min": 1,
+        "max": 40,
+        "step": 0.5,
+        "default": 10
+      }
+    ],
+    "formulas": [
+      "mirror-focal",
+      "thin-lens",
+      "magnification"
+    ],
+    "presets": [
+      {
+        "label": "凹镜等大实像",
+        "values": {
+          "kind": 1,
+          "R": 200,
+          "u": 200
+        }
+      },
+      {
+        "label": "凹镜放大虚像",
+        "values": {
+          "kind": 1,
+          "R": 200,
+          "u": 60
+        }
+      },
+      {
+        "label": "凸镜虚像",
+        "values": {
+          "kind": -1,
+          "R": 200,
+          "u": 200
+        }
+      },
+      {
+        "label": "物在焦平面",
+        "values": {
+          "kind": 1,
+          "R": 200,
+          "u": 100
+        }
+      }
+    ]
+  },
+  "paraxial-2": {
+    "title": "双透镜光学系统",
+    "topic": "paraxial",
+    "model": "double-lens",
+    "description": "两片透镜逐级成像，改变间距时观察中间像、最终像及虚物的情况。",
+    "scope": "空气中同轴理想薄透镜与近轴光线。第二片可能接收到尚未会聚的光线，应使用有向物距或光线传递矩阵；等效焦距从系统主面量起。",
+    "parameters": [
+      {
+        "key": "f1",
+        "label": "第一片焦距大小 |f₁|",
+        "unit": "mm",
+        "min": 10,
+        "max": 250,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "k1",
+        "label": "第一片类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 2,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "会聚透镜"
+          },
+          {
+            "value": -1,
+            "label": "发散透镜"
+          }
+        ]
+      },
+      {
+        "key": "f2",
+        "label": "第二片焦距大小 |f₂|",
+        "unit": "mm",
+        "min": 10,
+        "max": 250,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "k2",
+        "label": "第二片类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 2,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "会聚透镜"
+          },
+          {
+            "value": -1,
+            "label": "发散透镜"
+          }
+        ]
+      },
+      {
+        "key": "d",
+        "label": "两片透镜间距 d",
+        "unit": "mm",
+        "min": 10,
+        "max": 600,
+        "step": 1,
+        "default": 350
+      },
+      {
+        "key": "u",
+        "label": "第一片前物距 u₁",
+        "unit": "mm",
+        "min": 10,
+        "max": 600,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "h",
+        "label": "物体高度 h",
+        "unit": "mm",
+        "min": 0.1,
+        "max": 20,
+        "step": 0.1,
+        "default": 5
+      }
+    ],
+    "formulas": [
+      "system-focal",
+      "matrix-imaging",
+      "magnification"
+    ],
+    "presets": [
+      {
+        "label": "逐级成实像",
+        "values": {
+          "f1": 100,
+          "k1": 1,
+          "f2": 100,
+          "k2": 1,
+          "d": 350,
+          "u": 200
+        }
+      },
+      {
+        "label": "最终平行光",
+        "values": {
+          "f1": 100,
+          "k1": 1,
+          "f2": 100,
+          "k2": 1,
+          "d": 300,
+          "u": 200
+        }
+      },
+      {
+        "label": "第二片接收会聚光",
+        "values": {
+          "f1": 100,
+          "k1": 1,
+          "f2": 100,
+          "k2": 1,
+          "d": 100,
+          "u": 200
+        }
+      }
+    ]
+  },
+  "instruments-0": {
+    "title": "显微镜成像",
+    "topic": "instruments",
+    "model": "microscope",
+    "description": "比较物镜与目镜的目视成像，以及无穷远物镜与管镜的相机成像。",
+    "scope": "同轴理想薄透镜、近轴几何显微镜。目视模式假定眼在目镜附近，视场数为中间像面的视野直径；相机模式使用无穷远物镜、管镜与理想转接倍率，在物镜前焦面合焦。视野示意不模拟衍射、像差或真实样品纹理。",
+    "parameters": [
+      {
+        "key": "f1",
+        "label": "物镜焦距",
+        "unit": "mm",
+        "min": 5,
+        "max": 50,
+        "step": 0.1,
+        "default": 10
+      },
+      {
+        "key": "f2",
+        "label": "目镜焦距",
+        "unit": "mm",
+        "min": 10,
+        "max": 80,
+        "step": 0.1,
+        "default": 20
+      },
+      {
+        "key": "d",
+        "label": "物镜到目镜距离",
+        "unit": "mm",
+        "min": 40,
+        "max": 300,
+        "step": 0.1,
+        "default": 130
+      },
+      {
+        "key": "u",
+        "label": "物体到物镜距离",
+        "unit": "mm",
+        "min": 5,
+        "max": 100,
+        "step": 0.01,
+        "default": 11
+      },
+      {
+        "key": "h",
+        "label": "物体高度 h",
+        "unit": "mm",
+        "min": 0.01,
+        "max": 1,
+        "step": 0.01,
+        "default": 0.1
+      },
+      {
+        "key": "near",
+        "label": "明视参考距离 D",
+        "unit": "mm",
+        "min": 150,
+        "max": 350,
+        "step": 1,
+        "default": 250
+      },
+      {
+        "key": "mode",
+        "label": "观察模式",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "目视观察"
+          },
+          {
+            "value": 1,
+            "label": "相机成像"
+          }
+        ]
+      },
+      {
+        "key": "fieldNumber",
+        "label": "目镜视场数",
+        "unit": "mm",
+        "min": 8,
+        "max": 30,
+        "step": 0.1,
+        "default": 18
+      },
+      {
+        "key": "tubeF",
+        "label": "管镜焦距",
+        "unit": "mm",
+        "min": 40,
+        "max": 300,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "adapter",
+        "label": "相机转接倍率",
+        "unit": "倍",
+        "min": 0.25,
+        "max": 2,
+        "step": 0.05,
+        "default": 0.5
+      },
+      {
+        "key": "sensorW",
+        "label": "感光面宽度",
+        "unit": "mm",
+        "min": 2,
+        "max": 36,
+        "step": 0.1,
+        "default": 8.8
+      },
+      {
+        "key": "sensorH",
+        "label": "感光面高度",
+        "unit": "mm",
+        "min": 2,
+        "max": 24,
+        "step": 0.1,
+        "default": 6.6
+      },
+      {
+        "key": "study",
+        "label": "显示内容",
+        "unit": "",
+        "min": 0,
+        "max": 3,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "成像光路"
+          },
+          {
+            "value": 1,
+            "label": "分辨率"
+          },
+          {
+            "value": 2,
+            "label": "视场"
+          },
+          {
+            "value": 3,
+            "label": "景深"
+          }
+        ]
+      },
+      {
+        "key": "NA",
+        "label": "数值孔径 NA",
+        "unit": "",
+        "min": 0.1,
+        "max": 1.4,
+        "step": 0.01,
+        "default": 0.4
+      },
+      {
+        "key": "wavelength",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 550
+      },
+      {
+        "key": "medium",
+        "label": "物镜前介质折射率 n",
+        "unit": "",
+        "min": 1,
+        "max": 1.6,
+        "step": 0.001,
+        "default": 1
+      },
+      {
+        "key": "separation",
+        "label": "两点间距 s",
+        "unit": "µm",
+        "min": 0.05,
+        "max": 10,
+        "step": 0.01,
+        "default": 0.8
+      },
+      {
+        "key": "defocus",
+        "label": "样品离焦量 z",
+        "unit": "µm",
+        "min": -95000,
+        "max": 95000,
+        "step": 0.01,
+        "default": 0
+      },
+      {
+        "key": "depthCriterion",
+        "label": "景深判据",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "仅衍射"
+          },
+          {
+            "value": 1,
+            "label": "衍射＋相机采样"
+          }
+        ]
+      },
+      {
+        "key": "pixel",
+        "label": "感光面像元尺寸 e",
+        "unit": "µm",
+        "min": 0.5,
+        "max": 20,
+        "step": 0.01,
+        "default": 3.45
+      },
+      {
+        "key": "displayWidth",
+        "label": "显示图像宽度",
+        "unit": "mm",
+        "min": 10,
+        "max": 1000,
+        "step": 1,
+        "default": 300
+      }
+    ],
+    "formulas": [
+      "microscope-angular",
+      "matrix-imaging",
+      "thin-lens",
+      "microscope-camera-magnification",
+      "microscope-camera-field",
+      "microscope-resolution",
+      "microscope-depth",
+      "microscope-eye-field"
+    ],
+    "presets": [
+      {
+        "label": "放松眼观察",
+        "values": {
+          "f1": 10,
+          "f2": 20,
+          "d": 130,
+          "u": 11,
+          "mode": 0
+        }
+      },
+      {
+        "label": "有限远虚像",
+        "values": {
+          "f1": 10,
+          "f2": 20,
+          "d": 125,
+          "u": 11,
+          "mode": 0
+        }
+      },
+      {
+        "label": "投影实像",
+        "values": {
+          "f1": 10,
+          "f2": 20,
+          "d": 150,
+          "u": 11,
+          "mode": 0
+        }
+      },
+      {
+        "label": "相机 10×",
+        "values": {
+          "mode": 1,
+          "f1": 10,
+          "u": 10,
+          "tubeF": 200,
+          "adapter": 0.5,
+          "d": 130
+        }
+      },
+      {
+        "label": "相机 20×",
+        "values": {
+          "mode": 1,
+          "f1": 5,
+          "u": 5,
+          "tubeF": 200,
+          "adapter": 0.5,
+          "d": 130
+        }
+      }
+    ]
+  },
+  "instruments-1": {
+    "title": "望远镜成像",
+    "topic": "instruments",
+    "model": "telescope",
+    "description": "远处物体产生近似平行光束，调节物镜和目镜使出射光重新平行。",
+    "scope": "远物近轴入射、理想薄透镜与圆形口径。角放大率仅在平行出射时定义；视场与入眼比例按几何截光估计，角分辨率采用理想物镜的瑞利判据。未包含像差、大气扰动与视网膜成像。",
+    "parameters": [
+      {
+        "key": "f1",
+        "label": "物镜焦距 fₒ",
+        "unit": "mm",
+        "min": 50,
+        "max": 400,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "f2",
+        "label": "目镜焦距大小 |fₑ|",
+        "unit": "mm",
+        "min": 10,
+        "max": 100,
+        "step": 1,
+        "default": 30
+      },
+      {
+        "key": "k2",
+        "label": "目镜类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 2,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "会聚目镜"
+          },
+          {
+            "value": -1,
+            "label": "发散目镜"
+          }
+        ]
+      },
+      {
+        "key": "d",
+        "label": "物镜到目镜距离 d",
+        "unit": "mm",
+        "min": 20,
+        "max": 600,
+        "step": 1,
+        "default": 230
+      },
+      {
+        "key": "angle",
+        "label": "远物入射方向 θ",
+        "unit": "°",
+        "min": -3,
+        "max": 3,
+        "step": 0.1,
+        "default": 1
+      },
+      {
+        "key": "aperture",
+        "label": "物镜有效直径 D",
+        "unit": "mm",
+        "min": 5,
+        "max": 80,
+        "step": 1,
+        "default": 20
+      },
+      {
+        "key": "study",
+        "label": "显示内容",
+        "unit": "",
+        "min": 0,
+        "max": 3,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "成像光路"
+          },
+          {
+            "value": 1,
+            "label": "放大与视场"
+          },
+          {
+            "value": 2,
+            "label": "分辨率"
+          },
+          {
+            "value": 3,
+            "label": "出瞳与观察"
+          }
+        ]
+      },
+      {
+        "key": "eyepieceDiameter",
+        "label": "目镜通光直径",
+        "unit": "mm",
+        "min": 2,
+        "max": 40,
+        "step": 0.5,
+        "default": 12
+      },
+      {
+        "key": "eyeDistance",
+        "label": "眼睛距目镜 z",
+        "unit": "mm",
+        "min": 0,
+        "max": 100,
+        "step": 0.5,
+        "default": 34.5
+      },
+      {
+        "key": "eyeOffset",
+        "label": "眼瞳偏心量",
+        "unit": "mm",
+        "min": -10,
+        "max": 10,
+        "step": 0.1,
+        "default": 0
+      },
+      {
+        "key": "eyeDiameter",
+        "label": "眼瞳直径",
+        "unit": "mm",
+        "min": 1,
+        "max": 8,
+        "step": 0.1,
+        "default": 4
+      },
+      {
+        "key": "wavelength",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 550
+      },
+      {
+        "key": "starSeparation",
+        "label": "双星角间距 Δθ",
+        "unit": "角秒",
+        "min": 0.1,
+        "max": 180,
+        "step": 0.1,
+        "default": 7
+      }
+    ],
+    "formulas": [
+      "telescope-angular",
+      "system-focal",
+      "telescope-resolution",
+      "telescope-pupil-position",
+      "telescope-pupil-diameter"
+    ],
+    "presets": [
+      {
+        "label": "开普勒平行出射",
+        "values": {
+          "f1": 200,
+          "f2": 30,
+          "k2": 1,
+          "d": 230
+        }
+      },
+      {
+        "label": "伽利略平行出射",
+        "values": {
+          "f1": 200,
+          "f2": 30,
+          "k2": -1,
+          "d": 170
+        }
+      },
+      {
+        "label": "偏离正确镜距",
+        "values": {
+          "f1": 200,
+          "f2": 30,
+          "k2": 1,
+          "d": 250
+        }
+      }
+    ]
+  },
+  "instruments-2": {
+    "title": "相机成像",
+    "topic": "instruments",
+    "model": "camera",
+    "description": "拖动物体、镜头和感光面，比较成像、取景、景深及像素采样。",
+    "scope": "理想薄透镜、圆形孔径的近轴模型；距离从薄透镜平面量起。取景范围按主光线投影，离焦时不是清晰视场。景深按指定几何弥散圆阈值；衍射采用对焦时圆孔径标量模型，像素上限按两点采样。忽略像差、镜头结构、畸变及真实器件性能。",
+    "parameters": [
+      {
+        "key": "f",
+        "label": "镜头焦距 f",
+        "unit": "mm",
+        "min": 10,
+        "max": 100,
+        "step": 1,
+        "default": 50
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 20,
+        "max": 5000,
+        "step": 1,
+        "default": 400
+      },
+      {
+        "key": "h",
+        "label": "物体高度 h",
+        "unit": "mm",
+        "min": 1,
+        "max": 100,
+        "step": 1,
+        "default": 20
+      },
+      {
+        "key": "sensor",
+        "label": "感光面距离 s",
+        "unit": "mm",
+        "min": 10,
+        "max": 300,
+        "step": 0.1,
+        "default": 57.142857142857146
+      },
+      {
+        "key": "aperture",
+        "label": "光圈直径 a",
+        "unit": "mm",
+        "min": 1,
+        "max": 50,
+        "step": 0.5,
+        "default": 12.5
+      },
+      {
+        "key": "study",
+        "label": "显示内容",
+        "unit": "",
+        "min": 0,
+        "max": 3,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "成像光路"
+          },
+          {
+            "value": 1,
+            "label": "视场与取景"
+          },
+          {
+            "value": 2,
+            "label": "景深与清晰度"
+          },
+          {
+            "value": 3,
+            "label": "分辨率与像素"
+          }
+        ]
+      },
+      {
+        "key": "sensorW",
+        "label": "感光面宽度",
+        "unit": "mm",
+        "min": 2,
+        "max": 50,
+        "step": 0.1,
+        "default": 8.8
+      },
+      {
+        "key": "sensorH",
+        "label": "感光面高度",
+        "unit": "mm",
+        "min": 2,
+        "max": 40,
+        "step": 0.1,
+        "default": 6.6
+      },
+      {
+        "key": "coc",
+        "label": "允许光斑直径 c₀",
+        "unit": "mm",
+        "min": 0.001,
+        "max": 0.1,
+        "step": 0.001,
+        "default": 0.03
+      },
+      {
+        "key": "pixel",
+        "label": "像素尺寸 p",
+        "unit": "μm",
+        "min": 1,
+        "max": 20,
+        "step": 0.05,
+        "default": 3.45
+      },
+      {
+        "key": "wavelength",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 550
+      }
+    ],
+    "formulas": [
+      "camera-defocus",
+      "thin-lens",
+      "camera-field",
+      "camera-depth",
+      "camera-diffraction",
+      "camera-sampling"
+    ],
+    "presets": [
+      {
+        "label": "400 mm 物体对焦",
+        "values": {
+          "f": 50,
+          "u": 400,
+          "sensor": 57.142857142857146
+        }
+      },
+      {
+        "label": "感光面离焦",
+        "values": {
+          "f": 50,
+          "u": 400,
+          "sensor": 65
+        }
+      },
+      {
+        "label": "缩小光圈",
+        "values": {
+          "aperture": 4
+        }
+      }
+    ]
+  },
+  "aberrations-0": {
+    "title": "光阑与光瞳",
+    "topic": "aberrations",
+    "model": "aperture",
+    "description": "移动圆形光阑，辨认真正限制轴上光束的孔径，观察入瞳、出瞳和离轴遮挡。",
+    "scope": "光向右传播，光阑位置正值在透镜后方、负值在前方。一片理想薄透镜与一个圆形光阑的近轴几何模型；入瞳、出瞳指实际孔径光阑的物侧和像侧像。通光比例按均匀填满透镜口径的圆形光束面积计算，不含吸收、衍射和余弦照度。",
+    "parameters": [
+      {
+        "key": "f",
+        "label": "透镜焦距 f",
+        "unit": "mm",
+        "min": 40,
+        "max": 120,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "u",
+        "label": "物距 u",
+        "unit": "mm",
+        "min": 160,
+        "max": 600,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "lensD",
+        "label": "透镜有效口径",
+        "unit": "mm",
+        "min": 5,
+        "max": 80,
+        "step": 1,
+        "default": 40
+      },
+      {
+        "key": "stopD",
+        "label": "外置光阑直径",
+        "unit": "mm",
+        "min": 2,
+        "max": 60,
+        "step": 1,
+        "default": 12
+      },
+      {
+        "key": "z",
+        "label": "光阑相对透镜位置",
+        "unit": "mm",
+        "min": -120,
+        "max": 240,
+        "step": 1,
+        "default": 50
+      },
+      {
+        "key": "h",
+        "label": "物点离轴高度",
+        "unit": "mm",
+        "min": 0,
+        "max": 80,
+        "step": 1,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "pupil-imaging",
+      "aperture-effective"
+    ],
+    "presets": [
+      {
+        "label": "后置光阑与入瞳",
+        "values": {
+          "f": 100,
+          "u": 200,
+          "lensD": 40,
+          "stopD": 12,
+          "z": 50,
+          "h": 0
+        }
+      },
+      {
+        "label": "前置光阑与出瞳",
+        "values": {
+          "f": 100,
+          "u": 200,
+          "lensD": 40,
+          "stopD": 12,
+          "z": -50,
+          "h": 0
+        }
+      },
+      {
+        "label": "入瞳在无穷远",
+        "values": {
+          "f": 100,
+          "u": 200,
+          "lensD": 40,
+          "stopD": 6,
+          "z": 100,
+          "h": 0
+        }
+      },
+      {
+        "label": "像面限制视场",
+        "values": {
+          "f": 100,
+          "u": 200,
+          "lensD": 40,
+          "stopD": 12,
+          "z": 200,
+          "h": 0
+        }
+      },
+      {
+        "label": "离轴渐晕",
+        "values": {
+          "f": 100,
+          "u": 200,
+          "lensD": 40,
+          "stopD": 12,
+          "z": 50,
+          "h": 60
+        }
+      }
+    ]
+  },
+  "aberrations-1": {
+    "title": "球差与色差",
+    "topic": "aberrations",
+    "model": "aberration",
+    "description": "平行光穿过两个球面，逐条按折射定律计算焦点；切换单色与三色，比较口径和波长对模糊的影响。",
+    "scope": "空气中的对称双凸球面透镜，两面使用精确折射；平行光均匀填充圆形口径。中心厚度由曲率、口径和边缘厚度确定。折射率采用可调的教学色散式；只计算几何球差、纵向色差和离焦，未计衍射、反射损耗、像素或真实玻璃数据库。",
+    "parameters": [
+      {
+        "key": "R",
+        "label": "两面曲率半径大小",
+        "unit": "mm",
+        "min": 40,
+        "max": 160,
+        "step": 1,
+        "default": 60
+      },
+      {
+        "key": "diameter",
+        "label": "透镜通光直径",
+        "unit": "mm",
+        "min": 2,
+        "max": 50,
+        "step": 1,
+        "default": 30
+      },
+      {
+        "key": "edge",
+        "label": "透镜边缘厚度",
+        "unit": "mm",
+        "min": 1,
+        "max": 8,
+        "step": 0.5,
+        "default": 2
+      },
+      {
+        "key": "A",
+        "label": "色散式常数 A",
+        "unit": "",
+        "min": 1.4,
+        "max": 1.65,
+        "step": 0.005,
+        "default": 1.5
+      },
+      {
+        "key": "B",
+        "label": "色散式系数 B",
+        "unit": "μm²",
+        "min": 0,
+        "max": 0.012,
+        "step": 0.0005,
+        "default": 0.004
+      },
+      {
+        "key": "wavelength",
+        "label": "参考波长",
+        "unit": "nm",
+        "min": 400,
+        "max": 700,
+        "step": 5,
+        "default": 550
+      },
+      {
+        "key": "screen",
+        "label": "观察屏距后顶点",
+        "unit": "mm",
+        "min": 20,
+        "max": 500,
+        "step": 1,
+        "default": 60
+      },
+      {
+        "key": "mode",
+        "label": "入射颜色",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "单色"
+          },
+          {
+            "value": 1,
+            "label": "红绿蓝三色"
+          }
+        ]
+      }
+    ],
+    "formulas": [
+      "lensmaker-thick",
+      "back-focal",
+      "cauchy-index",
+      "snell-law"
+    ],
+    "presets": [
+      {
+        "label": "单色球差",
+        "values": {
+          "R": 60,
+          "diameter": 30,
+          "edge": 2,
+          "A": 1.5,
+          "B": 0.004,
+          "wavelength": 550,
+          "screen": 60,
+          "mode": 0
+        }
+      },
+      {
+        "label": "缩小口径",
+        "values": {
+          "diameter": 10
+        }
+      },
+      {
+        "label": "三色焦点",
+        "values": {
+          "R": 60,
+          "diameter": 30,
+          "edge": 2,
+          "A": 1.5,
+          "B": 0.004,
+          "wavelength": 550,
+          "screen": 60,
+          "mode": 1
+        }
+      },
+      {
+        "label": "关闭色散",
+        "values": {
+          "B": 0,
+          "mode": 1
+        }
+      }
+    ]
+  },
+  "gaussian-focus": {
+    "title": "高斯光束透镜聚焦",
+    "topic": "beam-transformation",
+    "model": "gaussian-focus",
+    "description": "调节单片正焦距薄透镜，查看出射束腰位置、束腰半径和观察光斑半径。全部位置沿同一向右光轴量取，z₀是入射光束自由传播时的束腰位置，可在透镜前或后。",
+    "scope": "空气、理想基模高斯光束 M²=1、小角度、无像差薄透镜。半径按中心光强1/e²定义。λ从nm换为mm；zR=πw₀²/λ，q₋=zᴸ−z₀+i zR，q₊=1/(1/q₋−1/f)，z′₀=zᴸ−Re(q₊)，w′₀=√(λ Im(q₊)/π)。透镜前方出射束腰仅为反向延拓；透镜后实际最小半径在透镜处。观察面在透镜前时取入射光束。计算忽略截断、损耗和非线性。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 1100,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "waistMm",
+        "label": "入射束腰半径 w₀",
+        "unit": "mm",
+        "min": 0.01,
+        "max": 5,
+        "step": 0.01,
+        "default": 0.5
+      },
+      {
+        "key": "waistPositionMm",
+        "label": "入射束腰位置 z₀",
+        "unit": "mm",
+        "min": -2000,
+        "max": 2000,
+        "step": 1,
+        "default": 0
+      },
+      {
+        "key": "focalLengthMm",
+        "label": "透镜焦距 f",
+        "unit": "mm",
+        "min": 10,
+        "max": 5000,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "lensPositionMm",
+        "label": "透镜位置 zᴸ",
+        "unit": "mm",
+        "min": 0,
+        "max": 600,
+        "step": 1,
+        "default": 200
+      },
+      {
+        "key": "observationMm",
+        "label": "观察位置 z",
+        "unit": "mm",
+        "min": 0,
+        "max": 2000,
+        "step": 1,
+        "default": 320
+      }
+    ],
+    "formulas": [],
+    "presets": []
+  },
+  "beam-transformation-1": {
+    "title": "激光扩束与准直",
+    "topic": "beam-transformation",
+    "model": "gaussian-expander",
+    "description": "双透镜高斯光束扩束。第一镜焦距等于firstKind乘firstFocalMm，第二镜焦距为正；两镜位置独立，第二镜至少在第一镜右侧1 mm。",
+    "scope": "空气、理想基模高斯光束M²=1、小角度、无像差薄透镜；半径按光强1/e²定义。λ从nm换为mm；q₁₋=z₁−z₀+iπw₀²/λ，q₁₊=1/(1/q₁₋−1/f₁)，q₂₋=q₁₊+z₂−z₁，q₂₊=1/(1/q₂₋−1/f₂)。实际倍率w(z₂)/w(z₁)，名义倍率|f₂/f₁|适用无焦设计d=f₁+f₂；发散角为远场半角λ/(πw′₀)。准直目标仅移动第二镜，使其镜后平波前，取较大束腰解，仍有衍射发散；近准直表示镜后100mm内半径变化小于1%。观察面读数按所在传播段计算，忽略截断、损耗及非线性。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 1100,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "waistMm",
+        "label": "入射束腰半径 w₀",
+        "unit": "mm",
+        "min": 0.01,
+        "max": 5,
+        "step": 0.01,
+        "default": 0.5
+      },
+      {
+        "key": "waistPositionMm",
+        "label": "入射束腰位置 z₀",
+        "unit": "mm",
+        "min": -2000,
+        "max": 2000,
+        "step": 1,
+        "default": 0
+      },
+      {
+        "key": "firstKind",
+        "label": "装置类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 2,
+        "default": -1,
+        "options": [
+          {
+            "value": -1,
+            "label": "伽利略式"
+          },
+          {
+            "value": 1,
+            "label": "开普勒式"
+          }
+        ]
+      },
+      {
+        "key": "firstFocalMm",
+        "label": "第一镜焦距大小 |f₁|",
+        "unit": "mm",
+        "min": 10,
+        "max": 500,
+        "step": 1,
+        "default": 25
+      },
+      {
+        "key": "firstPositionMm",
+        "label": "第一镜位置 z₁",
+        "unit": "mm",
+        "min": 0,
+        "max": 500,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "secondFocalMm",
+        "label": "第二镜焦距 f₂",
+        "unit": "mm",
+        "min": 10,
+        "max": 1000,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "secondPositionMm",
+        "label": "第二镜位置 z₂",
+        "unit": "mm",
+        "min": 1,
+        "max": 1100,
+        "step": 1,
+        "default": 175
+      },
+      {
+        "key": "observationMm",
+        "label": "观察位置 z",
+        "unit": "mm",
+        "min": 0,
+        "max": 2000,
+        "step": 1,
+        "default": 500
+      }
+    ],
+    "formulas": [],
+    "presets": []
+  },
+  "resonators-0": {
+    "title": "两镜谐振腔稳定性",
+    "topic": "resonators",
+    "model": "two-mirror-resonator",
+    "description": "调节腔镜曲率与镜距，观察稳定范围和腔内光束。",
+    "scope": "空气中理想球面或平面两镜腔，小角度高斯基模；凹面朝腔内时 R 为正，凸面为负，平面镜曲率为零。严格稳定 0<g₁g₂<1；共焦简并腔取对称高斯解，其他临界和不稳定腔不画有限稳定模式。不计增益、损耗、有限口径与热透镜；稳定不等于达到激光振荡阈值。第一镜固定 z=0，第二镜位于 L，观察面在腔外时不计算腔内光斑。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长 λ",
+        "unit": "nm",
+        "min": 380,
+        "max": 1100,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "lengthMm",
+        "label": "镜间距 L",
+        "unit": "mm",
+        "min": 10,
+        "max": 2000,
+        "step": 1,
+        "default": 300
+      },
+      {
+        "key": "firstKind",
+        "label": "第一镜类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 1,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "凹面镜"
+          },
+          {
+            "value": 0,
+            "label": "平面镜"
+          },
+          {
+            "value": -1,
+            "label": "凸面镜"
+          }
+        ]
+      },
+      {
+        "key": "firstRadiusMm",
+        "label": "第一镜曲率半径大小 |R₁|",
+        "unit": "mm",
+        "min": 20,
+        "max": 5000,
+        "step": 1,
+        "default": 500
+      },
+      {
+        "key": "secondKind",
+        "label": "第二镜类型",
+        "unit": "",
+        "min": -1,
+        "max": 1,
+        "step": 1,
+        "default": 1,
+        "options": [
+          {
+            "value": 1,
+            "label": "凹面镜"
+          },
+          {
+            "value": 0,
+            "label": "平面镜"
+          },
+          {
+            "value": -1,
+            "label": "凸面镜"
+          }
+        ]
+      },
+      {
+        "key": "secondRadiusMm",
+        "label": "第二镜曲率半径大小 |R₂|",
+        "unit": "mm",
+        "min": 20,
+        "max": 5000,
+        "step": 1,
+        "default": 500
+      },
+      {
+        "key": "observationMm",
+        "label": "观察位置 z",
+        "unit": "mm",
+        "min": 0,
+        "max": 2000,
+        "step": 1,
+        "default": 150
+      }
+    ],
+    "formulas": [],
+    "presets": []
+  },
+  "laser-gain-0": {
+    "title": "激光阈值与增益",
+    "topic": "laser-gain",
+    "model": "laser-gain",
+    "description": "调节增益、损耗和腔镜反射率，观察起振阈值与增益饱和。",
+    "scope": "假定已有可共振单模，两镜之间填满均匀增益介质，长度 L。g₀ 与 α 是光强系数，单位 m⁻¹；输入长度 mm、反射率百分数，需换成 m 和 0–1。Q₀=R₁R₂exp[2(g₀−α)L]，gth=α+ln(1/(R₁R₂))/(2L)。稳态等效均匀饱和：g(I)=g₀/(1+I/Iₛ)；g₀>gth>0 时 I/Iₛ=g₀/gth−1，增益钳位在 gth。否则正常有损腔的稳态受激光强为零，忽略自发辐射；此时增益仍为 g₀。I 是输出镜前等效腔内光强，输出镜无吸收，Iout/Iₛ=(1−R₂)I/Iₛ；输出是相对光强，不能声称瓦数或泵浦阈值。理想无损 gth=0 不确定有限稳态光强，返回空值。试算光强是饱和曲线采样，不修改自动稳态。只判断增益条件，不判断几何稳定性、模式相位、多模、瞬态、空间烧孔和泵浦效率。高单程增益时饱和近似会变差。",
+    "parameters": [
+      {
+        "key": "lengthMm",
+        "label": "增益介质长度 L",
+        "unit": "mm",
+        "min": 10,
+        "max": 1000,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "smallSignalGain",
+        "label": "小信号增益 g₀",
+        "unit": "m⁻¹",
+        "min": 0,
+        "max": 50,
+        "step": 0.01,
+        "default": 2
+      },
+      {
+        "key": "lossPerM",
+        "label": "内部损耗系数 α",
+        "unit": "m⁻¹",
+        "min": 0,
+        "max": 10,
+        "step": 0.01,
+        "default": 0.2
+      },
+      {
+        "key": "firstReflectivityPct",
+        "label": "第一镜反射率 R₁",
+        "unit": "%",
+        "min": 1,
+        "max": 100,
+        "step": 0.1,
+        "default": 99
+      },
+      {
+        "key": "secondReflectivityPct",
+        "label": "输出镜反射率 R₂",
+        "unit": "%",
+        "min": 1,
+        "max": 100,
+        "step": 0.1,
+        "default": 90
+      },
+      {
+        "key": "probeIntensity",
+        "label": "试算相对光强 I/Iₛ",
+        "unit": "",
+        "min": 0,
+        "max": 20,
+        "step": 0.01,
+        "default": 0.5
+      }
+    ],
+    "formulas": [],
+    "presets": []
+  },
+  "wave-fields-1": {
+    "title": "光波叠加",
+    "topic": "wave-fields",
+    "model": "wave-superposition",
+    "description": "调整两束光的振幅与相位差，比较电场叠加和平均光强。",
+    "scope": "均匀介质中两束同频、同向、同偏振的完全相干平面光波。电场采用同一相对振幅基准；平均相对光强以振幅为1的单束光为1。纵轴是电场，不是光线偏转；显示固定时刻的电场快照。不计算双缝条纹、不同频率拍频或部分相干。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 600
+      },
+      {
+        "key": "amplitude1",
+        "label": "第一束振幅",
+        "unit": "",
+        "min": 0,
+        "max": 2,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "amplitude2",
+        "label": "第二束振幅",
+        "unit": "",
+        "min": 0,
+        "max": 2,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "phaseDeg",
+        "label": "相位差",
+        "unit": "°",
+        "min": 0,
+        "max": 360,
+        "step": 1,
+        "default": 90
+      },
+      {
+        "key": "observationUm",
+        "label": "观察位置",
+        "unit": "μm",
+        "min": 0,
+        "max": 10,
+        "step": 0.01,
+        "default": 1.1
+      }
+    ],
+    "formulas": [
+      "wave-field-sum",
+      "wave-resultant-amplitude",
+      "wave-average-intensity"
+    ],
+    "presets": [
+      {
+        "label": "同相",
+        "values": {
+          "phaseDeg": 0
+        }
+      },
+      {
+        "label": "反相",
+        "values": {
+          "phaseDeg": 180
+        }
+      },
+      {
+        "label": "相差90°",
+        "values": {
+          "phaseDeg": 90
+        }
+      }
+    ]
+  },
+  "interference-0": {
+    "title": "杨氏双缝干涉",
+    "topic": "interference",
+    "model": "young-double-slit",
+    "description": "改变波长、双缝间距和屏幕距离，观察条纹与光程差。",
+    "scope": "空气中单色、等强、同相、同偏振的两束完全相干光；理想窄缝，忽略单缝衍射包络、传播振幅衰减与部分相干。按两条实际距离之差计算屏上相位与归一化平均光强（最亮为1）；条纹间距 λL/d 为近轴近似。装置图局部放大，屏上位置按毫米标尺。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 600
+      },
+      {
+        "key": "slitDistanceMm",
+        "label": "双缝间距",
+        "unit": "mm",
+        "min": 0.1,
+        "max": 1,
+        "step": 0.01,
+        "default": 0.5
+      },
+      {
+        "key": "screenDistanceM",
+        "label": "屏幕距离",
+        "unit": "m",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "observationMm",
+        "label": "观察位置",
+        "unit": "mm",
+        "min": -20,
+        "max": 20,
+        "step": 0.01,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "young-path-difference",
+      "young-fringe-spacing",
+      "young-intensity"
+    ],
+    "presets": []
+  },
+  "interference-2": {
+    "title": "迈克耳孙干涉仪",
+    "topic": "interference",
+    "model": "michelson",
+    "description": "移动反射镜，观察往返光程差与圆环干涉条纹。",
+    "scope": "空气中单色扩展光源、等强同偏振的两束光；两镜等效平行，分光器玻璃光程已补偿，固定相位参考选择等臂时本输出端为亮。等倾圆环位于理想观察透镜焦平面，r=f tanθ，δ=2(ΔL₀+s₂−s₁)cosθ，I/Imax=cos²(πδ/λ)。忽略有限相干长度、衍射包络、镜面倾斜与像差。L₁=100 mm+s₁，L₂=100 mm+ΔL₀+s₂，微调量需从μm换为mm。器件与微小移镜局部放大，圆环按毫米标尺。移动光源不改变臂长，移动观察透镜时屏跟随保持在焦平面。搭建器副本使用平行激光，仅计算几何光路与功率，不模拟相干圆环。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 600
+      },
+      {
+        "key": "baseDifferenceUm",
+        "label": "初始两臂长度差",
+        "unit": "μm",
+        "min": -500,
+        "max": 500,
+        "step": 1,
+        "default": 120
+      },
+      {
+        "key": "mirrorMoveUm",
+        "label": "第二镜微调",
+        "unit": "μm",
+        "min": -1,
+        "max": 1,
+        "step": 0.001,
+        "default": 0
+      },
+      {
+        "key": "mirror1MoveUm",
+        "label": "第一镜微调",
+        "unit": "μm",
+        "min": -1,
+        "max": 1,
+        "step": 0.001,
+        "default": 0
+      },
+      {
+        "key": "sourceDistanceMm",
+        "label": "光源到分光镜",
+        "unit": "mm",
+        "min": 65,
+        "max": 150,
+        "step": 0.1,
+        "default": 100
+      },
+      {
+        "key": "lensDistanceMm",
+        "label": "观察透镜位置",
+        "unit": "mm",
+        "min": 35,
+        "max": 80,
+        "step": 0.1,
+        "default": 50
+      },
+      {
+        "key": "focalLengthMm",
+        "label": "观察透镜焦距",
+        "unit": "mm",
+        "min": 75,
+        "max": 200,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "observationRadiusMm",
+        "label": "观察半径",
+        "unit": "mm",
+        "min": 0,
+        "max": 12,
+        "step": 0.01,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "michelson-path",
+      "michelson-intensity",
+      "michelson-displacement"
+    ],
+    "presets": []
+  },
+  "diffraction-0": {
+    "title": "单缝衍射",
+    "topic": "diffraction",
+    "model": "single-slit",
+    "description": "改变缝宽与波长，观察中央亮纹的宽窄。",
+    "scope": "单色平行光均匀正入射长狭缝，采用一维标量远场衍射。θ=atan(y/L)，β=πa sinθ/λ，I/I₀=(sinβ/β)²；中央光强为1。忽略有限缝高、偏振及近场效应。缝宽局部放大，屏上坐标按毫米标尺。所有参数满足a²/(λL)≤0.1。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "slitWidthMm",
+        "label": "缝宽",
+        "unit": "mm",
+        "min": 0.02,
+        "max": 0.08,
+        "step": 0.001,
+        "default": 0.05
+      },
+      {
+        "key": "screenDistanceM",
+        "label": "屏幕距离",
+        "unit": "m",
+        "min": 0.3,
+        "max": 0.8,
+        "step": 0.01,
+        "default": 0.5
+      },
+      {
+        "key": "observationMm",
+        "label": "观察位置",
+        "unit": "mm",
+        "min": -40,
+        "max": 40,
+        "step": 0.01,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "single-slit-intensity",
+      "single-slit-width",
+      "single-slit-angle"
+    ],
+    "presets": [
+      {
+        "label": "默认",
+        "values": {
+          "wavelengthNm": 532,
+          "slitWidthMm": 0.05,
+          "screenDistanceM": 0.5,
+          "observationMm": 0
+        }
+      },
+      {
+        "label": "窄缝",
+        "values": {
+          "slitWidthMm": 0.025
+        }
+      }
+    ]
+  },
+  "diffraction-1": {
+    "title": "圆孔衍射与艾里斑",
+    "topic": "diffraction",
+    "model": "circular-diffraction",
+    "description": "改变孔径，观察中央亮斑与同心圆环。",
+    "scope": "单色均匀平行光正入射理想圆孔，理想观察透镜将远场图样呈现在后焦平面；屏跟随透镜焦距f。采用近轴标量模型u=πDr/(λf)，I/I₀=[2J₁(u)/u]²；中央取极限1。第一暗环u=3.8317059702，r₁≈1.22λf/D，dₐ=2r₁。忽略像差、有限透镜截断、偏振及离焦；圆孔局部放大，光斑和曲线用μm标尺。器件副本只显示几何光路，艾里圆环留在此场景。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "apertureDiameterMm",
+        "label": "圆孔直径",
+        "unit": "mm",
+        "min": 1,
+        "max": 8,
+        "step": 0.1,
+        "default": 2
+      },
+      {
+        "key": "focalLengthMm",
+        "label": "透镜焦距",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "step": 1,
+        "default": 120
+      },
+      {
+        "key": "observationRadiusUm",
+        "label": "观察半径",
+        "unit": "μm",
+        "min": 0,
+        "max": 500,
+        "step": 1,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "circular-intensity",
+      "circular-diameter",
+      "circular-angle"
+    ],
+    "presets": [
+      {
+        "label": "默认",
+        "values": {
+          "wavelengthNm": 532,
+          "apertureDiameterMm": 2,
+          "focalLengthMm": 120,
+          "observationRadiusUm": 0
+        }
+      },
+      {
+        "label": "小圆孔",
+        "values": {
+          "apertureDiameterMm": 1
+        }
+      }
+    ]
+  },
+  "spatial-spectrum-0": {
+    "title": "透镜的傅里叶变换",
+    "topic": "spatial-spectrum",
+    "model": "fourier-lens",
+    "description": "拖动输入条纹与透镜，观察空间频率如何映射到频谱屏。",
+    "scope": "理想相干单色光，前后焦面分别为输入面和频谱面；输入场U(x,y)=exp[-(x²+y²)/w²]·[1+m cos(2πx/d)]/(1+m)。透镜对复振幅作二维傅里叶变换，νx=xF/(λf)，νy=yF/(λf)。频谱为三个高斯振幅之和，光强取其模平方并以中心归一化；±1/d对应xF=±λf/d，单个高斯分量的1/e²光强半径wF=λf/(πw)。忽略有限透镜截断、像差、偏振与离焦，不包含4f空间滤波。m=0时无条纹，只含高斯光斑；所有输入状态均可复制光源、振幅光栅、透镜与频谱屏到光路搭建，保留参数；搭建页在共轴、前后焦面、输入束腰和足够口径条件下计算相同频谱。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "periodMm",
+        "label": "条纹周期",
+        "unit": "mm",
+        "min": 0.08,
+        "max": 0.4,
+        "step": 0.005,
+        "default": 0.16
+      },
+      {
+        "key": "waistMm",
+        "label": "光束半径",
+        "unit": "mm",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.05,
+        "default": 0.8
+      },
+      {
+        "key": "modulation",
+        "label": "条纹对比",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "default": 1
+      },
+      {
+        "key": "focalLengthMm",
+        "label": "透镜焦距",
+        "unit": "mm",
+        "min": 80,
+        "max": 250,
+        "step": 1,
+        "default": 120
+      },
+      {
+        "key": "observationUm",
+        "label": "观察位置",
+        "unit": "μm",
+        "min": -3000,
+        "max": 3000,
+        "step": 1,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "fourier-position",
+      "fourier-width",
+      "fourier-intensity"
+    ],
+    "presets": [
+      {
+        "label": "条纹输入",
+        "values": {
+          "modulation": 1
+        }
+      },
+      {
+        "label": "无条纹",
+        "values": {
+          "modulation": 0
+        }
+      }
+    ]
+  },
+  "spatial-spectrum-1": {
+    "title": "4f 系统与空间滤波",
+    "topic": "spatial-spectrum",
+    "model": "four-f",
+    "description": "拖动滤波片，观察输出条纹。",
+    "scope": "相干单色光、两镜等焦距、理想无限薄透镜；频谱面一维振幅狭缝或挡片，输出为复振幅变换的模平方。忽略有限口径、像差与离焦。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 532
+      },
+      {
+        "key": "periodMm",
+        "label": "条纹周期",
+        "unit": "mm",
+        "min": 0.08,
+        "max": 0.4,
+        "step": 0.005,
+        "default": 0.16
+      },
+      {
+        "key": "waistMm",
+        "label": "光束半径",
+        "unit": "mm",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.05,
+        "default": 0.8
+      },
+      {
+        "key": "modulation",
+        "label": "条纹对比",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "default": 1
+      },
+      {
+        "key": "focalLengthMm",
+        "label": "透镜焦距",
+        "unit": "mm",
+        "min": 80,
+        "max": 130,
+        "step": 1,
+        "default": 120
+      },
+      {
+        "key": "filterWidthUm",
+        "label": "滤波宽度",
+        "unit": "μm",
+        "min": 10,
+        "max": 5000,
+        "step": 10,
+        "default": 200
+      },
+      {
+        "key": "filterOffsetUm",
+        "label": "滤波位置",
+        "unit": "μm",
+        "min": -2200,
+        "max": 2200,
+        "step": 5,
+        "default": 0
+      },
+      {
+        "key": "filterMode",
+        "label": "滤波方式",
+        "unit": "",
+        "min": 0,
+        "max": 2,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "通光狭缝"
+          },
+          {
+            "value": 1,
+            "label": "遮光挡片"
+          },
+          {
+            "value": 2,
+            "label": "全通"
+          }
+        ]
+      },
+      {
+        "key": "observationMm",
+        "label": "观察位置",
+        "unit": "mm",
+        "min": -3,
+        "max": 3,
+        "step": 0.01,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "four-f-length",
+      "four-f-bandwidth",
+      "four-f-output"
+    ],
+    "presets": [
+      {
+        "label": "低通",
+        "values": {
+          "filterMode": 0,
+          "filterWidthUm": 200,
+          "filterOffsetUm": 0
+        }
+      },
+      {
+        "label": "高通",
+        "values": {
+          "filterMode": 1,
+          "filterWidthUm": 200,
+          "filterOffsetUm": 0
+        }
+      },
+      {
+        "label": "全通",
+        "values": {
+          "filterMode": 2
+        }
+      }
+    ]
+  },
+  "radiometric-quantities-0": {
+    "title": "点光源照度与距离",
+    "topic": "radiometric-quantities",
+    "model": "point-source",
+    "description": "调整光强与距离，观察接收面中心照度。",
+    "scope": "理想点光源，接收面中心垂直于入射光；只计算中心照度，不计算整面照度分布。不含环境光、介质吸收、遮挡和反射。I 是沿接收方向的发光强度（cd），E 是照度（lx），不是辐照度（W/m²）。距离须远大于真实光源尺寸，近处有限光源不适用。",
+    "parameters": [
+      {
+        "key": "intensityCd",
+        "label": "光强",
+        "unit": "cd",
+        "min": 0,
+        "max": 2000,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "distanceM",
+        "label": "距离",
+        "unit": "m",
+        "min": 0.2,
+        "max": 10,
+        "step": 0.01,
+        "default": 2
+      }
+    ],
+    "formulas": [
+      "point-source-illuminance"
+    ],
+    "presets": []
+  },
+  "photometric-quantities-0": {
+    "title": "照度分布与光源方向",
+    "topic": "photometric-quantities",
+    "model": "illumination-map",
+    "description": "移动射灯、改变方向，观察接收面的照度分布。",
+    "scope": "简化定向点光源，水平接收面z=0，光源位置(x_s,0,h)，主轴仅在x-z平面转动。θ=0向正下方，θ>0朝+x；配光I(α)=I₀ max(cosα,0)^n，n=ln(1/2)/ln(cosβ)，β为光强降到主轴一半的离轴角，不是截止角或完整束角。E=I(α)cosγ/r²，γ从接收面法线量起。单位cd、m、lx。固定8m×8m接收区域，最大值和均匀度基于81×81采样，平均照度采用二维梯形积分近似，不保证连续极值。调节方向保持主轴光强，不保证总光通量不变。忽略有限光源尺寸、环境光、吸收、反射与遮挡。",
+    "parameters": [
+      {
+        "key": "intensityCd",
+        "label": "主轴光强",
+        "unit": "cd",
+        "min": 0,
+        "max": 2000,
+        "step": 1,
+        "default": 500
+      },
+      {
+        "key": "sourceXM",
+        "label": "光源位置",
+        "unit": "m",
+        "min": -3,
+        "max": 3,
+        "step": 0.01,
+        "default": 0
+      },
+      {
+        "key": "heightM",
+        "label": "高度",
+        "unit": "m",
+        "min": 0.5,
+        "max": 5,
+        "step": 0.01,
+        "default": 2
+      },
+      {
+        "key": "tiltDeg",
+        "label": "倾角",
+        "unit": "°",
+        "min": -70,
+        "max": 70,
+        "step": 1,
+        "default": 20
+      },
+      {
+        "key": "halfAngleDeg",
+        "label": "半强角",
+        "unit": "°",
+        "min": 10,
+        "max": 60,
+        "step": 1,
+        "default": 30
+      },
+      {
+        "key": "observationXM",
+        "label": "观察横坐标",
+        "unit": "m",
+        "min": -4,
+        "max": 4,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "observationYM",
+        "label": "观察纵坐标",
+        "unit": "m",
+        "min": -4,
+        "max": 4,
+        "step": 0.01,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "directional-illuminance"
+    ],
+    "presets": []
+  },
+  "fiber-modes-0": {
+    "title": "光纤数值孔径与导模",
+    "topic": "fiber-modes",
+    "model": "fiber-modes",
+    "description": "调节入射角与纤芯参数，观察导光条件和单模范围。",
+    "scope": "空气入射、平整端面、直圆形阶跃型光纤，纤芯与包层均匀无损。n₁>n₂时NA=√(n₁²−n₂²)，接收半角相对轴线，界面临界角相对法线。二维图是过轴几何光线示意，按当前视窗裁切，横纵比例一致；角度标注直接对应光线与法线；仅画首次漏出的折射支路，不计算反射漏光功率。单模判据采用弱导近似，V小于约2.405；截止边界单列。模式表示稳定传播的横向光场形状，反弹次数不是模式数。折射率固定，不含材料色散、弯曲损耗、模场分布、偏振简并计数或实际耦合效率。n₁≤n₂时无纤芯折射率导光，NA、V、截止波长不适用。",
+    "parameters": [
+      {
+        "key": "coreIndex",
+        "label": "纤芯折射率",
+        "unit": "",
+        "min": 1.44,
+        "max": 1.47,
+        "step": 0.0001,
+        "default": 1.46
+      },
+      {
+        "key": "claddingIndex",
+        "label": "包层折射率",
+        "unit": "",
+        "min": 1.44,
+        "max": 1.47,
+        "step": 0.0001,
+        "default": 1.455
+      },
+      {
+        "key": "radiusUm",
+        "label": "纤芯半径",
+        "unit": "μm",
+        "min": 1,
+        "max": 25,
+        "step": 0.1,
+        "default": 4.1
+      },
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 400,
+        "max": 1700,
+        "step": 1,
+        "default": 1550
+      },
+      {
+        "key": "angleDeg",
+        "label": "入射角",
+        "unit": "°",
+        "min": 0,
+        "max": 30,
+        "step": 0.1,
+        "default": 5
+      }
+    ],
+    "formulas": [
+      "fiber-na",
+      "fiber-v",
+      "fiber-cutoff"
+    ],
+    "presets": [
+      {
+        "label": "单模",
+        "values": {
+          "coreIndex": 1.46,
+          "claddingIndex": 1.455,
+          "radiusUm": 4.1,
+          "wavelengthNm": 1550,
+          "angleDeg": 5
+        }
+      },
+      {
+        "label": "多模",
+        "values": {
+          "coreIndex": 1.46,
+          "claddingIndex": 1.455,
+          "radiusUm": 12.5,
+          "wavelengthNm": 850,
+          "angleDeg": 5
+        }
+      },
+      {
+        "label": "漏光",
+        "values": {
+          "coreIndex": 1.46,
+          "claddingIndex": 1.455,
+          "radiusUm": 4.1,
+          "wavelengthNm": 1550,
+          "angleDeg": 15
+        }
+      }
+    ]
+  },
+  "fiber-modes-1": {
+    "title": "单模光纤耦合",
+    "topic": "fiber-modes",
+    "model": "fiber-coupling",
+    "description": "对准入射光与光纤模场，观察耦合效率。",
+    "scope": "空气入射，理想单模光纤模场和入射光采用圆对称高斯光场近似；两半径均为光强降至中心1/e²处的半径，模场半径不是纤芯半径。束腰位于端面，波前曲率匹配，同偏振，小倾角；横向偏移与倾角均在图示平面内。η=4w²wf²/(w²+wf²)²·exp[-2d²/(w²+wf²)−k²w²wf²sin²θ/(2(w²+wf²))]，k=2π/λ，倾角在空气中量起。不包括端面反射、离焦、偏振失配、材料色散、非高斯模场或多模耦合；模式半径作为当前波长下的独立输入，不计算是否单模。",
+    "parameters": [
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 400,
+        "max": 1700,
+        "step": 1,
+        "default": 1550
+      },
+      {
+        "key": "beamRadiusUm",
+        "label": "光斑半径",
+        "unit": "μm",
+        "min": 1,
+        "max": 15,
+        "step": 0.1,
+        "default": 4
+      },
+      {
+        "key": "modeRadiusUm",
+        "label": "模场半径",
+        "unit": "μm",
+        "min": 1,
+        "max": 10,
+        "step": 0.1,
+        "default": 5.2
+      },
+      {
+        "key": "offsetUm",
+        "label": "横向偏移",
+        "unit": "μm",
+        "min": -15,
+        "max": 15,
+        "step": 0.1,
+        "default": 1.5
+      },
+      {
+        "key": "tiltDeg",
+        "label": "入射倾角",
+        "unit": "°",
+        "min": -5,
+        "max": 5,
+        "step": 0.1,
+        "default": 1
+      },
+      {
+        "key": "powerMw",
+        "label": "入射功率",
+        "unit": "mW",
+        "min": 0.1,
+        "max": 20,
+        "step": 0.1,
+        "default": 1
+      }
+    ],
+    "formulas": [
+      "fiber-coupling-efficiency",
+      "fiber-coupled-power"
+    ],
+    "presets": [
+      {
+        "label": "对准",
+        "values": {
+          "beamRadiusUm": 5.2,
+          "modeRadiusUm": 5.2,
+          "offsetUm": 0,
+          "tiltDeg": 0
+        }
+      },
+      {
+        "label": "偏移",
+        "values": {
+          "beamRadiusUm": 5.2,
+          "modeRadiusUm": 5.2,
+          "offsetUm": 5.2,
+          "tiltDeg": 0
+        }
+      },
+      {
+        "label": "失配",
+        "values": {
+          "beamRadiusUm": 10.4,
+          "modeRadiusUm": 5.2,
+          "offsetUm": 0,
+          "tiltDeg": 0
+        }
+      }
+    ]
+  },
+  "polarization-0": {
+    "title": "偏振片与马吕斯定律",
+    "topic": "polarization",
+    "model": "malus",
+    "description": "旋转偏振方向和透光轴，观察透射功率。",
+    "scope": "线偏振平行光正入射理想偏振片，透光轴无吸收，垂直分量完全阻挡。Pout=Pin cos²θ，θ为两条无向轴的较小夹角，范围0–90°。光束完整通过器件及探测器，不计反射、有限消光比或口径截光；功率与光强在固定光斑面积下具有相同透射比例。图中为沿光传播方向观察的正视图，两条轴线表示偏振方向和透光轴，不是传播路径。复制为平行线偏振光源、理想偏振片和功率计，保持入射功率及两轴角度。",
+    "parameters": [
+      {
+        "key": "powerMw",
+        "label": "入射功率",
+        "unit": "mW",
+        "min": 0,
+        "max": 20,
+        "step": 0.1,
+        "default": 10
+      },
+      {
+        "key": "inputAngleDeg",
+        "label": "偏振方向",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "step": 0.1,
+        "default": 0
+      },
+      {
+        "key": "axisAngleDeg",
+        "label": "透光轴",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "step": 0.1,
+        "default": 45
+      }
+    ],
+    "formulas": [
+      "malus-power"
+    ],
+    "presets": [
+      {
+        "label": "平行",
+        "values": {
+          "axisAngleDeg": 0,
+          "inputAngleDeg": 0
+        }
+      },
+      {
+        "label": "半透",
+        "values": {
+          "axisAngleDeg": 45,
+          "inputAngleDeg": 0
+        }
+      },
+      {
+        "label": "正交",
+        "values": {
+          "axisAngleDeg": 90,
+          "inputAngleDeg": 0
+        }
+      }
+    ]
+  },
+  "polarization-1": {
+    "title": "波片与偏振态",
+    "topic": "polarization",
+    "model": "waveplate",
+    "description": "转动快轴，观察直线、圆与椭圆偏振。",
+    "scope": "线偏振平行光正入射理想无损波片，固定在532 nm设计波长；四分之一波片慢轴相对快轴延迟90°，半波片180°。α、β相对同一水平轴逆时针量起，无向轴相差180°等效。复振幅Eout=f cos(α−β)+s sin(α−β) exp(iδ)，时间因子exp(−iωt)。中间为可旋转的三维波片与空间电场，右侧为同步的输出电场正视图；空间长度为示意，电场归一化，动画慢放，曲线不是光线路径。归一化S3=2Im(Ex Ey共轭)，在右侧沿传播方向的固定观察方式下S3>0为顺时针，不使用左右旋命名。圆偏振无固定长轴，零功率时偏振量为空，不把无光当成线偏振。忽略色散、倾斜入射、吸收及口径截光。复制为线偏振光源、当前波片和功率计，保持功率、输入偏振角及快轴角，并以相同探测器横向U/V基底核对S1/S2/S3。",
+    "parameters": [
+      {
+        "key": "plateType",
+        "label": "波片类型",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "四分之一波片"
+          },
+          {
+            "value": 1,
+            "label": "半波片"
+          }
+        ]
+      },
+      {
+        "key": "powerMw",
+        "label": "入射功率",
+        "unit": "mW",
+        "min": 0,
+        "max": 20,
+        "step": 0.1,
+        "default": 10
+      },
+      {
+        "key": "inputAngleDeg",
+        "label": "偏振方向",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "step": 0.1,
+        "default": 0
+      },
+      {
+        "key": "axisAngleDeg",
+        "label": "快轴角",
+        "unit": "°",
+        "min": 0,
+        "max": 180,
+        "step": 0.1,
+        "default": 45
+      }
+    ],
+    "formulas": [
+      "waveplate-s3"
+    ],
+    "presets": [
+      {
+        "label": "线偏振",
+        "values": {
+          "plateType": 0,
+          "inputAngleDeg": 0,
+          "axisAngleDeg": 0
+        }
+      },
+      {
+        "label": "圆偏振",
+        "values": {
+          "plateType": 0,
+          "inputAngleDeg": 0,
+          "axisAngleDeg": 45
+        }
+      },
+      {
+        "label": "椭圆偏振",
+        "values": {
+          "plateType": 0,
+          "inputAngleDeg": 0,
+          "axisAngleDeg": 22.5
+        }
+      }
+    ]
+  },
+  "polarization-2": {
+    "title": "布儒斯特角与双折射",
+    "topic": "polarization",
+    "model": "polarization-refraction",
+    "description": "拖动入射光或晶体光轴，观察偏振反射与分束。",
+    "scope": "两个独立模型切换，不把各向同性界面的布儒斯特公式套到晶体。模式0：透明、非磁、无吸收的平面单界面，入射角从法线量起，s电场垂直图面、p电场在图面内；按菲涅耳功率反射率计算，未偏振光取Rs与Rp平均，T=1−R。折射率相等时没有特定布儒斯特角；临界角取等号时为掠射临界，不显示有限法向透射功率。模式1：单轴晶体平行平板、未偏振平行光正入射，光轴位于剖面内，γ从向右法线逆时针量起，no、ne是两个主折射率。e有效相位折射率=[cos²γ/no²+sin²γ/ne²]^(−1/2)，光线表示能量流，tanρ=(ne²−no²)sinγcosγ/(ne²cos²γ+no²sin²γ)，图上正ρ向上，d=L|tanρ|。o光直行，e光在晶体内走离，平行出射面后两束光平行；图内水平和竖直用同一毫米比例，视图随参数缩放。沿光轴或垂直光轴传播时空间分束为零，不能说所有方向都分束。晶体模式不计算表面反射、光功率、相干干涉、色散或一般斜入射。当前搭建器材不支持对应的偏振菲涅耳界面或单轴晶体分束，不提供复制。",
+    "parameters": [
+      {
+        "key": "mode",
+        "label": "观察内容",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "布儒斯特角"
+          },
+          {
+            "value": 1,
+            "label": "双折射"
+          }
+        ]
+      },
+      {
+        "key": "n1",
+        "label": "入射侧折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "step": 0.001,
+        "default": 1
+      },
+      {
+        "key": "n2",
+        "label": "透射侧折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "step": 0.001,
+        "default": 1.5
+      },
+      {
+        "key": "angleDeg",
+        "label": "入射角",
+        "unit": "°",
+        "min": 0,
+        "max": 89.9,
+        "step": 0.1,
+        "default": 55
+      },
+      {
+        "key": "polarization",
+        "label": "入射偏振",
+        "unit": "",
+        "min": 0,
+        "max": 2,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "未偏振"
+          },
+          {
+            "value": 1,
+            "label": "s 偏振"
+          },
+          {
+            "value": 2,
+            "label": "p 偏振"
+          }
+        ]
+      },
+      {
+        "key": "ordinaryIndex",
+        "label": "o 光折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "step": 0.001,
+        "default": 1.658
+      },
+      {
+        "key": "extraordinaryIndex",
+        "label": "e 主折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.4,
+        "step": 0.001,
+        "default": 1.486
+      },
+      {
+        "key": "axisAngleDeg",
+        "label": "光轴角",
+        "unit": "°",
+        "min": 0,
+        "max": 90,
+        "step": 0.1,
+        "default": 45
+      },
+      {
+        "key": "thicknessMm",
+        "label": "晶体厚度",
+        "unit": "mm",
+        "min": 1,
+        "max": 20,
+        "step": 0.1,
+        "default": 10
+      }
+    ],
+    "formulas": [
+      "brewster-angle",
+      "crystal-separation"
+    ],
+    "presets": [
+      {
+        "label": "布儒斯特角",
+        "values": {
+          "mode": 0,
+          "n1": 1,
+          "n2": 1.5,
+          "angleDeg": 56.309932474020215
+        }
+      },
+      {
+        "label": "全反射",
+        "values": {
+          "mode": 0,
+          "n1": 1.5,
+          "n2": 1,
+          "angleDeg": 50
+        }
+      },
+      {
+        "label": "分束",
+        "values": {
+          "mode": 1,
+          "ordinaryIndex": 1.658,
+          "extraordinaryIndex": 1.486,
+          "axisAngleDeg": 45,
+          "thicknessMm": 10
+        }
+      },
+      {
+        "label": "沿光轴",
+        "values": {
+          "mode": 1,
+          "axisAngleDeg": 0
+        }
+      }
+    ]
+  },
+  "interference-1": {
+    "title": "薄膜干涉与牛顿环",
+    "topic": "interference",
+    "model": "film-interference",
+    "description": "从两路反射到等厚圆环，观察膜厚如何改变干涉。",
+    "scope": "无吸收单层膜；薄膜模式为s偏振平面波，牛顿环为玻璃间薄膜的近轴正入射局部模型。",
+    "parameters": [
+      {
+        "key": "mode",
+        "label": "观察模式",
+        "unit": "",
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "default": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "薄膜干涉"
+          },
+          {
+            "value": 1,
+            "label": "牛顿环"
+          }
+        ]
+      },
+      {
+        "key": "wavelengthNm",
+        "label": "波长",
+        "unit": "nm",
+        "min": 380,
+        "max": 780,
+        "step": 1,
+        "default": 600
+      },
+      {
+        "key": "filmIndex",
+        "label": "薄膜折射率",
+        "unit": "",
+        "min": 1.05,
+        "max": 2.1,
+        "step": 0.01,
+        "default": 1.38
+      },
+      {
+        "key": "substrateIndex",
+        "label": "基底折射率",
+        "unit": "",
+        "min": 1,
+        "max": 2.2,
+        "step": 0.01,
+        "default": 1.52
+      },
+      {
+        "key": "incidentAngleDeg",
+        "label": "入射角",
+        "unit": "°",
+        "min": 0,
+        "max": 60,
+        "step": 1,
+        "default": 25
+      },
+      {
+        "key": "thicknessNm",
+        "label": "薄膜厚度",
+        "unit": "nm",
+        "min": 0,
+        "max": 1500,
+        "step": 1,
+        "default": 100
+      },
+      {
+        "key": "curvatureRadiusMm",
+        "label": "镜片曲率半径",
+        "unit": "mm",
+        "min": 500,
+        "max": 3000,
+        "step": 10,
+        "default": 1000
+      },
+      {
+        "key": "gapIndex",
+        "label": "膜内折射率",
+        "unit": "",
+        "min": 1,
+        "max": 1.45,
+        "step": 0.01,
+        "default": 1
+      },
+      {
+        "key": "centralGapNm",
+        "label": "中心间隙",
+        "unit": "nm",
+        "min": 0,
+        "max": 1000,
+        "step": 1,
+        "default": 0
+      },
+      {
+        "key": "observationRadiusMm",
+        "label": "观察半径",
+        "unit": "mm",
+        "min": 0,
+        "max": 3,
+        "step": 0.01,
+        "default": 0
+      }
+    ],
+    "formulas": [
+      "film-path",
+      "film-reflection",
+      "newton-thickness",
+      "newton-dark-radius"
+    ],
+    "presets": [
+      {
+        "label": "减反膜",
+        "values": {
+          "mode": 0,
+          "filmIndex": 1.38,
+          "substrateIndex": 1.52,
+          "incidentAngleDeg": 0,
+          "thicknessNm": 108.69565217391305
+        }
+      },
+      {
+        "label": "肥皂膜",
+        "values": {
+          "mode": 0,
+          "filmIndex": 1.333,
+          "substrateIndex": 1,
+          "incidentAngleDeg": 0,
+          "thicknessNm": 112.52813203300826
+        }
+      },
+      {
+        "label": "空气膜接触",
+        "values": {
+          "mode": 1,
+          "gapIndex": 1,
+          "centralGapNm": 0,
+          "observationRadiusMm": 0
+        }
+      }
+    ]
+  }
+}

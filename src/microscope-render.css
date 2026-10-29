@@ -1,0 +1,5 @@
+.sb-microscope-focus{position:absolute;right:22px;bottom:68px;z-index:3;display:flex;align-items:center;gap:6px;padding:9px 12px;border:1px solid #d5dfdf;border-radius:10px;background:#ffffffed;box-shadow:0 3px 16px #213f4810;color:#536b71;font-size:12px;backdrop-filter:blur(8px)}
+.sb-microscope-focus input{box-sizing:content-box;flex:0 0 auto;width:3ch;min-width:3ch;border:0;border-bottom:1px solid #cadbd9;background:transparent;color:#244c52;font:500 13px ui-monospace,monospace;text-align:left;padding:3px;appearance:textfield;-moz-appearance:textfield}
+.sb-microscope-focus input::-webkit-inner-spin-button,.sb-microscope-focus input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.sb-microscope-focus input:focus{outline:2px solid #83bdb3;outline-offset:3px;border-radius:2px}
+.sb-microscope-focus small{color:#79908f}

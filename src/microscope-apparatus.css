@@ -1,0 +1,17 @@
+.os-microscope-presentation{display:flex;gap:2px;border:1px solid #dde6ef;border-radius:7px;padding:2px;background:#f6f8fb}
+.os-microscope-presentation button{padding:4px 8px;border:0;border-radius:5px;background:none;color:#7c8da0;font-size:12px;white-space:nowrap;cursor:pointer}
+.os-microscope-presentation button[aria-pressed="true"]{background:#fff;color:#356daf;box-shadow:0 1px 3px #263f6012}
+.os-microscope-presentation button:focus-visible{outline:2px solid #739ac8;outline-offset:1px}
+.microscope-apparatus .microscope-shell{fill:#e8edf2;fill-opacity:.7;stroke:#aab8c7;stroke-width:1.5}
+.microscope-apparatus .microscope-cutaway{fill:#fbfdff;fill-opacity:.85;stroke:#d8e2eb;stroke-width:1}
+.microscope-apparatus .microscope-objective-shell{fill:#dce5ec;fill-opacity:.65;stroke:#91a6b9;stroke-width:1.5}
+.microscope-apparatus .microscope-shell-seam{fill:none;stroke:#c3ced9;stroke-width:2}
+.microscope-apparatus .microscope-rim{fill:none;stroke:#738da3;stroke-width:4;stroke-linecap:round}
+.microscope-apparatus .microscope-slide{fill:#c2e4e4;fill-opacity:.55;stroke:#77aaa9;stroke-width:1}
+.microscope-apparatus .microscope-camera-shell{fill:#e5ecf2;fill-opacity:.7;stroke:#91a6b9;stroke-width:1.5}
+.microscope-apparatus .microscope-camera-detail{fill:#bacbd8}
+.gs-plot .microscope-apparatus text{font-size:12px;fill:#6e8499}
+.gs-plot .microscope-eye text{font-size:12px;fill:#6e8499}
+.gs-plot .microscope-eye .microscope-final-image{fill:#26836a}
+.optics-scene:has(.os-microscope-presentation) .gs-toolbar-left{flex-wrap:wrap}
+.optics-scene:has(.os-microscope-presentation) .gs-toolbar{height:auto;min-height:42px;gap:6px;flex-wrap:wrap;padding-block:5px}
