@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-29",
+  "date": "2026-10-30",
   "state": "approved_public_release_snapshot",
   "license": "MIT",
   "repository": "https://github.com/KylerGu/optics-lab-open-source",
@@ -625,7 +625,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "50ea3a362a9e2b09385e157e55456107c0481e6c265bda42f365321e5e1bd42c"
+      "sha256": "a1ca2dba114e146b3c4ca978fa1bcbf1ba7c7d1a19d8a970b1ac44efa6d7f2f4"
     },
     {
       "path": "render.yaml",
