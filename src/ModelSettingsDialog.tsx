@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState, createContext, type FormEvent } from "react";
-import { KeyRound, X } from "lucide-react";
+import { Eye, EyeOff, KeyRound, X } from "lucide-react";
 import {
   DEEPSEEK_BASE_URL,
   DEEPSEEK_MODEL_OPTIONS,
@@ -39,6 +39,7 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
   const [sessionOnly, setSessionOnly] = useState(false);
   const [keyInput, setKeyInput] = useState("");
   const [savedKey, setSavedKey] = useState("");
+  const [savedPersistence, setSavedPersistence] = useState<"local" | "session" | null>(null);
   const [reveal, setReveal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +52,7 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
       setReasoning(saved?.reasoning ?? "high");
       setSessionOnly(saved?.persistence === "session");
       setSavedKey(saved?.apiKey ?? "");
+      setSavedPersistence(saved?.persistence ?? null);
       setKeyInput("");
       setReveal(false);
       setError(null);
@@ -77,6 +79,7 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
   function clear() {
     clearModelSettings();
     setSavedKey("");
+    setSavedPersistence(null);
     setKeyInput("");
     setError(null);
   }
@@ -101,13 +104,16 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
         </select>
       </label>
       <label>API Key
-        {savedKey && <span className="model-settings-mask">当前密钥 {maskKey(savedKey)}</span>}
+        {savedKey && <span className="model-settings-mask">当前密钥 {maskKey(savedKey)} · {savedPersistence === "session" ? "仅当前标签页" : "本浏览器"}</span>}
         <span className="model-settings-keyline">
           <input type={reveal ? "text" : "password"} value={keyInput} autoComplete="off" spellCheck={false} placeholder={savedKey ? "留空则继续使用当前密钥" : "粘贴 DeepSeek API Key"} onChange={event => setKeyInput(event.target.value)}/>
-          <button type="button" className="outline-button" onClick={() => setReveal(value => !value)}>{reveal ? "隐藏" : "显示"}</button>
+          <button type="button" className="model-settings-reveal" aria-label={reveal ? "隐藏密钥" : "显示密钥"} aria-pressed={reveal} onClick={() => setReveal(value => !value)}>{reveal ? <EyeOff size={16} aria-hidden="true"/> : <Eye size={16} aria-hidden="true"/>}</button>
         </span>
       </label>
-      <label className="model-settings-check"><input type="checkbox" checked={sessionOnly} onChange={event => setSessionOnly(event.target.checked)}/>只在本次标签页保留，关闭标签页后删除</label>
+      <div className="model-settings-keep">
+        <label className="model-settings-check" htmlFor="model-settings-session"><input id="model-settings-session" type="checkbox" checked={sessionOnly} aria-describedby="model-settings-session-hint" onChange={event => setSessionOnly(event.target.checked)}/>不在此设备保存</label>
+        <p id="model-settings-session-hint">勾选后密钥只在当前标签页有效，关闭即清除，适合公共电脑；不勾选则保存在本浏览器，下次无需重填。</p>
+      </div>
       {error && <p className="model-settings-error" role="alert">{error}</p>}
       <div className="modal-footer">
         <button type="button" className="text-button" onClick={clear} disabled={!savedKey && !keyInput}>清除密钥</button>
