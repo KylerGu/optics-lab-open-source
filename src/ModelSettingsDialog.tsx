@@ -18,6 +18,8 @@ import "./model-settings.css";
 export const ModelSettingsContext = createContext<() => void>(() => {});
 export const useOpenModelSettings = () => useContext(ModelSettingsContext);
 
+const PROVIDER_HOST = new URL(DEEPSEEK_BASE_URL).host;
+
 export function ModelSettingsButton({ onClick }: { onClick: () => void }) {
   const [summary, setSummary] = useState(modelSettingsSummary);
   useEffect(() => listenModelSettings(() => setSummary(modelSettingsSummary())), []);
@@ -90,19 +92,20 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
         <h2 id="model-settings-title">模型设置</h2>
         <button type="button" className="icon-button" aria-label="关闭模型设置" onClick={onClose}><X size={18}/></button>
       </div>
-      <p className="modal-description">四个助手都使用你自己的 DeepSeek 密钥。密钥只留在这台浏览器里，请求时放在请求头中，服务器不保存、不写入日志。</p>
-      <label>服务商<span className="model-settings-fixed">DeepSeek 官方</span></label>
-      <label>接口地址<span className="model-settings-fixed">{DEEPSEEK_BASE_URL}</span></label>
-      <label>模型
-        <select value={model} onChange={event => setModel(event.target.value as DeepSeekModel)}>
-          {DEEPSEEK_MODEL_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label} · {option.hint}</option>)}
-        </select>
-      </label>
-      <label>思考强度
-        <select value={reasoning} onChange={event => setReasoning(event.target.value as ReasoningEffort)}>
-          {REASONING_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
-        </select>
-      </label>
+      <p className="modal-description">四个助手都使用你自己的 DeepSeek 密钥。密钥只留在这台浏览器里。</p>
+      <p className="ms-provider">DeepSeek 官方 · {PROVIDER_HOST}</p>
+      <div className="ms-pair">
+        <label>模型
+          <select value={model} onChange={event => setModel(event.target.value as DeepSeekModel)}>
+            {DEEPSEEK_MODEL_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+        </label>
+        <label>思考强度
+          <select value={reasoning} onChange={event => setReasoning(event.target.value as ReasoningEffort)}>
+            {REASONING_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+        </label>
+      </div>
       <label>API Key
         {savedKey && <span className="model-settings-mask">当前密钥 {maskKey(savedKey)} · {savedPersistence === "session" ? "仅当前标签页" : "本浏览器"}</span>}
         <span className="model-settings-keyline">
@@ -112,12 +115,15 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
       </label>
       <div className="model-settings-keep">
         <label className="model-settings-check" htmlFor="model-settings-session"><input id="model-settings-session" type="checkbox" checked={sessionOnly} aria-describedby="model-settings-session-hint" onChange={event => setSessionOnly(event.target.checked)}/>不在此设备保存</label>
-        <p id="model-settings-session-hint">勾选后密钥只在当前标签页有效，关闭即清除，适合公共电脑；不勾选则保存在本浏览器，下次无需重填。</p>
+        <p id="model-settings-session-hint">勾选后只留在当前标签页，关闭即清除。</p>
       </div>
       {error && <p className="model-settings-error" role="alert">{error}</p>}
       <div className="modal-footer">
         <button type="button" className="text-button" onClick={clear} disabled={!savedKey && !keyInput}>清除密钥</button>
-        <button type="submit" className="primary-button">保存</button>
+        <div className="ms-actions">
+          <button type="button" className="outline-button ms-cancel" onClick={onClose}>取消</button>
+          <button type="submit" className="primary-button">保存</button>
+        </div>
       </div>
     </form>
   </dialog>;
