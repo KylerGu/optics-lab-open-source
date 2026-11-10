@@ -2,6 +2,8 @@ import { builderConversationId } from './builderTabs';
 import { createPortal } from 'react-dom';
 import { builderConversation, promoteBuilderConversation, sameApparatus, updateConversationObject, type BuilderConversationContext } from './researchConversation';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useOpenModelSettings } from './ModelSettingsDialog';
+import { listenModelSettings, modelHeaders } from './modelSettings';
 import { ArrowRight, ArrowUpRight, BarChart3, Check, ChevronRight, CircleHelp, Download, FileText, FlaskConical, FolderOpen, LoaderCircle, MessageSquare, MoreHorizontal, Paperclip, Plus, RefreshCw, Sparkles, Square, Trash2, X } from 'lucide-react';
 import AssistantAnswer from './AssistantAnswer';
 import ResearchVisualActions from './ResearchVisualActions';
@@ -57,6 +59,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   const project = inBuilder&&builderContext?(binding?.selected?.project??standalone):(store.projects.find(p => p.id === store.selectedId) ?? store.projects[0]);
   const currentObject = project.objects.find(o => o.id === project.activeObjectId);
   const latest = useRef({projects:[...store.projects,...detached],project,builderContext}); latest.current={projects:[...store.projects,...detached],project,builderContext};
+  const openModelSettings = useOpenModelSettings();
   const [configured, setConfigured] = useState<boolean | null>(null), [checking, setChecking] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null), [storageError, setStorageError] = useState(initial.warning);
   const [running, setRunning] = useState<Record<string, AgentStep[]>>({});
@@ -129,15 +132,15 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   async function checkStatus() {
     setChecking(true); setStatusError(null);
     try {
-      const response = await fetch('/api/agent/status', { signal: AbortSignal.timeout(6000) });
+      const response = await fetch('/api/agent/status', { headers: modelHeaders(), signal: AbortSignal.timeout(6000) });
       if (!response.ok) throw new Error();
       const data = await response.json(); if (typeof data.configured !== 'boolean') throw new Error();
       setConfigured(data.configured);
-      if (!data.configured) setStatusError('AI 模型接口尚未配置。');
+      if (!data.configured) setStatusError('请先在「模型设置」中填写你的 DeepSeek API Key。');
     } catch { setConfigured(null); setStatusError('暂时无法连接实验探究助手，请确认后台服务已启动。'); }
     finally { setChecking(false); }
   }
-  useEffect(() => { void checkStatus(); return () => { for (const controller of active.current.values()) controller.abort('unmount'); }; }, []);
+  useEffect(() => { void checkStatus(); const stop = listenModelSettings(() => { void checkStatus(); }); return () => { stop(); for (const controller of active.current.values()) controller.abort('unmount'); }; }, []);
   useEffect(() => {
     if (visible) { try { setSavedApparatus(readSavedSpatial()); } catch { /* Keep the last readable list. */ } }
     else {
@@ -321,7 +324,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         })}
       </div>
       <div className="rw-composer-area">
-        {(statusError || configured === false) && <div className="rw-connection"><span>{statusError ?? 'AI 模型接口尚未配置。'}</span><button className="rw-text-button" disabled={checking || busy} onClick={() => void checkStatus()}><RefreshCw size={14}/>{checking ? '检测中' : '重新检测'}</button></div>}
+        {(statusError || configured === false) && <div className="rw-connection"><span>{statusError ?? '请先在「模型设置」中填写你的 DeepSeek API Key。'}</span><button type="button" className="rw-text-button" disabled={busy} onClick={openModelSettings}>模型设置</button><button className="rw-text-button" disabled={checking || busy} onClick={() => void checkStatus()}><RefreshCw size={14}/>{checking ? '检测中' : '重新检测'}</button></div>}
         {error && <p className="rw-input-error" role="alert">{error}</p>}
         {currentObject ? <div className="rw-current-object"><Paperclip size={13}/><span>当前装置：{currentObject.experiment.name}</span>{project.objects.length > 1 && <small>可在问题中指定多个对象进行比较</small>}</div>:modelSources.length>0&&<div className="rw-current-object"><Paperclip size={13}/><span>当前模型：{modelSources.at(-1)!.title.split(' · ')[0]}</span></div>}
         <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…'} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : 'Ctrl + Enter 发送'}</span>{busy ? <button className="rw-button" type="button" onClick={stopResearch}><Square size={12}/>停止</button> : <button className="rw-button rw-primary" type="submit" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}>发送<ArrowRight size={16}/></button>}</div></form>

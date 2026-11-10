@@ -1,6 +1,7 @@
 import copy
 import json
 import math
+import os
 import tempfile
 from pathlib import Path
 import unittest
@@ -195,13 +196,14 @@ class AgentConfigurationTests(unittest.TestCase):
 
     def test_status_and_missing_configuration_endpoint(self):
         client = TestClient(app)
-        with patch("backend.app.get_settings", return_value=Settings("", "deepseek-flash")):
+        with patch("backend.app.get_settings", return_value=Settings("private-test-key", "deepseek-flash")):
             self.assertFalse(client.get("/api/agent/status").json()["configured"])
             response = client.post("/api/agent/chat", json=request().model_dump())
             self.assertEqual(response.status_code, 503)
-        with patch("backend.app.get_settings", return_value=Settings("private-test-key", "deepseek-flash")):
+            self.assertNotIn("private-test-key", response.text)
+        with patch.dict(os.environ, {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=Settings("private-test-key", "deepseek-flash")):
             status = client.get("/api/agent/status").json()
-            self.assertTrue(status["configured"])
+            self.assertEqual(status, {"configured": True})
             self.assertNotIn("private-test-key", json.dumps(status))
 
     def test_chat_history_cannot_inject_system_role(self):

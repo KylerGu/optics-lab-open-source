@@ -199,7 +199,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
             except HTTPException as error:
                 return error
 
-        with patch("backend.app.get_settings", return_value=settings), \
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
                 patch("backend.turn_limits.READ_SECONDS", 0.6), \
                 patch("backend.turn_limits.CONNECT_SECONDS", 2), \
                 patch("backend.turn_limits.WRITE_SECONDS", 2), \
@@ -233,7 +233,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
     async def test_turn_budget_aborts_an_upstream_that_keeps_sending(self):
         server = self.server(DripUpstream)
         settings = self.settings(server)
-        with patch("backend.app.get_settings", return_value=settings), \
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
                 patch("backend.turn_limits.READ_SECONDS", 5), \
                 patch("backend.turn_limits.CONNECT_SECONDS", 2), \
                 patch("backend.turn_limits.WRITE_SECONDS", 2), \
@@ -254,7 +254,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
                 ready = threading.Event()
                 server.accepted = ready
                 settings = self.settings(server)
-                with patch("backend.app.get_settings", return_value=settings), \
+                with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
                         patch("backend.turn_limits.READ_SECONDS", 20), \
                         patch("backend.turn_limits.CONNECT_SECONDS", 2), \
                         patch("backend.turn_limits.WRITE_SECONDS", 2), \
@@ -280,7 +280,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
                 await response.body_iterator.aclose()
             return [json.loads(chunk) for chunk in chunks if chunk.strip()]
 
-        with patch("backend.app.get_settings", return_value=settings), \
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
                 patch("backend.turn_limits.READ_SECONDS", 0.6), \
                 patch("backend.turn_limits.CONNECT_SECONDS", 2), \
                 patch("backend.turn_limits.WRITE_SECONDS", 2), \
@@ -305,7 +305,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
             raise AgentError("已停止本轮设计，装置未修改。", 499)
 
         settings = Settings(SECRET, "test-model", "https://example.test")
-        with patch("backend.app.get_settings", return_value=settings), \
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
                 patch("backend.app.run_spatial_agent", side_effect=slow), \
                 patch("backend.turn_limits.LONG_TURN_SECONDS", 0.25):
             started = time.monotonic()
@@ -388,7 +388,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
                     "checks": [], "comparisons": [], "evidence": None}
 
         request = SpatialAgentRequest(requestId="stop-slot", experiment=apparatus(), message="停止")
-        with patch("backend.app.get_settings", return_value=Settings(SECRET, "test-model", "https://example.test")), patch("backend.app.run_spatial_agent", side_effect=fake):
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=Settings(SECRET, "test-model", "https://example.test")), patch("backend.app.run_spatial_agent", side_effect=fake):
             response = await spatial_agent_chat(request, Connected())
             stopped = await cancel_spatial(ResearchCancelRequest(requestId="stop-slot"))
             chunks = []

@@ -306,7 +306,67 @@ class SceneWorkspace:
         raise ValueError('未知场景能力。')
 
 
+def _gaussian_experiment(state):
+    from .models import Experiment
+    p = state.parameters if hasattr(state, 'parameters') else state['parameters']
+    return Experiment.model_validate({
+        'schemaVersion': 1, 'name': '高斯光束 · 自由传播', 'railLengthMm': 600,
+        'elements': [
+            {'id': 'source', 'kind': 'laser', 'name': '束腰', 'positionMm': p['waistPositionMm'], 'wavelengthNm': p['wavelengthNm'], 'waistMm': p['waistMm']},
+            {'id': 'screen', 'kind': 'screen', 'name': '观察平面', 'positionMm': p['observationMm'], 'sizeMm': 40},
+        ],
+    })
+
+
+def _gaussian_state(experiment):
+    from .gaussian import gaussian_elements
+    source, screen = gaussian_elements(experiment)
+    return {'version': 1, 'sceneId': 'gaussian-propagation', 'parameters': {
+        'wavelengthNm': source.wavelengthNm, 'waistMm': source.waistMm,
+        'waistPositionMm': source.positionMm, 'observationMm': screen.positionMm,
+    }}
+
+
+def _gaussian_scans(scans):
+    from .models import Experiment
+    converted = []
+    for scan in scans:
+        snapshot = Experiment.model_validate(scan['inputSnapshot'])
+        element = next(item for item in snapshot.elements if item.id == scan['elementId'])
+        field = 'waistPositionMm' if element.kind == 'laser' and scan['field'] == 'positionMm' else 'observationMm' if element.kind == 'screen' and scan['field'] == 'positionMm' else scan['field'] if scan['field'] in {'waistMm', 'wavelengthNm'} else None
+        if field is None:
+            continue
+        origin = _gaussian_state(snapshot)
+        rows = []
+        for row in scan['rows']:
+            try:
+                candidate = patch_scene_parameters(origin, {field: row['value']})
+                evidence = SceneWorkspace.summary(calculate(candidate))
+            except (ValueError, TypeError, OverflowError, ZeroDivisionError):
+                evidence = {'input': origin, 'metrics': [], 'scope': '该取值无法计算。', 'status': '无法计算', 'warnings': [row.get('error') or '超出范围'], 'modelVersion': '', 'calculation': {}}
+            rows.append({'value': row['value'], 'result': evidence})
+        if rows:
+            converted.append({'field': field, 'rows': rows})
+    return converted
+
+
+def run_gaussian_propagation(request, settings, client=None):
+    """Free-propagation Gaussian uses the existing verified tools, through the scene assistant."""
+    from .agent import AgentRequest, run_agent
+    from .models import Experiment
+    incoming = request.state.model_dump()
+    agent_request = AgentRequest(requestId=request.requestId, experiment=_gaussian_experiment(request.state), message=request.message, mode='teaching', history=list(request.history), scene='gaussian')
+    reply = run_agent(agent_request, settings, client)
+    state = _gaussian_state(Experiment.model_validate(reply['experiment']))
+    changed = state['parameters'] != incoming['parameters']
+    evidence = SceneWorkspace.summary(calculate(state)) if changed or reply.get('evidence') or reply.get('scans') else None
+    return {'requestId': reply['requestId'], 'inputSnapshot': incoming, 'state': state, 'changed': changed,
+            'answer': reply['answer'], 'evidence': evidence, 'scans': _gaussian_scans(reply['scans']), 'trace': reply['trace']}
+
+
 def run_scene_agent(request,settings,client=None):
+    if getattr(request.state, 'sceneId', None) == 'gaussian-propagation' or (isinstance(request.state, dict) and request.state.get('sceneId') == 'gaussian-propagation'):
+        return run_gaussian_propagation(request, settings, client)
     if not settings.configured: raise AgentError('请先配置AI模型接口。',503)
     if not request.message.strip(): raise AgentError('请输入问题。',422)
     # The model understands intent first. Concept-only turns receive no edit tools.

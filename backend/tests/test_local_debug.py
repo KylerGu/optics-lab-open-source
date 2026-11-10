@@ -39,7 +39,7 @@ class LocalDebugTests(unittest.TestCase):
         def run(document, configuration, **kwargs):
             with httpx.Client(transport=httpx.MockTransport(provider)) as client:
                 return run_research_agent(document, configuration, client=client, **kwargs)
-        with patch('backend.app.get_settings', return_value=settings), patch('backend.app.run_research_agent', side_effect=run), TestClient(app) as client:
+        with patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}), patch('backend.app.get_settings', return_value=settings), patch('backend.app.run_research_agent', side_effect=run), TestClient(app) as client:
             response = client.post('/api/research/agent/chat', json={'requestId': 'logged', 'message': '计算当前装置', 'experiment': apparatus().model_dump()})
         self.assertIn('已得到实际读数', response.text)
         raw = next(self.root.glob('run-*.jsonl')).read_text(encoding='utf-8')
@@ -85,7 +85,7 @@ class LocalDebugTests(unittest.TestCase):
         self.assertEqual(data['current'], {'position': 20})
 
     def test_agent_errors_are_recorded_and_storage_failure_is_nonfatal(self):
-        with patch('backend.app.get_settings', return_value=Settings('secret', 'test', 'https://example.test')), patch('backend.app.run_research_agent', side_effect=AgentError('测试错误', 504)), TestClient(app) as client:
+        with patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}), patch('backend.app.get_settings', return_value=Settings('secret', 'test', 'https://example.test')), patch('backend.app.run_research_agent', side_effect=AgentError('测试错误', 504)), TestClient(app) as client:
             response = client.post('/api/research/agent/chat', json={'requestId': 'failure', 'message': '继续研究'})
         self.assertIn('测试错误', response.text)
         self.assertIn('"event": "error"', next(self.root.glob('run-*.jsonl')).read_text(encoding='utf-8'))

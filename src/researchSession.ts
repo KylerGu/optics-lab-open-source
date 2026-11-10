@@ -1,4 +1,5 @@
 import { parseSpatial, toLegacy, type SpatialExperiment, type SpatialResult } from './builderModel';
+import { modelHeaders } from './modelSettings';
 import { validateSpatialAgentReply, validateStep, type AgentStep, type SpatialComparison, type SpatialChatMessage, type SpatialAgentReply } from './spatialAgent';
 import { validateFocusDesign, type FocusDesign } from './research';
 import { validateStabilityStudy, type StabilityStudy } from './tolerance';
@@ -266,7 +267,7 @@ export async function cancelResearchAgent(requestId: string): Promise<void> {
 
 export async function requestResearchAgent(id: string, input: SpatialExperiment | null, message: string, history: SpatialChatMessage[], signal: AbortSignal, onStep: (step: AgentStep) => void, objects?: ResearchObject[], activeObjectId?: string | null, titleNeeded = false, previousTurns: ResearchTurn[] = [], conversationContext: ConversationContext = { workspace: 'research' }): Promise<ResearchReply> {
   const expected = objects ? objectInputs(objects) : undefined;
-  const response = await fetch('/api/research/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: id, experiment: input, message, history, titleNeeded, conversationContext, currentPlan: currentResearchPlan(previousTurns), modelExperiments: researchModelInputs(previousTurns), ...(expected ? { objects: expected, activeObjectId } : {}) }), signal });
+  const response = await fetch('/api/research/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/json', ...modelHeaders() }, body: JSON.stringify({ requestId: id, experiment: input, message, history, titleNeeded, conversationContext, currentPlan: currentResearchPlan(previousTurns), modelExperiments: researchModelInputs(previousTurns), ...(expected ? { objects: expected, activeObjectId } : {}) }), signal });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(typeof body?.detail === 'string' ? body.detail : '实验探究助手暂时无法连接，请重试。');

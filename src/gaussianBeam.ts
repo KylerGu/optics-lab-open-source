@@ -1,4 +1,7 @@
 import { makeElement, parseExperiment, type Experiment, type Laser, type Screen } from './model';
+import type { SceneState } from './sceneRuntime';
+
+export const GAUSSIAN_PROPAGATION_SCENE = 'gaussian-propagation';
 
 export const GAUSSIAN_DRAFT_KEY = 'optics-lab-gaussian-scene-v1';
 
@@ -10,6 +13,21 @@ export function gaussianElements(experiment: Experiment): { laser: Laser; screen
     throw new Error('这个场景只包含一个光源和一个观察屏，观察屏需要在光源右侧。透镜组合请在光路搭建中打开。');
   }
   return { laser, screen };
+}
+
+export function gaussianSceneState(experiment: Experiment): SceneState {
+  const { laser, screen } = gaussianElements(experiment);
+  return { version: 1, sceneId: GAUSSIAN_PROPAGATION_SCENE, parameters: {
+    wavelengthNm: laser.wavelengthNm, waistMm: laser.waistMm, waistPositionMm: laser.positionMm, observationMm: screen.positionMm,
+  } };
+}
+
+export function experimentFromGaussianScene(state: SceneState, base: Experiment): Experiment {
+  return parseExperiment({ ...base, elements: base.elements.map(item => {
+    if (item.kind === 'laser') return { ...item, wavelengthNm: state.parameters.wavelengthNm, waistMm: state.parameters.waistMm, positionMm: state.parameters.waistPositionMm };
+    if (item.kind === 'screen') return { ...item, positionMm: state.parameters.observationMm };
+    return item;
+  }) });
 }
 
 export function makeGaussianScene(): Experiment {

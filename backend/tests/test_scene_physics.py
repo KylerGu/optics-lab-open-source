@@ -90,6 +90,8 @@ class ScenePhysicsTests(unittest.TestCase):
                     if scene_id=='instruments-0' and field['key']=='NA':patch['medium']=max(1,value)
                     if scene_id=='beam-transformation-1' and field['key']=='firstPositionMm':patch['secondPositionMm']=max(175,value+1)
                     if scene_id=='beam-transformation-1' and field['key']=='secondPositionMm':patch['firstPositionMm']=min(100,value-1)
+                    if scene_id=='gaussian-propagation' and field['key']=='waistPositionMm':patch['observationMm']=min(600,value+1)
+                    if scene_id=='gaussian-propagation' and field['key']=='observationMm':patch['waistPositionMm']=max(0,value-1)
                     json.dumps(calculate(state(scene_id,**patch)),allow_nan=False)
             for invalid in (True,float('nan'),float('inf')):
                 with self.assertRaises(ValueError): state(scene_id,**{d['parameters'][0]['key']:invalid})

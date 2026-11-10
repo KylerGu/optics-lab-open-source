@@ -27,6 +27,7 @@ export function parseScene(value:unknown,sceneId?:string):SceneState {
   for(const p of definition.parameters){const n=state.parameters[p.key];if(typeof n!=='number'||!Number.isFinite(n)||n<p.min||n>p.max||p.options&&!p.options.some(o=>o.value===n))throw new Error(`${p.label}超出有效范围。`);}
   if(state.sceneId==='instruments-0'&&state.parameters.NA>state.parameters.medium)throw new Error('数值孔径不能大于物镜前介质折射率。');
   if(state.sceneId==='beam-transformation-1'&&state.parameters.secondPositionMm-state.parameters.firstPositionMm<1)throw new Error('第二镜需在第一镜右侧，至少相隔 1 mm。');
+  if(state.sceneId==='gaussian-propagation'&&state.parameters.observationMm-state.parameters.waistPositionMm<1)throw new Error('观察位置需在束腰右侧，至少相隔 1 mm。');
   return normalizeMicroscope({version:1,sceneId:state.sceneId,parameters:{...state.parameters}});
 }
 export const sceneKey = (state:SceneState) => JSON.stringify([state.sceneId,...SCENE_DEFINITIONS[state.sceneId].parameters.map(p=>state.parameters[p.key])]);
