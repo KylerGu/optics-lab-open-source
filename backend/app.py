@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from .models import SimulationRequest
 from .optics import MODEL_VERSION, simulate
 from .agent import AgentError, AgentRequest, run_agent
-from .settings import ByokRejected, get_settings, settings_for_request
+from .settings import ByokRejected, get_settings, production_mode, settings_for_request
 from .research import FocusSearchRequest, search_focus
 from .tolerance import ToleranceRequest, run_tolerance
 from .spatial import SpatialRequest, trace
@@ -22,7 +22,76 @@ from .local_debug import DebugRun, save_snapshot
 from . import turn_limits
 from .turn_limits import BUDGET_MESSAGE, STALL_MESSAGE, TurnStop, log_turn
 
-app = FastAPI(title="光学智研计算服务", version="0.6.0")
+# Kept off unless APP_ENV=production. style-src allows React and KaTeX inline styles.
+# connect-src stays on this origin: the browser never calls DeepSeek itself.
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY",
+    "Strict-Transport-Security": "max-age=15552000",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "font-src 'self' data:; "
+        "connect-src 'self'; "
+        "worker-src 'self' blob:; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'"
+    ),
+}
+
+
+def fastapi_docs_options():
+    if production_mode():
+        return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    return {}
+
+
+def _is_api_docs(path):
+    return path == "/openapi.json" or path in {"/docs", "/redoc"} or path.startswith("/docs/") or path.startswith("/redoc/")
+
+
+class ProductionGuard:
+    """Production-only docs block and security headers.
+
+    When APP_ENV is not production this is a straight ASGI pass-through, so
+    local streaming responses are not wrapped or buffered.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not production_mode():
+            await self.app(scope, receive, send)
+            return
+        if _is_api_docs(scope.get("path", "")):
+            response = JSONResponse(status_code=404, content={"detail": "Not Found"})
+            for key, value in SECURITY_HEADERS.items():
+                response.headers[key] = value
+            await response(scope, receive, send)
+            return
+
+        async def send_with_headers(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers") or [])
+                present = {name.lower() for name, _value in headers}
+                for key, value in SECURITY_HEADERS.items():
+                    encoded = key.lower().encode("latin-1")
+                    if encoded not in present:
+                        headers.append((encoded, value.encode("latin-1")))
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
+
+
+app = FastAPI(title="光学智研计算服务", version="0.6.0", debug=False, **fastapi_docs_options())
+app.add_middleware(ProductionGuard)
 agent_slots = BoundedSemaphore(2)
 research_slots = BoundedSemaphore(2)
 spatial_agent_slots = BoundedSemaphore(2)
@@ -176,6 +245,8 @@ def health():
 
 @app.post('/api/debug/snapshot')
 async def debug_snapshot(request: Request):
+    if production_mode():
+        raise HTTPException(status_code=404, detail="Not Found")
     body = await request.body()
     if len(body) > 8_000_000:
         raise HTTPException(status_code=413, detail='调试快照过大。')

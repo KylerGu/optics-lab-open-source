@@ -10,7 +10,8 @@ RUN npm run build
 
 FROM python:3.13-slim AS runtime
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=10000
+# APP_ENV=production matches render.yaml: debug files and API docs stay off.
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=10000 APP_ENV=production
 COPY requirements.txt ./
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
