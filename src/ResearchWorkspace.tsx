@@ -265,7 +265,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       });
     } catch (reason) {
       if (controller.signal.reason === 'unmount' || controller.signal.reason === 'cancel' && active.current.get(current.id) !== controller) return;
-      const failure = controller.signal.aborted ? controller.signal.reason === 'timeout' ? '本轮没有收到完整回复，请重试。' : '已停止本轮探究，未保存不完整的计算结果。' : assistantErrorMessage(reason);
+      const failure = controller.signal.aborted ? controller.signal.reason === 'timeout' ? '本轮超时，可以重试。' : '已停止本轮探究，未保存不完整的计算结果。' : assistantErrorMessage(reason);
       changeProject(current.id, p => ({ ...p, draft: p.draft || message, turns: p.turns.map(t => t.id === id ? { ...t, error: failure } : t) }));
     } finally { clearTimeout(timer); if (active.current.get(current.id) === controller) { active.current.delete(current.id); setRunning(r => { const next = { ...r }; delete next[current.id]; return next; }); } }
   }

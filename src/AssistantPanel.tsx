@@ -117,7 +117,7 @@ function AssistantSession(props: LegacyProps) {
       if(reply.studies.length)latest.current.onStudy(reply.studies[reply.studies.length-1]);
     } catch(error) {
       if(controller.signal.reason==='unmount') return;
-      const failure=controller.signal.aborted ? controller.signal.reason==='timeout' ? '等待超时，当前装置保持不变。可以重试或简化目标。' : '已停止等待，当前装置保持不变。' : assistantErrorMessage(error);
+      const failure=controller.signal.aborted ? controller.signal.reason==='timeout' ? '本轮超时，可以重试。' : '已停止等待，当前装置保持不变。' : assistantErrorMessage(error);
       setTurns(current=>current.map(turn=>turn.id===requestId ? {...turn,error:failure} : turn));
       if(!controller.signal.aborted && isAssistantConnectionError(error)) {
         setPrompt(current=>current || message);

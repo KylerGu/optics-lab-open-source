@@ -6,25 +6,34 @@ import time
 import httpx
 
 from .agent import AgentError
+from .turn_limits import TIMEOUT_MESSAGE
 
 
 class ResearchClient:
-    def __init__(self, cancelled=None, transport=None, diagnostics=None):
+    def __init__(self, cancelled=None, transport=None, diagnostics=None, *, streaming=True, deadline=None):
         self.cancelled = cancelled
         self.transport = transport
         self.diagnostics = diagnostics
+        self.streaming = streaming
+        self.deadline = deadline
+
+    def _closed_error(self):
+        if self.deadline is not None and time.monotonic() >= self.deadline:
+            raise AgentError(TIMEOUT_MESSAGE, 504)
+        if self.cancelled and self.cancelled():
+            raise AgentError('已停止本轮研究。', 499)
 
     def post(self, url, **kwargs):
         if self.diagnostics:
             payload = kwargs.get('json', {})
             self.diagnostics.record('provider.request', messageCount=len(payload.get('messages', [])), inputCharacters=sum(len(str(m.get('content') or '')) + len(str(m.get('reasoning_content') or '')) for m in payload.get('messages', [])))
         async def request():
+            self._closed_error()
             async with httpx.AsyncClient(follow_redirects=False, transport=self.transport) as client:
                 task = asyncio.create_task(self.receive(client, url, kwargs))
                 try:
                     while True:
-                        if self.cancelled and self.cancelled():
-                            raise AgentError('已停止本轮研究。', 499)
+                        self._closed_error()
                         done, _ = await asyncio.wait({task}, timeout=.1)
                         if done:
                             return task.result()
@@ -42,8 +51,11 @@ class ResearchClient:
 
     async def receive(self, client, url, kwargs):
         payload = dict(kwargs.get('json', {}))
-        payload['stream'] = True
+        if self.streaming:
+            payload['stream'] = True
         options = {**kwargs, 'json': payload}
+        if not self.streaming:
+            return await client.post(url, **options)
         async with client.stream('POST', url, **options) as response:
             if self.diagnostics:
                 self.diagnostics.record('provider.headers', statusCode=response.status_code)

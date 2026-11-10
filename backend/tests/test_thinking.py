@@ -40,8 +40,8 @@ class ThinkingTests(unittest.TestCase):
         self.assertEqual(payload['thinking'], {'type': 'enabled'})
         self.assertEqual(payload['reasoning_effort'], 'high')
         self.assertEqual(payload['max_tokens'], 32768)
-        self.assertIsNone(timeout['read'])
-        self.assertEqual(timeout['connect'], 15)
+        self.assertEqual(timeout['read'], 60)
+        self.assertEqual(timeout['connect'], 10)
         self.assertEqual(result['trace'], [])
         self.assertNotIn('private-definition-thought', json.dumps(result))
 
@@ -65,8 +65,8 @@ class ThinkingTests(unittest.TestCase):
         self.assertEqual(payload['thinking'], {'type': 'enabled'})
         self.assertEqual(payload['reasoning_effort'], 'max')
         self.assertEqual(payload['max_tokens'], 131072)
-        self.assertIsNone(captured[0][1]['read'])
-        self.assertEqual(captured[0][1]['connect'], 15)
+        self.assertEqual(captured[0][1]['read'], 60)
+        self.assertEqual(captured[0][1]['connect'], 10)
         self.assertNotIn('private-max-thought', json.dumps(result))
 
     def test_answer_before_automatic_verification_keeps_its_thought(self):
@@ -108,7 +108,7 @@ class ThinkingTests(unittest.TestCase):
                 _, captured = self.execute([answer('普通回答。')], settings=settings)
                 payload, timeout = captured[0]
                 self.assertEqual(payload['max_tokens'], 3500)
-                self.assertIsNone(timeout['read'])
+                self.assertEqual(timeout['read'], 60)
                 if settings.uses_deepseek:
                     self.assertEqual(payload['thinking'], {'type': 'disabled'})
                     self.assertEqual(payload['reasoning_effort'], 'none')

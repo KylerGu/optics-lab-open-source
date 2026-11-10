@@ -69,7 +69,7 @@ class LocalDebugTests(unittest.TestCase):
                 build_research_apparatus('设计装置', None, settings, client, None, None,
                                          diagnostics=ResearchTrace(path=self.root / 'timing.jsonl', debug=debug))
             self.assertEqual(caught.exception.status, 504)
-            self.assertIn('响应超时', caught.exception.message)
+            self.assertIn('本轮超时', caught.exception.message)
         rows = [json.loads(line) for line in debug.path.read_text(encoding='utf-8').splitlines()]
         layout = next(r for r in rows if r['event'] == 'tool' and r['name'] == 'set_apparatus')
         self.assertEqual(layout['experiment'], apparatus().model_dump(mode='json'))

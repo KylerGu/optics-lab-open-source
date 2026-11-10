@@ -10,6 +10,7 @@ from pydantic import Field, ValidationError, field_validator, model_validator
 from .models import Experiment, StrictModel
 from .optics import simulate
 from .settings import Settings
+from .turn_limits import TIMEOUT_MESSAGE
 from .research import FocusGoal, search_focus, agent_design_summary
 from .tolerance import Tolerance, run_tolerance, agent_study_summary, verified_study_answer
 from .teaching import LearningContext, teaching_prompt
@@ -363,7 +364,7 @@ def completion(client, settings, messages, timeout, available_tools=None, *, req
     try:
         response = client.post(settings.base_url.rstrip("/") + "/chat/completions", headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload, timeout=timeout)
     except httpx.TimeoutException:
-        raise AgentError("AI服务响应超时，请稍后重试。", 504) from None
+        raise AgentError(TIMEOUT_MESSAGE, 504) from None
     except httpx.HTTPError:
         raise AgentError("暂时无法连接AI服务，请检查接口地址与网络。") from None
     if response.status_code == 401:
