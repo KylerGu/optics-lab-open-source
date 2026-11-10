@@ -91,7 +91,7 @@ function AssistantSession(props: LegacyProps) {
     const message=prompt.trim(), requestId=crypto.randomUUID(), snapshot=latest.current.experiment, snapshotKey=experimentKey(snapshot);
     const history: ConversationMessage[]=turns.filter(turn=>turn.reply).flatMap(turn=>[{role:'user' as const,content:turn.prompt},{role:'assistant' as const,content:turn.reply!.answer}]).slice(-8).map(item=>({...item,content:item.content.slice(0,2500)}));
     const controller=new AbortController();active.current=controller;
-    const timer=setTimeout(()=>controller.abort('timeout'),330000);
+    const timer=setTimeout(()=>controller.abort('timeout'),720000);
     setBusy(true);setPrompt('');setInputError(null);
     setTurns(current=>[...current,{id:requestId,prompt:message,reply:null,error:null,application:''}].slice(-40));
     try {
@@ -117,7 +117,7 @@ function AssistantSession(props: LegacyProps) {
       if(reply.studies.length)latest.current.onStudy(reply.studies[reply.studies.length-1]);
     } catch(error) {
       if(controller.signal.reason==='unmount') return;
-      const failure=controller.signal.aborted ? controller.signal.reason==='timeout' ? '本轮超时，可以重试。' : '已停止等待，当前装置保持不变。' : assistantErrorMessage(error);
+      const failure=controller.signal.aborted ? controller.signal.reason==='timeout' ? '模型长时间无响应，已停止。' : '已停止等待，当前装置保持不变。' : assistantErrorMessage(error);
       setTurns(current=>current.map(turn=>turn.id===requestId ? {...turn,error:failure} : turn));
       if(!controller.signal.aborted && isAssistantConnectionError(error)) {
         setPrompt(current=>current || message);

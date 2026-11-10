@@ -226,14 +226,15 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     }
     const linkedBuilder=builderContext&&(current.id==='builder:'+builderConversationId(builderContext.tab)||builderContext.tab.researchContext?.key===JSON.stringify([current.id,current.activeObjectId]));
     const id = crypto.randomUUID(), controller = new AbortController(), input = current.objects.find(o => o.id === current.activeObjectId)?.experiment ?? null;
+    const keptSteps: AgentStep[] = [];
     active.current.set(current.id, controller); setRunning(r => ({ ...r, [current.id]: [] })); setError(null);
     controller.signal.addEventListener('abort', () => { void cancelResearchAgent(id); }, { once: true });
-    // Max research has a ten-minute backend budget, plus stream delivery margin.
-    const timer = setTimeout(() => controller.abort('timeout'), 630000);
+    // Backend safety cap is 30 minutes. Stay a few minutes longer so the server can finish first.
+    const timer = setTimeout(() => controller.abort('timeout'), 1980000);
     const turn: ResearchTurn = { id, prompt: message, createdAt: new Date().toISOString(), reply: null, error: null };
     changeProject(current.id, p => ({ ...p, draft: '', turns: [...p.turns, turn] }));
     try {
-      const reply = await requestResearchAgent(id, input, message, researchHistory(current.turns), controller.signal, step => { if (!controller.signal.aborted) setRunning(r => current.id in r ? { ...r, [current.id]: [...r[current.id], step] } : r); }, current.objects, current.activeObjectId, current.titleMode === 'pending', current.turns, {workspace:inBuilder?'builder':'research',projectId:current.id,tabId:linkedBuilder?builderContext?.tab.id:null,selectedElementId:linkedBuilder?builderContext?.selectedElementId:null});
+      const reply = await requestResearchAgent(id, input, message, researchHistory(current.turns), controller.signal, step => { keptSteps.push(step); if (!controller.signal.aborted) setRunning(r => current.id in r ? { ...r, [current.id]: [...r[current.id], step] } : r); }, current.objects, current.activeObjectId, current.titleMode === 'pending', current.turns, {workspace:inBuilder?'builder':'research',projectId:current.id,tabId:linkedBuilder?builderContext?.tab.id:null,selectedElementId:linkedBuilder?builderContext?.selectedElementId:null});
       if (controller.signal.aborted) throw new Error('请求已停止。');
       let applied=false;
       const edit=reply.apparatusEdits?.at(-1);
@@ -265,10 +266,15 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       });
     } catch (reason) {
       if (controller.signal.reason === 'unmount' || controller.signal.reason === 'cancel' && active.current.get(current.id) !== controller) return;
-      const failure = controller.signal.aborted ? controller.signal.reason === 'timeout' ? '本轮超时，可以重试。' : '已停止本轮探究，未保存不完整的计算结果。' : assistantErrorMessage(reason);
-      changeProject(current.id, p => ({ ...p, draft: p.draft || message, turns: p.turns.map(t => t.id === id ? { ...t, error: failure } : t) }));
+      const failure = controller.signal.aborted ? controller.signal.reason === 'timeout' ? '模型长时间无响应，已停止。' : '已停止本轮探究，未保存不完整的计算结果。' : assistantErrorMessage(reason);
+      changeProject(current.id, p => ({ ...p, draft: p.draft || message, turns: p.turns.map(t => t.id === id ? { ...t, error: failure, steps: keptSteps.slice(-40) } : t) }));
     } finally { clearTimeout(timer); if (active.current.get(current.id) === controller) { active.current.delete(current.id); setRunning(r => { const next = { ...r }; delete next[current.id]; return next; }); } }
   }
+  function continueResearch(turn: ResearchTurn) {
+    const done = (turn.steps ?? turn.reply?.trace ?? []).map(step => step.summary).filter(Boolean).slice(-12).join('；');
+    return ('请从已完成的步骤继续，不要从头重做。上一轮问题：' + turn.prompt + (done ? '\n已完成：' + done : '')).slice(0, 2000);
+  }
+  function canContinue(text: string) { return text.startsWith('模型长时间无响应') || text.startsWith('本轮已达时长上限'); }
   function stopResearch(event: React.MouseEvent<HTMLButtonElement>) {
     // The same button becomes a submit button after stopping. Suppress the
     // click's form default so the cancelled question is not sent again.
@@ -304,7 +310,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       <div className="rw-conversation" ref={conversation} data-navigation-scroll="research-conversation" role="log" aria-label="探究对话" aria-live="polite">
         {inBuilder&&(binding?.missing||binding?.ambiguous)?null:!project.turns.length ? <div className="rw-welcome"><div className="rw-welcome-symbol"><Sparkles size={27}/></div><span className="rw-eyebrow">光学实验探究助手</span><h1>用实验，看懂光学</h1><p>说说你没想明白的原理或现象，<br/>一起设计实验、观察变化、理解原因。</p><div className="rw-starters">{STARTERS.map(item => { const Icon = item.icon; return <button key={item.title} disabled={busy} onClick={() => { setDraft(item.text); textarea.current?.focus(); }}><Icon size={20}/><strong>{item.title}</strong><ChevronRight size={15}/></button>; })}</div></div> : project.turns.map(turn => {
           const turnRecords = records.filter(record => record.requestId === turn.id);
-          return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span>你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><div className="rw-agent-name"><Sparkles size={17}/><strong>光学实验探究助手</strong></div><AssistantAnswer text={turn.reply.answer}/><ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p><button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending"><LoaderCircle size={16}/><span>{pendingLabel}</span></div>}</article>;
+          return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span>你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><div className="rw-agent-name"><Sparkles size={17}/><strong>光学实验探究助手</strong></div><AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending"><LoaderCircle size={16}/><span>{pendingLabel}</span></div>}</article>;
         })}
       </div>
       <div className="rw-composer-area">

@@ -18,7 +18,8 @@ from backend.spatial_agent import SpatialAgentRequest
 from backend.tests.test_agent import experiment
 from backend.tests.test_scene_physics import state
 from backend.tests.test_spatial_agent import apparatus
-from backend.turn_limits import TIMEOUT_MESSAGE, provider_timeout
+from backend.spatial_agent import run_spatial_agent
+from backend.turn_limits import BUDGET_MESSAGE, STALL_MESSAGE, TurnStop, provider_timeout
 
 
 SECRET = "UNIQUE-SECRET-KEY-9f3a"
@@ -218,11 +219,13 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
         self.assertLess(time.monotonic() - started, 4)
         for error in (one, two):
             self.assertEqual(error.status_code, 504)
-            self.assertEqual(error.detail, TIMEOUT_MESSAGE)
+            self.assertEqual(error.detail, STALL_MESSAGE)
         self.assertTrue(slots_free(agent_slots))
         text = "\n".join(captured.output)
         self.assertIn("route=agent", text)
         self.assertIn("timed_out=True", text)
+        self.assertIn("reason=stall", text)
+        self.assertEqual(one.detail, STALL_MESSAGE)
         self.assertNotIn(SECRET, text)
         self.assertNotIn(USER_TEXT, text)
 
@@ -239,7 +242,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
                 await agent_chat(agent_document(), Connected())
         self.assertLess(time.monotonic() - started, 2)
         self.assertEqual(caught.exception.status_code, 504)
-        self.assertEqual(caught.exception.detail, TIMEOUT_MESSAGE)
+        self.assertEqual(caught.exception.detail, BUDGET_MESSAGE)
         self.assertTrue(server.closed.wait(2))
         self.assertTrue(slots_free(agent_slots))
 
@@ -286,7 +289,7 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
             events = await read(response)
         self.assertLess(time.monotonic() - started, 4)
         self.assertEqual(events[-1]["type"], "error")
-        self.assertEqual(events[-1]["message"], TIMEOUT_MESSAGE)
+        self.assertEqual(events[-1]["message"], STALL_MESSAGE)
         self.assertTrue(slots_free(research_agent_slots))
         text = json.dumps(events)
         self.assertNotIn(SECRET, text)
@@ -317,10 +320,23 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
                 await response.body_iterator.aclose()
         self.assertLess(time.monotonic() - started, 2)
         events = [json.loads(chunk) for chunk in chunks if chunk.strip()]
-        self.assertEqual(events[-1], {"type": "error", "message": TIMEOUT_MESSAGE})
+        self.assertEqual(events[-1], {"type": "error", "message": BUDGET_MESSAGE})
         self.assertTrue(slots_free(spatial_agent_slots))
         self.assertNotIn(USER_TEXT, "\n".join(chunks))
         self.assertNotIn(SECRET, "\n".join(chunks))
+
+    def test_budget_keeps_the_original_apparatus_and_says_progress_remains(self):
+        stop = TurnStop()
+        stop.expire()
+        request = SpatialAgentRequest(requestId="kept", experiment=apparatus(), message="继续搭建")
+        result = run_spatial_agent(request, Settings(SECRET, "test-model", "https://example.test"), client=object(), cancelled=stop)
+        self.assertFalse(result["changed"])
+        self.assertFalse(result["applyAllowed"])
+        self.assertEqual(result["experiment"], request.experiment.model_dump())
+        self.assertTrue(result["answer"].startswith(BUDGET_MESSAGE))
+        with self.assertRaises(AgentError) as caught:
+            run_spatial_agent(request, Settings(SECRET, "test-model", "https://example.test"), client=object(), cancelled=stop, delegated=True)
+        self.assertEqual(caught.exception.message, BUDGET_MESSAGE)
 
 
 if __name__ == "__main__":

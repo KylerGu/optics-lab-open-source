@@ -6,7 +6,7 @@ import time
 import httpx
 
 from .agent import AgentError
-from .turn_limits import TIMEOUT_MESSAGE
+from .turn_limits import BUDGET_MESSAGE
 
 
 class ResearchClient:
@@ -19,8 +19,10 @@ class ResearchClient:
 
     def _closed_error(self):
         if self.deadline is not None and time.monotonic() >= self.deadline:
-            raise AgentError(TIMEOUT_MESSAGE, 504)
+            raise AgentError(BUDGET_MESSAGE, 504)
         if self.cancelled and self.cancelled():
+            if getattr(self.cancelled, "budget", False):
+                raise AgentError(BUDGET_MESSAGE, 504)
             raise AgentError('已停止本轮研究。', 499)
 
     def post(self, url, **kwargs):

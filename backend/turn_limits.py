@@ -1,9 +1,13 @@
 """Single place to tune assistant time limits.
 
-Connect, read, write and pool bound one provider HTTP call.
-Read is the longest quiet gap between response bytes, not the whole turn.
-Turn budgets bound one user round, including later tool calls.
+Read is the stall detector: no bytes from the provider for this long means the
+call is stuck. Tool work and a stream that keeps arriving are not stalls.
+Turn budgets are only a last-resort cap. Render allows an HTTP response to
+stay open for 100 minutes; these caps stop sooner so the turn can end cleanly
+and keep its progress. Browser abort timers must stay a couple of minutes
+longer than the matching budget (scene 12 min, builder and research 33 min).
 """
+from threading import Event
 import logging
 import time
 
@@ -15,12 +19,42 @@ READ_SECONDS = 60.0
 WRITE_SECONDS = 30.0
 POOL_SECONDS = 15.0
 
-# One user round. Scene assistant and legacy /api/agent/chat.
-SCENE_TURN_SECONDS = 120.0
-# Optical-path builder and the experiment-inquiry assistant (about 6 minutes).
-LONG_TURN_SECONDS = 360.0
+# Safety caps, not the normal way a turn ends.
+# Scene assistant and legacy /api/agent/chat: 10 minutes.
+SCENE_TURN_SECONDS = 600.0
+# Optical-path builder and experiment inquiry: 30 minutes (top of the 20–30 minute range).
+LONG_TURN_SECONDS = 1800.0
 
-TIMEOUT_MESSAGE = "本轮超时，可以重试。"
+STALL_MESSAGE = "模型长时间无响应，已停止。"
+BUDGET_MESSAGE = "本轮已达时长上限，已保留进度，可点继续。"
+
+
+class TurnStop:
+    """Callable cancel flag. budget=True means the safety cap, not a user stop."""
+
+    def __init__(self):
+        self._event = Event()
+        self.budget = False
+        self.reason = "ok"
+
+    def __call__(self):
+        return self._event.is_set()
+
+    def is_set(self):
+        return self._event.is_set()
+
+    def set(self):
+        if self.reason == "ok":
+            self.reason = "cancel"
+        self._event.set()
+
+    def expire(self):
+        self.budget = True
+        self.reason = "budget"
+        self._event.set()
+
+    def stall(self):
+        self.reason = "stall"
 
 log = logging.getLogger("optics.assistant")
 log.setLevel(logging.INFO)
@@ -40,12 +74,13 @@ def provider_timeout():
     )
 
 
-def log_turn(route, started, *, timed_out, cancelled):
+def log_turn(route, started, *, timed_out, cancelled, reason="ok"):
     """Duration only. Never include the prompt, the reply, or credentials."""
     log.info(
-        "assistant_turn route=%s elapsed_s=%.3f timed_out=%s cancelled=%s",
+        "assistant_turn route=%s elapsed_s=%.3f timed_out=%s cancelled=%s reason=%s",
         route,
         time.monotonic() - started,
         bool(timed_out),
         bool(cancelled),
+        reason,
     )

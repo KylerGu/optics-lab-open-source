@@ -9,6 +9,7 @@ import httpx
 from pydantic import Field, ValidationError, model_validator
 
 from .agent import AgentError, ChatMessage, TOOLS as LEGACY_TOOLS, Workspace, assistant_context, completion, tool
+from .turn_limits import BUDGET_MESSAGE, STALL_MESSAGE
 from .models import Experiment, StrictModel
 from .settings import Settings
 from .spatial import SpatialExperiment
@@ -749,7 +750,16 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
     messages.append({"role": "user", "content": request.message})
     def stopped():
         if cancelled and cancelled():
+            if getattr(cancelled, "budget", False):
+                raise AgentError(BUDGET_MESSAGE, 504)
             raise AgentError("已停止本轮探究，未保存不完整结果。", 499)
+    def progress_reply(error):
+        kept = "；".join(step.get("summary") for step in steps if step.get("summary"))
+        lead = error.message + (("\n已完成：" + kept) if kept else "") + "\n请从这些已完成的步骤继续，不要从头重做。"
+        result = workspace.reply(request.requestId, lead[:4000], steps, completed=False)
+        if not str(result.get("answer") or "").startswith(error.message):
+            result["answer"] = (lead + "\n" + result["answer"])[:12000]
+        return result
     try:
         for round_number in range(10):
             stopped()
@@ -760,7 +770,10 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
                     message = completion(client, settings, messages, settings.provider_timeout, TOOLS)
                 diagnostics.record('model.result', tools=[c.get('function', {}).get('name') for c in message.get('tool_calls') or []], reasoningCharacters=len(message.get('reasoning_content') or ''))
             except AgentError as error:
-                stopped()
+                if error.message not in {STALL_MESSAGE, BUDGET_MESSAGE}:
+                    stopped()
+                if error.message in {STALL_MESSAGE, BUDGET_MESSAGE} and (steps or workspace.available_evidence() or workspace.build_failure):
+                    return progress_reply(error)
                 if workspace.available_evidence() or workspace.build_failure:
                     return workspace.reply(request.requestId, '计算结果已保存，但AI说明未完成：' + error.message + ' 可以查看结果或继续提问。', steps, completed=False)
                 raise
@@ -819,6 +832,10 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
             messages[0]['content'] = PROMPT + context_note + json.dumps(research_context_summary(workspace), ensure_ascii=False)
         stopped()
         return workspace.reply(request.requestId, "本轮已到探究步骤上限。已完成的计算可在实验记录中查看；尚未完成的步骤不能作为结论，请继续分步验证。", steps, completed=False)
+    except AgentError as error:
+        if error.message in {STALL_MESSAGE, BUDGET_MESSAGE} and (steps or workspace.available_evidence() or workspace.build_failure):
+            return progress_reply(error)
+        raise
     finally:
         diagnostics.record('run.end', tools=len(steps), objectsGenerated=len(workspace.apparatus_builds), records=len(workspace.available_evidence()))
         if owns_client:

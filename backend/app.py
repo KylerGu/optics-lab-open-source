@@ -20,7 +20,7 @@ from .research_agent import ResearchAgentRequest, run_research_agent
 from .research_http import ResearchClient
 from .local_debug import DebugRun, save_snapshot
 from . import turn_limits
-from .turn_limits import TIMEOUT_MESSAGE, log_turn
+from .turn_limits import BUDGET_MESSAGE, STALL_MESSAGE, TurnStop, log_turn
 
 app = FastAPI(title="光学智研计算服务", version="0.6.0")
 agent_slots = BoundedSemaphore(2)
@@ -32,11 +32,16 @@ research_requests_lock = Lock()
 STREAM_KEEPALIVE_SECONDS = 10
 
 
-def note_failure(events, error, timed_out):
+def note_failure(events, error, timed_out, stopped):
     message = error.message
-    if timed_out.is_set() or message == TIMEOUT_MESSAGE:
+    if message == STALL_MESSAGE:
+        stopped.stall()
+    elif message == BUDGET_MESSAGE or timed_out.is_set():
         timed_out.set()
-        message = TIMEOUT_MESSAGE
+        stopped.expire()
+        message = BUDGET_MESSAGE
+    elif stopped.reason == "ok":
+        stopped.reason = "error"
     events.put({"type": "error", "message": message})
 
 
@@ -49,7 +54,7 @@ async def ndjson_stream(request, events, stopped, timed_out, deadline_at, starte
                 break
             if not timed_out.is_set() and time.monotonic() >= deadline_at:
                 timed_out.set()
-                stopped.set()
+                stopped.expire()
             try:
                 event = events.get_nowait()
             except Empty:
@@ -60,19 +65,20 @@ async def ndjson_stream(request, events, stopped, timed_out, deadline_at, starte
                 continue
             if event is None:
                 break
-            if timed_out.is_set() and isinstance(event, dict) and event.get("type") == "error":
-                event = {"type": "error", "message": TIMEOUT_MESSAGE}
+            if timed_out.is_set() and isinstance(event, dict) and event.get("type") == "error" and event.get("message") != STALL_MESSAGE:
+                event = {"type": "error", "message": BUDGET_MESSAGE}
             yield json.dumps(event, ensure_ascii=False, allow_nan=False) + "\n"
             last_sent = time.monotonic()
     finally:
-        cancelled = stopped.is_set() and not timed_out.is_set()
+        reason = stopped.reason if stopped.reason != "ok" else "cancel" if stopped.is_set() else "ok"
         stopped.set()
-        log_turn(route, started, timed_out=timed_out.is_set(), cancelled=cancelled)
+        log_turn(route, started, timed_out=reason in {"stall", "budget"}, cancelled=reason == "cancel", reason=reason)
 
 
 async def finish_json_turn(request, slot, started, deadline_at, route, work):
     """Run one JSON assistant turn. Disconnect or the deadline closes the upstream call."""
-    stopped, timed_out, done = Event(), Event(), Event()
+    stopped, done = TurnStop(), Event()
+    timed_out = Event()
     outcome = {}
 
     def wrapped():
@@ -80,8 +86,11 @@ async def finish_json_turn(request, slot, started, deadline_at, route, work):
             outcome["reply"] = work(stopped)
         except AgentError as error:
             outcome["error"] = error
-            if error.message == TIMEOUT_MESSAGE:
+            if error.message == STALL_MESSAGE:
+                stopped.stall()
+            elif error.message == BUDGET_MESSAGE:
                 timed_out.set()
+                stopped.expire()
         except Exception:
             outcome["error"] = AgentError("本轮未完成，请重试。")
         finally:
@@ -96,7 +105,7 @@ async def finish_json_turn(request, slot, started, deadline_at, route, work):
                 break
             if time.monotonic() >= deadline_at:
                 timed_out.set()
-                stopped.set()
+                stopped.expire()
             await asyncio.sleep(0.05)
         while not done.is_set():
             await asyncio.sleep(0.05)
@@ -105,13 +114,19 @@ async def finish_json_turn(request, slot, started, deadline_at, route, work):
             stopped.set()
     error = outcome.get("error")
     reply = outcome.get("reply")
-    timed = timed_out.is_set() or (isinstance(error, AgentError) and error.message == TIMEOUT_MESSAGE)
-    cancelled = stopped.is_set() and not timed and reply is None
-    log_turn(route, started, timed_out=timed, cancelled=cancelled)
+    reason = stopped.reason
+    if reason == "ok" and error is not None:
+        reason = "error"
+    elif reason == "ok" and stopped.is_set() and reply is None:
+        reason = "cancel"
+    timed = reason == "budget" or timed_out.is_set()
+    log_turn(route, started, timed_out=reason in {"stall", "budget"}, cancelled=reason == "cancel", reason=reason)
     if reply is not None and not timed:
         return reply
+    if isinstance(error, AgentError) and error.message == STALL_MESSAGE:
+        raise HTTPException(status_code=504, detail=STALL_MESSAGE)
     if timed:
-        raise HTTPException(status_code=504, detail=TIMEOUT_MESSAGE)
+        raise HTTPException(status_code=504, detail=BUDGET_MESSAGE)
     if error is not None:
         raise HTTPException(status_code=error.status, detail=error.message) from None
     raise HTTPException(status_code=499, detail="已停止本轮请求。")
@@ -188,7 +203,7 @@ async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
         raise HTTPException(status_code=503, detail="请先配置AI模型接口。")
     if not spatial_agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="光路设计正在运行，请稍后重试。")
-    events, stopped, timed_out = Queue(), Event(), Event()
+    events, stopped, timed_out = Queue(), TurnStop(), Event()
     started = time.monotonic()
     deadline_at = started + turn_limits.LONG_TURN_SECONDS
     debug = DebugRun('builder', document, settings)
@@ -197,15 +212,15 @@ async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
         events.put({'type': 'progress', 'step': step})
     def worker():
         try:
-            reply = run_spatial_agent(document, settings, progress=report, cancelled=stopped.is_set, debug=debug)
+            reply = run_spatial_agent(document, settings, progress=report, cancelled=stopped, debug=debug)
             debug.record('reply', reply=reply)
             events.put({"type": "reply", "reply": reply})
         except AgentError as error:
             debug.record('error', message=error.message, status=error.status)
-            note_failure(events, error, timed_out)
+            note_failure(events, error, timed_out, stopped)
         except Exception as error:
             debug.record('error', errorType=type(error).__name__)
-            events.put({"type": "error", "message": TIMEOUT_MESSAGE if timed_out.is_set() else "本轮设计未完成，装置未修改。请重试。"})
+            events.put({"type": "error", "message": BUDGET_MESSAGE if timed_out.is_set() else "本轮设计未完成，装置未修改。请重试。"})
         finally:
             debug.record('finished', stopped=stopped.is_set())
             spatial_agent_slots.release()
@@ -233,7 +248,7 @@ async def research_agent_chat(document: ResearchAgentRequest, request: Request):
         raise HTTPException(status_code=503, detail="请先配置AI模型接口。")
     if not research_agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="实验探究助手正在处理其他问题，请稍后重试。")
-    events, stopped, timed_out = Queue(), Event(), Event()
+    events, stopped, timed_out = Queue(), TurnStop(), Event()
     started = time.monotonic()
     deadline_at = started + turn_limits.LONG_TURN_SECONDS
     with research_requests_lock:
@@ -248,15 +263,15 @@ async def research_agent_chat(document: ResearchAgentRequest, request: Request):
         events.put({'type': 'progress', 'step': step})
     def worker():
         try:
-            reply = run_research_agent(document, settings, progress=report, cancelled=stopped.is_set, builder_settings=builder_settings, debug=debug)
+            reply = run_research_agent(document, settings, progress=report, cancelled=stopped, builder_settings=builder_settings, debug=debug)
             debug.record('reply', reply=reply)
             events.put({"type": "reply", "reply": reply})
         except AgentError as error:
             debug.record('error', message=error.message, status=error.status)
-            note_failure(events, error, timed_out)
+            note_failure(events, error, timed_out, stopped)
         except Exception as error:
             debug.record('error', errorType=type(error).__name__)
-            events.put({"type": "error", "message": TIMEOUT_MESSAGE if timed_out.is_set() else "本轮研究未完成，请重试。"})
+            events.put({"type": "error", "message": BUDGET_MESSAGE if timed_out.is_set() else "本轮研究未完成，请重试。"})
         finally:
             debug.record('finished', stopped=stopped.is_set())
             with research_requests_lock:
@@ -276,7 +291,7 @@ async def agent_chat(document: AgentRequest, request: Request):
     deadline_at = started + turn_limits.SCENE_TURN_SECONDS
 
     def work(stopped):
-        client = ResearchClient(stopped.is_set, streaming=False, deadline=deadline_at)
+        client = ResearchClient(stopped, streaming=False, deadline=deadline_at)
         try:
             return run_agent(document, get_settings(), client=client)
         finally:
@@ -333,7 +348,7 @@ async def scene_chat(document: SceneAgentRequest, request: Request):
     deadline_at = started + turn_limits.SCENE_TURN_SECONDS
 
     def work(stopped):
-        client = ResearchClient(stopped.is_set, streaming=False, deadline=deadline_at)
+        client = ResearchClient(stopped, streaming=False, deadline=deadline_at)
         try:
             return run_scene_agent(document, get_settings(), client=client)
         finally:
