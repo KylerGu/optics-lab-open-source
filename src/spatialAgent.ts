@@ -98,6 +98,9 @@ export function readSpatialChat():SpatialChatMessage[] {
     return messages.reduce((n,m)=>n+m.content.length,0)<=24000?messages:[];
   }catch{return [];}
 }
+export async function cancelSpatialAgent(requestId:string):Promise<void> {
+  await fetch('/api/spatial/agent/cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId}),signal:AbortSignal.timeout(5000),keepalive:true}).catch(()=>{});
+}
 export async function requestSpatialAgent(id:string,input:SpatialExperiment,message:string,history:SpatialChatMessage[],signal:AbortSignal,onStep:(step:AgentStep)=>void):Promise<SpatialAgentReply> {
   const response=await fetch('/api/spatial/agent/chat',{method:'POST',headers:{'Content-Type':'application/json',...modelHeaders()},body:JSON.stringify({requestId:id,experiment:input,message,history}),signal});
   if(!response.ok){const body=await response.json().catch(()=>null) as {detail?:unknown}|null;throw new Error(typeof body?.detail==='string'?body.detail:'光路设计暂时不可用，请重试。');}

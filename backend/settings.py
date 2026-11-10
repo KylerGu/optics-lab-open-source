@@ -2,7 +2,6 @@
 from dataclasses import dataclass
 import os
 
-import httpx
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -49,8 +48,9 @@ class Settings:
 
     @property
     def provider_timeout(self):
-        # Bound connection establishment and sending, not model thinking/output.
-        return httpx.Timeout(connect=15, read=None, write=30, pool=15)
+        # Numbers live in turn_limits so connect, read and turn budgets stay together.
+        from .turn_limits import provider_timeout
+        return provider_timeout()
 
     @property
     def configured(self):

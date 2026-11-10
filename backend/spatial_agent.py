@@ -8,6 +8,7 @@ import httpx
 from pydantic import Field, ValidationError, model_validator
 
 from .agent import AgentError, ChatMessage, assistant_context, completion, expanded_schema, tool
+from .turn_limits import BUDGET_MESSAGE, STALL_MESSAGE, STOP_MESSAGE, finished_steps
 from .models import StrictModel
 from .settings import Settings
 from .spatial import SpatialElement, SpatialExperiment, norm, sub, trace
@@ -487,7 +488,9 @@ def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=N
     steps = []
     def stopped():
         if cancelled and cancelled():
-            raise AgentError("已停止本轮设计，装置未修改。", 499)
+            if getattr(cancelled, "budget", False):
+                raise AgentError(BUDGET_MESSAGE, 504)
+            raise AgentError(STOP_MESSAGE, 499)
     def record(name, status, explanation):
         step = {"name": name, "status": status, "summary": explanation}
         steps.append(step)
@@ -573,6 +576,16 @@ def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=N
                 messages.append({'role': 'system', 'content': '当前装置计算结果：' + json.dumps(data, ensure_ascii=False, allow_nan=False)
                                  + '\n结合用户要求解释结果和限制；如需修正可继续修改，否则直接回复。自定比较指标仅供参考，不是载入装置的硬门槛。'})
         return reply('本轮操作较多，当前可计算的装置与结果已保留；尚未完成的要求可以继续提问。')
+    except AgentError as error:
+        kept = finished_steps(steps) if error.status == 499 else steps
+        if not delegated and (error.message in {STALL_MESSAGE, BUDGET_MESSAGE} or (error.status == 499 and kept)):
+            label = STOP_MESSAGE if error.status == 499 else error.message
+            done = "；".join(step.get("summary") for step in kept if step.get("summary"))
+            answer = label + (("\n已完成：" + done) if done else "") + "\n请从这些已完成的步骤继续，不要从头重做。"
+            return {"requestId": request.requestId, "inputSnapshot": request.experiment.model_dump(),
+                    "experiment": request.experiment.model_dump(), "changed": False, "applyAllowed": False,
+                    "answer": answer[:12000].strip(), "trace": kept, "checks": [], "comparisons": [], "evidence": None}
+        raise
     finally:
         if owns_client:
             client.close()

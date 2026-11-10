@@ -85,10 +85,11 @@ class ByokHttpTests(unittest.TestCase):
             seen.append(req.headers.get("authorization"))
             return httpx.Response(200, json=answer("焦距表示汇聚能力。"))
 
-        real_client = httpx.Client
+        real_async = httpx.AsyncClient
 
-        def factory(*_args, **_kwargs):
-            return real_client(transport=httpx.MockTransport(handle), follow_redirects=False)
+        def factory(*_args, **kwargs):
+            kwargs["transport"] = httpx.MockTransport(handle)
+            return real_async(*_args, **kwargs)
 
         collector = Collect()
         backend_log = logging.getLogger("backend")
@@ -96,7 +97,7 @@ class ByokHttpTests(unittest.TestCase):
         backend_log.setLevel(logging.DEBUG)
         backend_log.addHandler(collector)
         try:
-            with patch("backend.agent.httpx.Client", factory), patch("backend.app.get_settings", return_value=Settings(SERVER_SECRET, "server-model", "https://example.test")), patch.dict(os.environ, {"AI_ALLOW_SERVER_KEY": "1"}):
+            with patch("backend.research_http.httpx.AsyncClient", factory), patch("backend.app.get_settings", return_value=Settings(SERVER_SECRET, "server-model", "https://example.test")), patch.dict(os.environ, {"AI_ALLOW_SERVER_KEY": "1"}):
                 response = TestClient(app).post("/api/agent/chat", headers={"X-AI-Key": SECRET, "X-AI-Model": "deepseek-flash"}, json=request().model_dump())
         finally:
             backend_log.removeHandler(collector)

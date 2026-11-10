@@ -115,7 +115,7 @@ class ResearchBuilderTests(unittest.TestCase):
                                          Settings('test', 'deepseek-flash', reasoning_effort='high'),
                                          client, None, None)
         self.assertEqual(caught.exception.status, 504)
-        self.assertIn('响应超时', caught.exception.message)
+        self.assertIn('长时间无响应', caught.exception.message)
         self.assertEqual(len(payloads), 1)
         content = payloads[0]['messages'][0]['content']
         catalog = json.loads(content.split('\n器材：', 1)[1].split('\n装置：', 1)[0])
@@ -153,10 +153,10 @@ class ResearchBuilderTests(unittest.TestCase):
             w = ResearchWorkspace(objects=[ResearchObject(id='original', source='saved', experiment=original)],
                                   active_object_id='original', builder=build)
             w.execute('read_research', {})
-            with self.assertRaisesRegex(ValueError, '响应超时'):
+            with self.assertRaisesRegex(ValueError, '长时间无响应'):
                 w.execute('build_research_apparatus', {'goal': '调整装置', 'baseObjectId': 'original'})
         result = w.reply('timeout', '完成', [])
-        self.assertIn('响应超时', result['answer'])
+        self.assertIn('长时间无响应', result['answer'])
         self.assertNotIn('缺少有效目标', result['answer'])
         self.assertEqual(result['apparatusBuilds'], [])
         self.assertEqual(result['objectSnapshots'][0]['experiment'], original.model_dump())

@@ -41,6 +41,7 @@ export interface ResearchReply {
 }
 export interface ResearchTurn {
   id: string; prompt: string; createdAt: string; reply: ResearchReply | null; error: string | null;
+  steps?: AgentStep[];
 }
 export interface ResearchProject {
   id: string; title: string; titleMode: ResearchTitleMode; createdAt: string; updatedAt: string; draft: string;
@@ -51,6 +52,15 @@ export interface ResearchStorage { schemaVersion: 2; selectedId: string | null; 
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown, max: number): v is string => typeof v === 'string' && !!v.trim() && v.length <= max;
 const date = (v: unknown): v is string => typeof v === 'string' && Number.isFinite(Date.parse(v));
+function readSteps(value: unknown): AgentStep[] {
+  if (!Array.isArray(value)) return [];
+  const steps: AgentStep[] = [];
+  for (const step of value.slice(0, 40)) {
+    if (!record(step) || typeof step.name !== 'string' || step.name.length > 80 || (step.status !== 'ok' && step.status !== 'error') || typeof step.summary !== 'string' || !step.summary || step.summary.length > 300) continue;
+    steps.push({ name: step.name, status: step.status, summary: step.summary });
+  }
+  return steps;
+}
 
 function validateApparatusBuilds(value: unknown, objects: ResearchObjectInput[]): ResearchApparatusBuild[] {
   if (value === undefined) return [];
@@ -213,7 +223,8 @@ export function parseResearchStorage(v: unknown, maxProjects = 30): ResearchStor
       if (!record(t) || !text(t.id, 100) || turnIds.has(t.id) || !text(t.prompt, 2000) || !date(t.createdAt) || !(t.error === null || text(t.error, 1000))) throw new Error('探究对话格式无效。');
       turnIds.add(t.id);
       const reply = t.reply === null ? null : validateResearchReply(t.reply, t.id, record(t.reply) && t.reply.inputSnapshot !== null ? parseSpatial(t.reply.inputSnapshot) : null);
-      return { id: t.id, prompt: t.prompt, createdAt: t.createdAt, reply, error: t.error === null && !reply ? '上次探究未完整接收，可重新发送。' : t.error as string | null };
+      const steps = readSteps(t.steps);
+      return { id: t.id, prompt: t.prompt, createdAt: t.createdAt, reply, error: t.error === null && !reply ? '上次探究未完整接收，可重新发送。' : t.error as string | null, ...(steps.length ? { steps } : {}) };
     });
     turns.forEach((turn, index) => { if (turn.reply) validatePlanEvidence(turn.reply, turns.slice(0, index)); });
     return { id: p.id, ...restoreResearchTitle(p.title, p.titleMode, turns), createdAt: p.createdAt, updatedAt: p.updatedAt, draft: p.draft, objects, activeObjectId, turns };
@@ -235,10 +246,18 @@ export function newResearchProject(): ResearchProject {
   return { id: crypto.randomUUID(), title: '未命名探究', titleMode: 'pending', createdAt: now, updatedAt: now, draft: '', objects: [], activeObjectId: null, turns: [] };
 }
 
+function stoppedNotes(turn: ResearchTurn): string {
+  const done = (turn.steps ?? []).map(step => step.summary).filter(summary => summary && !summary.startsWith('正在')).slice(-12).join('；');
+  return ((turn.error ?? '已停止') + (done ? '\n已完成：' + done : '')).slice(0, 2500);
+}
 export function researchHistory(turns: ResearchTurn[]): SpatialChatMessage[] {
-  return turns.filter(t => t.reply).slice(-4).flatMap(t => [
-    { role: 'user' as const, content: t.prompt.slice(0, 2000) },
-    { role: 'assistant' as const, content: t.reply!.answer.slice(0, 2500) + (t.reply!.plan.length ? '\n探究计划：' + t.reply!.plan.join('；') : '') + (t.reply!.objectSnapshots?.length ? '\n当轮对象：' + t.reply!.objectSnapshots.map(o => o.experiment.name).join('、') : '') },
+  return turns.flatMap(turn => {
+    if (turn.reply) return [turn];
+    if (turn.error?.startsWith('已停止') && turn.steps?.some(step => step.summary && !step.summary.startsWith('正在'))) return [turn];
+    return [];
+  }).slice(-4).flatMap(turn => [
+    { role: 'user' as const, content: turn.prompt.slice(0, 2000) },
+    { role: 'assistant' as const, content: turn.reply ? turn.reply.answer.slice(0, 2500) + (turn.reply.plan.length ? '\n探究计划：' + turn.reply.plan.join('；') : '') + (turn.reply.objectSnapshots?.length ? '\n当轮对象：' + turn.reply.objectSnapshots.map(o => o.experiment.name).join('、') : '') : stoppedNotes(turn) },
   ]);
 }
 
