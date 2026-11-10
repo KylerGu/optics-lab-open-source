@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { gaussianBeam, gaussianElements, makeGaussianScene } from './gaussianBeam';
+import { experimentFromGaussianScene, gaussianBeam, gaussianElements, gaussianSceneState, makeGaussianScene } from './gaussianBeam';
 
 const close = (actual: number, expected: number) => assert.ok(Math.abs(actual - expected) < Math.max(1, Math.abs(expected)) * 1e-12, `${actual} differs from ${expected}`);
 
@@ -64,4 +64,15 @@ test('teaching regions use distance from the waist and far-field radius error st
   const translated = gaussianBeam({ ...laser, positionMm: laser.positionMm + 100 }, { ...screen, positionMm: screen.positionMm + 100 });
   assert.equal(translated.region, base.region);
   close(translated.screenWavefrontRadiusMm, base.screenWavefrontRadiusMm);
+});
+
+test('assistant scene state round-trips the free-propagation parameters', () => {
+  const experiment = makeGaussianScene();
+  const state = gaussianSceneState(experiment);
+  assert.equal(state.sceneId, 'gaussian-propagation');
+  const restored = experimentFromGaussianScene({ ...state, parameters: { ...state.parameters, waistMm: 0.4 } }, experiment);
+  const { laser, screen } = gaussianElements(restored);
+  assert.equal(laser.waistMm, 0.4);
+  assert.equal(laser.positionMm, gaussianElements(experiment).laser.positionMm);
+  assert.equal(screen.positionMm, gaussianElements(experiment).screen.positionMm);
 });

@@ -1,11 +1,11 @@
 import SceneAssistantToggle from './SceneAssistantToggle';
 import { useCallback, useEffect, useId, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type CSSProperties } from 'react';
 import { BookOpen, ChevronLeft, Copy, Maximize, Minus, PanelLeftClose, PanelLeftOpen, Plus, Redo2, RotateCcw, ScanLine, Settings2, Sparkles, Undo2, X } from 'lucide-react';
-import AssistantPanel from './AssistantPanel';
+import SceneAssistant from './SceneAssistant';
 import { FormulaSheet } from './FormulaKnowledge';
 import type { FormulaId } from './formulaCatalog';
 import { historyReducer, parseExperiment, type Experiment, type History } from './model';
-import { GAUSSIAN_DRAFT_KEY, gaussianBeam, gaussianElements, makeGaussianScene } from './gaussianBeam';
+import { GAUSSIAN_DRAFT_KEY, experimentFromGaussianScene, gaussianBeam, gaussianElements, gaussianSceneState, makeGaussianScene } from './gaussianBeam';
 import { experimentKey } from './simulation';
 import { useScenePanelWidth } from './useScenePanelWidth';
 
@@ -309,7 +309,7 @@ export default function GaussianScene({ assistantOpen, onCloseAssistant, onExplo
     </div>
     <div className="gs-model-strip"><span title="横向与纵向的 1 mm 在屏幕上显示为不同长度，便于看清光束；θ 弧线是示意，实际角度看计算数值。">横纵比例不同</span></div>
     {formulaId && <FormulaSheet initialId={formulaId} onSelect={onFormula} values={{ wavelengthNm: laser.wavelengthNm, waistMm: laser.waistMm, distanceMm: beam.distanceMm, radiusMm: beam.screenRadiusMm, offsetMm: beam.screenRadiusMm }} onClose={() => onFormula(null)} />}
-    <aside hidden={!assistantOpen} className="gs-drawer gs-assistant" aria-label="场景AI助手"><button className="gs-assistant-close icon-button" aria-label="关闭场景AI助手" onClick={onCloseAssistant}><X size={18} /></button><AssistantPanel experiment={experiment} mode="teaching" scene="gaussian" editing={preview !== null} onApply={applyAssistant} onRestore={restoreAssistant} onDesign={() => setNotice('方案设计请在实验探究工作区查看。')} onStudy={() => setNotice('误差分析请在实验探究工作区查看。')} suggestion={null} /></aside>
+    <aside hidden={!assistantOpen} className="gs-drawer gs-assistant" aria-label="场景AI助手"><button className="gs-assistant-close icon-button" aria-label="关闭场景AI助手" onClick={onCloseAssistant}><X size={18} /></button><SceneAssistant sceneState={gaussianSceneState(experiment)} editing={preview !== null} onApplyScene={state => applyAssistant(experimentFromGaussianScene(state, latest.current))} onRestoreScene={(before, after) => restoreAssistant(experimentFromGaussianScene(before, latest.current), experimentFromGaussianScene(after, latest.current))} /></aside>
     {notice && <div className="gs-notice" role="status"><Sparkles size={16} /><span>{notice}</span><button className="icon-button" aria-label="关闭场景提示" onClick={() => setNotice(null)}><X size={15} /></button></div>}
   </section>;
 }

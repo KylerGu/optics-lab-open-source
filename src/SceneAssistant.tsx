@@ -32,6 +32,7 @@ export default function SceneAssistant(props:SceneAssistantProps){
     finally{clearTimeout(timer);if(active.current===controller){active.current=null;setBusy(false);}}
   };
   const sceneStarters:Record<string,string[]>={lens:['为什么会形成虚像？','把像距调到300 mm，保持透镜不变'],mirror:['凹面镜和凸面镜的像有什么区别？','把像距调到300 mm，保持镜面不变'],prism:['最小偏折是什么？','调到最小偏折位置'],'double-lens':['解释当前中间像和最终像','把最终像距调到200 mm，透镜不变'],microscope:['为什么需要物镜和目镜？','调到放松眼观察的镜距'],telescope:['为什么有正像和倒像望远镜？','调到平行出射的镜距'],camera:['缩小光圈为什么能减轻离焦？','调节感光面使当前物体对焦'],aperture:['光阑和光瞳有什么区别？','把入瞳位置调到150 mm，保持孔径不变'],aberration:['为什么缩小口径能减轻球差？','把观察屏调到几何光斑最小的位置，保持透镜不变']};
+  sceneStarters['gaussian-propagation']=['瑞利长度是什么？','把光斑半径调到0.4 mm，其他参数不变'];
   sceneStarters['gaussian-focus']=['解释当前束腰位置和光斑大小','把透镜焦距改为150 mm，其他参数不变','比较焦距80、100、150 mm'];
   sceneStarters['gaussian-expander']=['解释当前扩束倍率和发散角','调到准直，其他参数不变','比较第二镜位置170、175、180 mm'];
   sceneStarters['two-mirror-resonator']=['解释当前谐振腔是否稳定','只调整镜距，调到稳定','比较镜距300、500、1000 mm'];
