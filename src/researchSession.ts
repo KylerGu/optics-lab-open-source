@@ -245,10 +245,18 @@ export function newResearchProject(): ResearchProject {
   return { id: crypto.randomUUID(), title: '未命名探究', titleMode: 'pending', createdAt: now, updatedAt: now, draft: '', objects: [], activeObjectId: null, turns: [] };
 }
 
+function stoppedNotes(turn: ResearchTurn): string {
+  const done = (turn.steps ?? []).map(step => step.summary).filter(summary => summary && !summary.startsWith('正在')).slice(-12).join('；');
+  return ((turn.error ?? '已停止') + (done ? '\n已完成：' + done : '')).slice(0, 2500);
+}
 export function researchHistory(turns: ResearchTurn[]): SpatialChatMessage[] {
-  return turns.filter(t => t.reply).slice(-4).flatMap(t => [
-    { role: 'user' as const, content: t.prompt.slice(0, 2000) },
-    { role: 'assistant' as const, content: t.reply!.answer.slice(0, 2500) + (t.reply!.plan.length ? '\n探究计划：' + t.reply!.plan.join('；') : '') + (t.reply!.objectSnapshots?.length ? '\n当轮对象：' + t.reply!.objectSnapshots.map(o => o.experiment.name).join('、') : '') },
+  return turns.flatMap(turn => {
+    if (turn.reply) return [turn];
+    if (turn.error?.startsWith('已停止') && turn.steps?.some(step => step.summary && !step.summary.startsWith('正在'))) return [turn];
+    return [];
+  }).slice(-4).flatMap(turn => [
+    { role: 'user' as const, content: turn.prompt.slice(0, 2000) },
+    { role: 'assistant' as const, content: turn.reply ? turn.reply.answer.slice(0, 2500) + (turn.reply.plan.length ? '\n探究计划：' + turn.reply.plan.join('；') : '') + (turn.reply.objectSnapshots?.length ? '\n当轮对象：' + turn.reply.objectSnapshots.map(o => o.experiment.name).join('、') : '') : stoppedNotes(turn) },
   ]);
 }
 

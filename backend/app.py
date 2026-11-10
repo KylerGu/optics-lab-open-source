@@ -29,6 +29,8 @@ spatial_agent_slots = BoundedSemaphore(2)
 research_agent_slots = BoundedSemaphore(2)
 research_requests = {}
 research_requests_lock = Lock()
+spatial_requests = {}
+spatial_requests_lock = Lock()
 STREAM_KEEPALIVE_SECONDS = 10
 
 
@@ -145,6 +147,15 @@ async def cancel_research(document: ResearchCancelRequest):
     return {'stopped': stopped is not None}
 
 
+@app.post('/api/spatial/agent/cancel')
+async def cancel_spatial(document: ResearchCancelRequest):
+    with spatial_requests_lock:
+        stopped = spatial_requests.get(document.requestId)
+        if stopped is not None:
+            stopped.set()
+    return {'stopped': stopped is not None}
+
+
 @app.exception_handler(RequestValidationError)
 async def invalid_request(_request, _exception):
     return JSONResponse(status_code=422, content={"detail": "实验数据无效，请检查元件参数、单位与文件格式。"})
@@ -206,6 +217,11 @@ async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
     events, stopped, timed_out = Queue(), TurnStop(), Event()
     started = time.monotonic()
     deadline_at = started + turn_limits.LONG_TURN_SECONDS
+    with spatial_requests_lock:
+        if document.requestId in spatial_requests:
+            spatial_agent_slots.release()
+            raise HTTPException(status_code=409, detail='这条搭建请求已经在运行。')
+        spatial_requests[document.requestId] = stopped
     debug = DebugRun('builder', document, settings)
     def report(step):
         debug.record('progress', step=step)
@@ -223,6 +239,9 @@ async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
             events.put({"type": "error", "message": BUDGET_MESSAGE if timed_out.is_set() else "本轮设计未完成，装置未修改。请重试。"})
         finally:
             debug.record('finished', stopped=stopped.is_set())
+            with spatial_requests_lock:
+                if spatial_requests.get(document.requestId) is stopped:
+                    del spatial_requests[document.requestId]
             spatial_agent_slots.release()
             events.put(None)
     Thread(target=worker, daemon=True).start()

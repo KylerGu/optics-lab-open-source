@@ -27,6 +27,20 @@ LONG_TURN_SECONDS = 1800.0
 
 STALL_MESSAGE = "模型长时间无响应，已停止。"
 BUDGET_MESSAGE = "本轮已达时长上限，已保留进度，可点继续。"
+STOP_MESSAGE = "已停止"
+
+
+def finished_steps(steps):
+    """Drop a phase marker that was still running. Keep steps that already finished."""
+    kept = []
+    for step in steps or []:
+        name = str(step.get("name") or "")
+        summary = str(step.get("summary") or "")
+        if name.startswith("phase_") or name == "builder_start" or summary.startswith("正在"):
+            continue
+        if summary:
+            kept.append(step)
+    return kept
 
 
 class TurnStop:

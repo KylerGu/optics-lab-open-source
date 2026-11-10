@@ -7,6 +7,7 @@ import time
 import unittest
 from unittest.mock import patch
 
+import httpx
 from fastapi import HTTPException
 
 from backend.agent import AgentError, AgentRequest
@@ -19,7 +20,7 @@ from backend.tests.test_agent import experiment
 from backend.tests.test_scene_physics import state
 from backend.tests.test_spatial_agent import apparatus
 from backend.spatial_agent import run_spatial_agent
-from backend.turn_limits import BUDGET_MESSAGE, STALL_MESSAGE, TurnStop, provider_timeout
+from backend.turn_limits import BUDGET_MESSAGE, STALL_MESSAGE, STOP_MESSAGE, TurnStop, finished_steps, provider_timeout
 
 
 SECRET = "UNIQUE-SECRET-KEY-9f3a"
@@ -337,6 +338,71 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AgentError) as caught:
             run_spatial_agent(request, Settings(SECRET, "test-model", "https://example.test"), client=object(), cancelled=stop, delegated=True)
         self.assertEqual(caught.exception.message, BUDGET_MESSAGE)
+
+    def test_user_stop_keeps_finished_steps_and_drops_the_one_still_running(self):
+        self.assertEqual(
+            [step["summary"] for step in finished_steps([
+                {"name": "read_workspace", "status": "ok", "summary": "读取当前三维装置"},
+                {"name": "phase_compute", "status": "ok", "summary": "正在计算"},
+            ])],
+            ["读取当前三维装置"],
+        )
+        seen = {"n": 0}
+
+        def handler(_request):
+            seen["n"] += 1
+            message = {"role": "assistant", "content": None, "tool_calls": [{"id": "read", "type": "function", "function": {"name": "read_workspace", "arguments": "{}"}}]} if seen["n"] == 1 else {"role": "assistant", "content": "不应再调用"}
+            return httpx.Response(200, json={"choices": [{"finish_reason": "tool_calls" if seen["n"] == 1 else "stop", "message": message}]})
+
+        class Stop:
+            # Allow the first round and its finished tool, then stop before another model call.
+            budget = False
+            def __init__(self):
+                self.checks = 0
+            def __call__(self):
+                self.checks += 1
+                return self.checks >= 3
+
+        request = SpatialAgentRequest(requestId="stop-keep", experiment=apparatus(), message="搭建并计算")
+        with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+            result = run_spatial_agent(request, Settings(SECRET, "test-model", "https://example.test"), client=client, cancelled=Stop())
+        self.assertEqual(seen["n"], 1)
+        self.assertFalse(result["changed"])
+        self.assertFalse(result["applyAllowed"])
+        self.assertEqual(result["experiment"], request.experiment.model_dump())
+        self.assertEqual([step["name"] for step in result["trace"]], ["read_workspace"])
+        self.assertTrue(result["answer"].startswith(STOP_MESSAGE))
+        self.assertNotIn("正在", result["answer"])
+
+    async def test_spatial_stop_returns_the_finished_reply_and_frees_the_slot(self):
+        from backend.app import ResearchCancelRequest, cancel_spatial
+
+        def fake(document, settings, progress, cancelled, **kwargs):
+            progress({"name": "read_workspace", "status": "ok", "summary": "读取当前三维装置"})
+            progress({"name": "phase_compute", "status": "ok", "summary": "正在计算"})
+            while not cancelled():
+                time.sleep(0.01)
+            return {"requestId": document.requestId, "inputSnapshot": document.experiment.model_dump(),
+                    "experiment": document.experiment.model_dump(), "changed": False, "applyAllowed": False,
+                    "answer": "已停止\n已完成：读取当前三维装置", "trace": [{"name": "read_workspace", "status": "ok", "summary": "读取当前三维装置"}],
+                    "checks": [], "comparisons": [], "evidence": None}
+
+        request = SpatialAgentRequest(requestId="stop-slot", experiment=apparatus(), message="停止")
+        with patch("backend.app.get_settings", return_value=Settings(SECRET, "test-model", "https://example.test")), patch("backend.app.run_spatial_agent", side_effect=fake):
+            response = await spatial_agent_chat(request, Connected())
+            stopped = await cancel_spatial(ResearchCancelRequest(requestId="stop-slot"))
+            chunks = []
+            try:
+                async for chunk in response.body_iterator:
+                    chunks.append(chunk)
+            finally:
+                await response.body_iterator.aclose()
+        self.assertTrue(stopped["stopped"])
+        self.assertTrue(slots_free(spatial_agent_slots))
+        events = [json.loads(chunk) for chunk in chunks if chunk.strip()]
+        self.assertEqual(events[-1]["type"], "reply")
+        self.assertIn("读取当前三维装置", events[-1]["reply"]["answer"])
+        self.assertNotIn("正在计算", events[-1]["reply"]["answer"])
 
 
 if __name__ == "__main__":
