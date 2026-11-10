@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useOpenModelSettings } from './ModelSettingsDialog';
+import { listenModelSettings, modelHeaders } from './modelSettings';
 import { ArrowRight, Download, LoaderCircle, Maximize2, Minimize2, RefreshCw, Sparkles, Square, Trash2, Undo2 } from 'lucide-react';
 import { experimentKey } from './simulation';
 import { validateAgentReply, scanCSV, assistantErrorMessage, isAssistantConnectionError, type ConversationMessage, type Scan } from './agent';
@@ -68,13 +70,14 @@ function AssistantSession(props: LegacyProps) {
   const [busy,setBusy]=useState(false);
   const [inputError,setInputError]=useState<string|null>(null);
   const latest=useRef(props); latest.current=props;
+  const openModelSettings=useOpenModelSettings();
   const active=useRef<AbortController|null>(null);
   useEffect(()=>{if(props.suggestion)setPrompt(props.suggestion.text);},[props.suggestion]);
 
   async function checkStatus() {
     setChecking(true); setStatusError(null);
     try {
-      const response=await fetch('/api/agent/status',{signal:AbortSignal.timeout(6000)});
+      const response=await fetch('/api/agent/status',{headers:modelHeaders(),signal:AbortSignal.timeout(6000)});
       if(!response.ok) throw new Error('暂时无法检测助手配置，请确认后台已启动。');
       const data=await response.json();
       if(typeof data.configured!=='boolean') throw new Error('助手状态响应无效。');
@@ -82,7 +85,7 @@ function AssistantSession(props: LegacyProps) {
     } catch {setStatus(null);setStatusError('无法连接助手后台，请检查网络连接，稍后重新检测。');}
     finally {setChecking(false);}
   }
-  useEffect(()=>{void checkStatus();return()=>active.current?.abort('unmount');},[]);
+  useEffect(()=>{void checkStatus();const stop=listenModelSettings(()=>{void checkStatus();});return()=>{stop();active.current?.abort('unmount');};},[]);
   useEffect(()=>{saveConversation(scope, { draft: prompt, turns });},[scope,prompt,turns]);
 
   async function send() {
@@ -95,7 +98,7 @@ function AssistantSession(props: LegacyProps) {
     setBusy(true);setPrompt('');setInputError(null);
     setTurns(current=>[...current,{id:requestId,prompt:message,reply:null,error:null,application:''}].slice(-40));
     try {
-      const response=await fetch('/api/agent/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId,experiment:snapshot,message,mode:latest.current.mode,history,scene:latest.current.scene??null,learningContext:latest.current.mode==='teaching'?latest.current.learningContext??null:null}),signal:controller.signal});
+      const response=await fetch('/api/agent/chat',{method:'POST',headers:{'Content-Type':'application/json',...modelHeaders()},body:JSON.stringify({requestId,experiment:snapshot,message,mode:latest.current.mode,history,scene:latest.current.scene??null,learningContext:latest.current.mode==='teaching'?latest.current.learningContext??null:null}),signal:controller.signal});
       if(!response.ok) {
         let error='助手暂时无法处理请求，装置保持不变。';
         try {const data=await response.json();if(typeof data.detail==='string')error=data.detail;} catch { /* never display proxy HTML */ }
@@ -132,7 +135,7 @@ function AssistantSession(props: LegacyProps) {
     if(latest.current.onRestore?.(turn.reply.inputSnapshot,turn.reply.experiment))
       setTurns(current=>current.map(item=>item.id===turn.id ? {...item,applied:false,application:isGaussian?'已撤销此次调参。':'已撤销此次修改。'} : item));
   }
-  return <AssistantFrame title={isGaussian ? '高斯光束助教' : '光学探索助手'} prompt={prompt} onPrompt={setPrompt} busy={busy} configured={!!status?.configured} checking={checking} setupError={statusError} onCheck={()=>void checkStatus()} onSend={()=>void send()} onStop={()=>active.current?.abort('cancel')} onClear={()=>setTurns([])} canClear={turns.length>0} editing={props.editing} inputError={inputError} starters={isGaussian ? ['瑞利长度是什么？','把光斑半径调到0.4 mm，其他参数不变'] : props.mode==='teaching' ? ['解释当前装置的光束半径与光斑','搭建一个单透镜聚焦实验'] : ['帮我寻找固定观察屏上的较小光斑方案','分析当前方案的位置与焦距偏差']}>
+  return <AssistantFrame title={isGaussian ? '高斯光束助教' : '光学探索助手'} prompt={prompt} onPrompt={setPrompt} busy={busy} configured={!!status?.configured} checking={checking} setupError={statusError} onCheck={()=>void checkStatus()} onConfigure={openModelSettings} onSend={()=>void send()} onStop={()=>active.current?.abort('cancel')} onClear={()=>setTurns([])} canClear={turns.length>0} editing={props.editing} inputError={inputError} starters={isGaussian ? ['瑞利长度是什么？','把光斑半径调到0.4 mm，其他参数不变'] : props.mode==='teaching' ? ['解释当前装置的光束半径与光斑','搭建一个单透镜聚焦实验'] : ['帮我寻找固定观察屏上的较小光斑方案','分析当前方案的位置与焦距偏差']}>
       {turns.map(turn=><article className="agent-turn" key={turn.id}><p className="agent-user"><small>你</small>{turn.prompt}</p>{turn.error ? <p className="agent-error" role="alert">{turn.error}</p> : turn.reply ? <><div className="agent-answer"><AssistantAnswer text={turn.reply.answer}/></div>{turn.application && <div className="agent-application"><span>{wasApplied(turn) ? isGaussian ? '参数已更新。' : 'AI方案已应用。' : turn.application}</span>{canRestore(turn) && <button type="button" className="text-button" disabled={busy} onClick={()=>restore(turn)}><Undo2 size={12}/>{isGaussian ? '撤销此次调参' : '撤销此次修改'}</button>}</div>}{turn.reply.scans.map(scan=><ScanTable scan={scan} scene={props.scene} key={scan.id}/>)}{turn.reply.designs.map(design=><div className="agent-evidence" key={design.id}><strong>自动设计 · {design.counts.total}组计算</strong><p>{design.recommendation ? `推荐屏上半径 ${formatNumber(design.recommendation.radiusMm!)} mm；位置 ${formatNumber(design.recommendation.positionMm)} mm，焦距 ${formatNumber(design.recommendation.focalLengthMm)} mm。` : design.noRecommendationReason}</p><p>有限范围内的比较，不保证全局最优。搜索记录对应当时的装置。</p><button className="text-button" onClick={()=>props.onDesign(design)}>查看比较图与载入方案<ArrowRight size={12}/></button><button className="text-button" onClick={()=>downloadDesign(design,'json')}><Download size={12}/>导出完整记录</button></div>)}{turn.reply.studies.map(study=><div className="agent-evidence" key={study.id}><strong>{study.mode==='analysis'?'误差分析':'误差下的稳定方案比较'}</strong><p>位置±{formatNumber(study.tolerance.positionErrorMm)} mm，焦距±{formatNumber(study.tolerance.focalErrorPercent)}%；已计算偏差中最大半径 {study.baseline.maxRadiusMm===null?'无法计算':`${formatNumber(study.baseline.maxRadiusMm)} mm`}（当前方案）。</p>{study.recommendation && <p>较稳定推荐：标称位置 {formatNumber(study.recommendation.positionMm)} mm，焦距 {formatNumber(study.recommendation.focalLengthMm)} mm；偏差中最大半径 {formatNumber(study.recommendation.maxRadiusMm!)} mm。</p>}<p>有限采样，不代表连续误差严格界限。记录对应计算时装置。</p><button className="text-button" onClick={()=>props.onStudy(study)}>查看误差图与方案比较<ArrowRight size={12}/></button><button className="text-button" onClick={()=>downloadStudy(study,'json')}><Download size={12}/>导出分析记录</button></div>)}</> : <div className="agent-pending" role="status"><LoaderCircle size={14}/><span>正在回答…</span></div>}</article>)}
   </AssistantFrame>;
 }

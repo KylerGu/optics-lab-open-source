@@ -1,4 +1,5 @@
 import { parseSpatial, validateSpatialResult, type SpatialExperiment, type SpatialResult } from './builderModel';
+import { modelHeaders } from './modelSettings';
 import { isPhysicalLens, physicalFocalLengths } from './physicalLensGeometry';
 import {resizeLens} from './lensPresets';
 
@@ -98,7 +99,7 @@ export function readSpatialChat():SpatialChatMessage[] {
   }catch{return [];}
 }
 export async function requestSpatialAgent(id:string,input:SpatialExperiment,message:string,history:SpatialChatMessage[],signal:AbortSignal,onStep:(step:AgentStep)=>void):Promise<SpatialAgentReply> {
-  const response=await fetch('/api/spatial/agent/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:id,experiment:input,message,history}),signal});
+  const response=await fetch('/api/spatial/agent/chat',{method:'POST',headers:{'Content-Type':'application/json',...modelHeaders()},body:JSON.stringify({requestId:id,experiment:input,message,history}),signal});
   if(!response.ok){const body=await response.json().catch(()=>null) as {detail?:unknown}|null;throw new Error(typeof body?.detail==='string'?body.detail:'光路设计暂时不可用，请重试。');}
   if(!response.body)throw new Error('AI连接中断，请重试。');
   const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',bytes=0,reply:SpatialAgentReply|null=null;

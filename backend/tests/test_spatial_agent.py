@@ -271,7 +271,7 @@ class SpatialLoopTests(unittest.TestCase):
         def fake_run(req, settings, progress, cancelled, **kwargs):
             progress({"name": "read_workspace", "status": "ok", "summary": "读取当前三维装置"})
             return result
-        with patch("backend.app.get_settings", return_value=Settings("test-key", "deepseek-chat")), patch("backend.app.run_spatial_agent", side_effect=fake_run):
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=Settings("test-key", "deepseek-chat")), patch("backend.app.run_spatial_agent", side_effect=fake_run):
             with TestClient(app) as client:
                 response = client.post("/api/spatial/agent/chat", json={"requestId": "test", "experiment": document.model_dump(), "message": "解释反射"})
                 self.assertEqual(response.status_code, 200)

@@ -1,0 +1,33 @@
+.model-settings-entry {
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #d2d9e5;
+  color: #31425e;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.model-settings-entry:hover { background: #f4f7fb; }
+.model-settings-dialog { width: min(480px, 92vw); }
+.model-settings-dialog label { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; font-size: 12px; color: #5c6b82; }
+.model-settings-dialog input[type="text"],
+.model-settings-dialog input[type="password"],
+.model-settings-dialog select {
+  font: inherit;
+  font-size: 13px;
+  color: #31425e;
+  border: 1px solid #d5dce7;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #fff;
+}
+.model-settings-fixed { font-size: 13px; color: #31425e; }
+.model-settings-mask { font-variant-numeric: tabular-nums; letter-spacing: .04em; color: #31425e; }
+.model-settings-check { flex-direction: row; align-items: center; gap: 8px; }
+.model-settings-check input { accent-color: #31425e; }
+.model-settings-keyline { display: flex; gap: 8px; }
+.model-settings-keyline input { flex: 1; min-width: 0; }
+.model-settings-error { color: #9a4d2f; font-size: 12px; margin: 0; }
+@media (max-width: 1040px) {
+  .model-settings-entry { padding: 8px; }
+}

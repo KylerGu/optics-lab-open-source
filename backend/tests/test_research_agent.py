@@ -298,7 +298,7 @@ class ResearchAgentTests(unittest.TestCase):
         def fake(document, settings, progress, cancelled, **kwargs):
             progress({"name": "read_research", "status": "ok", "summary": "读取研究上下文"})
             return result
-        with patch('backend.app.get_settings', return_value=Settings("test", "test", "https://example.test")), patch('backend.app.run_research_agent', side_effect=fake):
+        with patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}), patch('backend.app.get_settings', return_value=Settings("test", "test", "https://example.test")), patch('backend.app.run_research_agent', side_effect=fake):
             response = client.post('/api/research/agent/chat', json=payload)
         events = [json.loads(line) for line in response.text.splitlines()]
         self.assertEqual([e["type"] for e in events], ["progress", "reply"])

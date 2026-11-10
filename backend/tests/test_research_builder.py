@@ -330,7 +330,7 @@ class ResearchBuilderTests(unittest.TestCase):
             w = ResearchWorkspace(objects=document.objects, active_object_id=document.activeObjectId, request_id=document.requestId)
             w.execute('simulate_apparatus', {})
             return w.reply(document.requestId, '对生成装置继续计算。', [])
-        with patch('backend.app.get_settings', return_value=SETTINGS), patch('backend.app.run_research_agent', side_effect=continue_research), TestClient(app) as client:
+        with patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}), patch('backend.app.get_settings', return_value=SETTINGS), patch('backend.app.run_research_agent', side_effect=continue_research), TestClient(app) as client:
             response = client.post('/api/research/agent/chat', json={'requestId': 'next', 'message': '继续计算', 'objects': prior['objectSnapshots'], 'activeObjectId': prior['activeObjectId'], 'experiment': prior['inputSnapshot']})
         self.assertEqual(response.status_code, 200)
         result = json.loads(response.text.splitlines()[-1])['reply']

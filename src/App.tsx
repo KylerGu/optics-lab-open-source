@@ -24,7 +24,8 @@ import MichelsonScene from './MichelsonScene';
 import FilmInterferenceScene from './FilmInterferenceScene';
 import OpticsScene from './OpticsScene';
 import FormulaLibrary from './FormulaKnowledge';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import ModelSettingsDialog, { ModelSettingsContext } from './ModelSettingsDialog';
 import { BookOpen, Box, Check, FlaskConical, Focus, X } from 'lucide-react';
 import type { BuilderConversationContext } from './researchConversation';
 import type { ResearchBuilderCopy } from './researchBuilderLink';
@@ -45,6 +46,8 @@ export default function App() {
   const [sceneCopy, setSceneCopy] = useState<{id:string;experiment:Experiment}|null>(null);
   const [researchCopy, setResearchCopy] = useState<ResearchBuilderCopy|null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const openModelSettings = useCallback(() => setSettingsOpen(true), []);
   const openDirectory = () => {navigate({area:'scenes'});setAssistantOpen(false);};
   const openGaussian = () => {navigate({area:'gaussian'});setAssistantOpen(false);};
   const openBuilder = () => {navigate({area:'builder'});setAssistantOpen(false);};
@@ -58,7 +61,7 @@ export default function App() {
     const timer = setTimeout(() => setToast(null), 5000); return () => clearTimeout(timer);
   }, [toast]);
 
-  return <div className={`app-shell ${surface === 'courses' ? 'is-scenes-area' : 'is-optical-area'}${route.area === 'research' ? ' is-inquiry-area' : ''}`}>
+  return <ModelSettingsContext.Provider value={openModelSettings}><div className={`app-shell ${surface === 'courses' ? 'is-scenes-area' : 'is-optical-area'}${route.area === 'research' ? ' is-inquiry-area' : ''}`}>
     <header className="topbar">
       <a className="brand" href="#" onClick={event=>{event.preventDefault();openDirectory();}} aria-label="光学智研首页"><div className="brand-mark"><Focus size={26}/></div><div><strong>光学智研<span>OPTICS LAB</span></strong><small>让光学探索，从一个想法开始</small></div></a>
       <nav className="mode-switch" aria-label="工作区域">
@@ -67,6 +70,7 @@ export default function App() {
         <button className={route.area==='builder'?'active':''} onClick={() => resumeWorkspace('builder')} aria-pressed={route.area==='builder'}><Box size={15}/>光路搭建</button>
         <button className={route.area==='research'?'active':''} onClick={() => resumeWorkspace('research')} aria-pressed={route.area==='research'}><FlaskConical size={15}/>实验探究工作区</button>
       </nav>
+      <button type="button" className="model-settings-entry" onClick={openModelSettings}>模型设置</button>
     </header>
     {sceneRoute && <SceneAssistantControls.Provider value={{open:assistantOpen,toggle:()=>setAssistantOpen(value=>!value)}}><div className="scenes-area" style={{display:surface === 'courses' ? undefined : 'none'}}>{scene === 'gaussian'
       ? <GaussianScene formulaId={sceneRoute.formula ?? null} onFormula={id => id ? navigate({area:'gaussian',formula:id},!!sceneRoute.formula) : backTo({area:'gaussian'})} assistantOpen={assistantOpen} onCloseAssistant={() => setAssistantOpen(false)} onDirectory={() => backTo({area:'scenes'})} onExplore={copyScene} />
@@ -94,5 +98,5 @@ export default function App() {
     {(builderOpened || route.area === 'builder') && <div style={{display:route.area === 'builder'?'contents':'none'}}><BuilderWorkspace visible={route.area === 'builder'} onConversation={setBuilderConversation} sceneCopy={sceneCopy} onCopyConsumed={()=>setSceneCopy(null)} researchCopy={researchCopy} onResearchCopyConsumed={()=>setResearchCopy(null)} onResearch={openResearch} onScenes={openDirectory}/></div>}
     <div style={{display: route.area === 'research' ? 'contents' : 'none'}}><ResearchWorkspace builderContext={builderConversation} inBuilder={route.area === 'builder'} visible={route.area === 'research'} onOpenBuilder={(input,origin,guide)=>{if(input)setResearchCopy({id:crypto.randomUUID(),experiment:input,...(origin?{origin}:{}),...(guide?{guide}:{})});openBuilder();}}/></div>
     {toast && <div className="toast" role="status"><Check size={17}/><span>{toast}</span><button aria-label="关闭通知" onClick={()=>setToast(null)}><X size={14}/></button></div>}
-  </div>;
+  </div><ModelSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} /></ModelSettingsContext.Provider>;
 }
