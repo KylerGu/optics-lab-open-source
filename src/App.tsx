@@ -25,7 +25,7 @@ import FilmInterferenceScene from './FilmInterferenceScene';
 import OpticsScene from './OpticsScene';
 import FormulaLibrary from './FormulaKnowledge';
 import { useCallback, useEffect, useState } from 'react';
-import ModelSettingsDialog, { ModelSettingsContext } from './ModelSettingsDialog';
+import ModelSettingsDialog, { ModelSettingsButton, ModelSettingsContext } from './ModelSettingsDialog';
 import { BookOpen, Box, Check, FlaskConical, Focus, X } from 'lucide-react';
 import type { BuilderConversationContext } from './researchConversation';
 import type { ResearchBuilderCopy } from './researchBuilderLink';
@@ -70,7 +70,7 @@ export default function App() {
         <button className={route.area==='builder'?'active':''} onClick={() => resumeWorkspace('builder')} aria-pressed={route.area==='builder'}><Box size={15}/>光路搭建</button>
         <button className={route.area==='research'?'active':''} onClick={() => resumeWorkspace('research')} aria-pressed={route.area==='research'}><FlaskConical size={15}/>实验探究工作区</button>
       </nav>
-      <button type="button" className="model-settings-entry" onClick={openModelSettings}>模型设置</button>
+      <ModelSettingsButton onClick={openModelSettings}/>
     </header>
     {sceneRoute && <SceneAssistantControls.Provider value={{open:assistantOpen,toggle:()=>setAssistantOpen(value=>!value)}}><div className="scenes-area" style={{display:surface === 'courses' ? undefined : 'none'}}>{scene === 'gaussian'
       ? <GaussianScene formulaId={sceneRoute.formula ?? null} onFormula={id => id ? navigate({area:'gaussian',formula:id},!!sceneRoute.formula) : backTo({area:'gaussian'})} assistantOpen={assistantOpen} onCloseAssistant={() => setAssistantOpen(false)} onDirectory={() => backTo({area:'scenes'})} onExplore={copyScene} />

@@ -1,12 +1,14 @@
 import { useContext, useEffect, useRef, useState, createContext, type FormEvent } from "react";
-import { X } from "lucide-react";
+import { KeyRound, X } from "lucide-react";
 import {
   DEEPSEEK_BASE_URL,
   DEEPSEEK_MODEL_OPTIONS,
   REASONING_OPTIONS,
   clearModelSettings,
+  listenModelSettings,
   loadModelSettings,
   maskKey,
+  modelSettingsSummary,
   saveModelSettings,
   type DeepSeekModel,
   type ReasoningEffort,
@@ -15,6 +17,18 @@ import "./model-settings.css";
 
 export const ModelSettingsContext = createContext<() => void>(() => {});
 export const useOpenModelSettings = () => useContext(ModelSettingsContext);
+
+export function ModelSettingsButton({ onClick }: { onClick: () => void }) {
+  const [summary, setSummary] = useState(modelSettingsSummary);
+  useEffect(() => listenModelSettings(() => setSummary(modelSettingsSummary())), []);
+  const model = summary?.model;
+  const status = model ?? "未配置";
+  return <button type="button" className={`model-settings-entry${model ? " is-ready" : ""}`} onClick={onClick} aria-label={model ? `模型设置，当前模型 ${model}` : "模型设置，尚未配置密钥"}>
+    <KeyRound size={15} aria-hidden="true"/>
+    <span className="model-settings-label">模型设置</span>
+    <span className="model-settings-status"><i className="model-settings-dot" aria-hidden="true"/><span>{status}</span></span>
+  </button>;
+}
 
 const keyShape = /^[\x21-\x7e]+$/;
 
