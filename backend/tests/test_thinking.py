@@ -159,7 +159,7 @@ class ThinkingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / '.env'
             path.write_text('DEEPSEEK_API_KEY=test-key\nAI_REASONING_EFFORT=low', encoding='utf-8')
-            with patch('backend.settings.ENV_PATH', path), patch.dict('os.environ', {}, clear=True), patch('backend.app.run_research_agent', side_effect=reply), TestClient(app) as client:
+            with patch('backend.settings.ENV_PATH', path), patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}, clear=True), patch('backend.app.run_research_agent', side_effect=reply), TestClient(app) as client:
                 response = client.post('/api/research/agent/chat', json={'requestId':'high-entry', 'message':'解释这个现象'})
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(json.loads(response.text.splitlines()[-1])['type'], 'reply')

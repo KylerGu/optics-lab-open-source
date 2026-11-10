@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from .models import SimulationRequest
 from .optics import MODEL_VERSION, simulate
 from .agent import AgentError, AgentRequest, run_agent
-from .settings import get_settings
+from .settings import ByokRejected, get_settings, settings_for_request
 from .research import FocusSearchRequest, search_focus
 from .tolerance import ToleranceRequest, run_tolerance
 from .spatial import SpatialRequest, trace
@@ -27,6 +27,14 @@ research_agent_slots = BoundedSemaphore(2)
 research_requests = {}
 research_requests_lock = Lock()
 STREAM_KEEPALIVE_SECONDS = 10
+UNCONFIGURED = "请先在「模型设置」中填写你的 DeepSeek API Key。"
+
+
+def request_settings(request: Request, *, research=False, research_build=False):
+    try:
+        return settings_for_request(getattr(request, "headers", None), research=research, research_build=research_build, loader=get_settings)
+    except ByokRejected as error:
+        raise HTTPException(status_code=422, detail=error.message) from None
 
 
 class ResearchCancelRequest(BaseModel):
@@ -82,22 +90,29 @@ def spatial_simulation(request: SpatialRequest):
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
-@app.get("/api/agent/status")
-def agent_status():
-    settings = get_settings()
+def _status(request: Request):
+    try:
+        settings = settings_for_request(getattr(request, "headers", None), loader=get_settings)
+    except ByokRejected:
+        return {"configured": False}
     return {"configured": settings.configured}
 
 
+@app.get("/api/agent/status")
+def agent_status(request: Request):
+    return _status(request)
+
+
 @app.get("/api/spatial/agent/status")
-def spatial_agent_status():
-    return {"configured": get_settings().configured}
+def spatial_agent_status(request: Request):
+    return _status(request)
 
 
 @app.post("/api/spatial/agent/chat")
 async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
-    settings = get_settings()
+    settings = request_settings(request)
     if not settings.configured:
-        raise HTTPException(status_code=503, detail="请先配置AI模型接口。")
+        raise HTTPException(status_code=503, detail=UNCONFIGURED)
     if not spatial_agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="光路设计正在运行，请稍后重试。")
     events, stopped = Queue(), Event()
@@ -159,9 +174,9 @@ def focus_search(request: FocusSearchRequest):
 
 @app.post("/api/research/agent/chat")
 async def research_agent_chat(document: ResearchAgentRequest, request: Request):
-    settings = get_settings(research=True)
+    settings = request_settings(request, research=True)
     if not settings.configured:
-        raise HTTPException(status_code=503, detail="请先配置AI模型接口。")
+        raise HTTPException(status_code=503, detail=UNCONFIGURED)
     if not research_agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="实验探究助手正在处理其他问题，请稍后重试。")
     events, stopped = Queue(), Event()
@@ -170,7 +185,7 @@ async def research_agent_chat(document: ResearchAgentRequest, request: Request):
             research_agent_slots.release()
             raise HTTPException(status_code=409, detail='这条研究请求已经在运行。')
         research_requests[document.requestId] = stopped
-    builder_settings = get_settings(research_build=True)
+    builder_settings = request_settings(request, research_build=True)
     debug = DebugRun('research', document, settings, builder_settings)
     def report(step):
         debug.record('progress', step=step)
@@ -219,11 +234,14 @@ async def research_agent_chat(document: ResearchAgentRequest, request: Request):
 
 
 @app.post("/api/agent/chat")
-def agent_chat(request: AgentRequest):
+def agent_chat(document: AgentRequest, request: Request):
+    settings = request_settings(request)
+    if not settings.configured:
+        raise HTTPException(status_code=503, detail=UNCONFIGURED)
     if not agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="助手正在处理其他请求，请稍后重试。")
     try:
-        return run_agent(request, get_settings())
+        return run_agent(document, settings)
     except AgentError as error:
         raise HTTPException(status_code=error.status, detail=error.message) from None
     finally:
@@ -271,11 +289,14 @@ def scene_formula(request: SceneFormulaRequest):
 
 
 @app.post('/api/scenes/agent/chat')
-def scene_chat(request: SceneAgentRequest):
+def scene_chat(document: SceneAgentRequest, request: Request):
+    settings = request_settings(request)
+    if not settings.configured:
+        raise HTTPException(status_code=503, detail=UNCONFIGURED)
     if not agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail='助手正在处理其他请求，请稍后重试。')
     try:
-        return run_scene_agent(request, get_settings())
+        return run_scene_agent(document, settings)
     except AgentError as error:
         raise HTTPException(status_code=error.status, detail=error.message) from None
     finally:

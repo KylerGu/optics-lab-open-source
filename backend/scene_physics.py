@@ -445,6 +445,8 @@ def validate_parameters(scene_id, parameters, partial=False):
         raise ValueError('数值孔径不能大于物镜前介质折射率。')
     if scene_id=='beam-transformation-1' and not partial and parameters['secondPositionMm']-parameters['firstPositionMm']<1:
         raise ValueError('第二镜需在第一镜右侧，至少相隔 1 mm。')
+    if scene_id=='gaussian-propagation' and 'observationMm' in parameters and 'waistPositionMm' in parameters and parameters['observationMm']-parameters['waistPositionMm']<1:
+        raise ValueError('观察位置需在束腰右侧，至少相隔 1 mm。')
     return parameters.copy()
 
 
@@ -551,6 +553,9 @@ def calculate(state, revision=''):
     if model == 'wave-superposition':
         from .scene_wave_superposition import calculate_wave
         return calculate_wave(state, definition, revision)
+    if model == 'gaussian-propagation':
+        from .scene_gaussian_propagation import calculate_propagation
+        return calculate_propagation(state, definition, revision)
     if model == 'gaussian-focus':
         from .scene_gaussian_focus import calculate_focus
         return calculate_focus(state, definition, revision)

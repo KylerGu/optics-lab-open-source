@@ -78,7 +78,7 @@ class ResearchHTTPTests(unittest.TestCase):
                 raise AgentError('已停止本轮研究。', 499)
             finally:
                 ended[document.requestId].set()
-        with patch('backend.app.get_settings', return_value=Settings('test', 'test', 'https://example.test')), patch('backend.app.run_research_agent', side_effect=research), TestClient(app) as client, ThreadPoolExecutor(max_workers=2) as pool:
+        with patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}), patch('backend.app.get_settings', return_value=Settings('test', 'test', 'https://example.test')), patch('backend.app.run_research_agent', side_effect=research), TestClient(app) as client, ThreadPoolExecutor(max_workers=2) as pool:
             first = pool.submit(client.post, '/api/research/agent/chat', json={'requestId': 'first', 'message': '研究甲'})
             second = pool.submit(client.post, '/api/research/agent/chat', json={'requestId': 'second', 'message': '研究乙'})
             try:
@@ -133,7 +133,7 @@ class BrowserStreamKeepaliveTests(unittest.IsolatedAsyncioTestCase):
         def slow_research(*args, **kwargs):
             release.wait(2)
             return {'answer': 'done'}
-        with patch('backend.app.get_settings', return_value=Settings('test', 'test', 'https://example.test')), patch('backend.app.run_research_agent', side_effect=slow_research), patch('backend.app.STREAM_KEEPALIVE_SECONDS', .01):
+        with patch.dict('os.environ', {'AI_ALLOW_SERVER_KEY': '1'}), patch('backend.app.get_settings', return_value=Settings('test', 'test', 'https://example.test')), patch('backend.app.run_research_agent', side_effect=slow_research), patch('backend.app.STREAM_KEEPALIVE_SECONDS', .01):
             response = await research_agent_chat(ResearchAgentRequest(requestId='keepalive-test', message='test'), ConnectedRequest())
             stream = response.body_iterator
             try:
