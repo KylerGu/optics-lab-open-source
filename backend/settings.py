@@ -78,6 +78,15 @@ def _setting(values, key, default=""):
     return os.environ.get(key, values.get(key, default)).strip()
 
 
+def production_mode() -> bool:
+    """Public deployment switch. Only the process environment counts, not .env.
+
+    APP_ENV=production turns off debug files and API docs. Any other value,
+    including unset, keeps local development behavior.
+    """
+    return os.environ.get("APP_ENV", "").strip().lower() == "production"
+
+
 def server_key_enabled() -> bool:
     """Private/self-hosted opt-in. Public deployments leave this unset."""
     return _setting(_file_values(), "AI_ALLOW_SERVER_KEY").lower() in _TRUE_FLAGS

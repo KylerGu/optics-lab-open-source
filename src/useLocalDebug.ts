@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 
-/** Best-effort local snapshots; no model calls and no effect on editing. */
+/** Best-effort local snapshots; no model calls and no effect on editing.
+ * Production bundles skip the request. The server also drops it when APP_ENV=production.
+ */
 export function useLocalDebug(area: 'research' | 'builder', state: unknown, enabled = true) {
   const body = JSON.stringify({ area, state });
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || import.meta.env?.PROD) return;
     const send = () => {
       void fetch('/api/debug/snapshot', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body,

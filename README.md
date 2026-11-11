@@ -118,7 +118,7 @@ macOS / Linux：
 .venv/bin/python -m backend.web
 ```
 
-打开 **http://127.0.0.1:10000**。部署时可使用仓库中的 [Dockerfile](Dockerfile) 和 [Render 配置](render.yaml)。公开站点保持 `AI_ALLOW_SERVER_KEY` 为关闭，由访问者在「模型设置」中填写自己的密钥。
+打开 **http://127.0.0.1:10000**。部署时可使用仓库中的 [Dockerfile](Dockerfile) 和 [Render 配置](render.yaml)。公开站点保持 `AI_ALLOW_SERVER_KEY` 为关闭，并设置 `APP_ENV=production`（镜像和 `render.yaml` 已写好），从而关闭调试记录和接口文档。助手密钥仍由访问者在「模型设置」中填写。
 
 ## 开发与扩展
 

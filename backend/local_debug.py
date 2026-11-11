@@ -5,6 +5,8 @@ from pathlib import Path
 from threading import Lock
 from uuid import uuid4
 
+from .settings import production_mode
+
 
 DEBUG_ROOT = Path(__file__).resolve().parents[1] / 'output' / 'runtime' / 'debug'
 _lock = Lock()
@@ -17,6 +19,8 @@ def timestamp():
 class DebugRun:
     def __init__(self, area, request, settings, builder_settings=None):
         self.path = DEBUG_ROOT / ('run-' + uuid4().hex + '.jsonl')
+        if production_mode():
+            return
         self.record('request', area=area, request=request.model_dump(),
                     model=settings.model, reasoningEffort=settings.reasoning_effort,
                     builderEffort=builder_settings.reasoning_effort if builder_settings else None)
@@ -28,6 +32,8 @@ class DebugRun:
             pass
 
     def record(self, event, **data):
+        if production_mode():
+            return
         try:
             row = json.dumps({'time': timestamp(), 'event': event, **data}, ensure_ascii=False, allow_nan=False)
             with _lock:
@@ -39,7 +45,7 @@ class DebugRun:
 
 
 def save_snapshot(area, state):
-    if area not in {'research', 'builder'}:
+    if production_mode() or area not in {'research', 'builder'}:
         return False
     try:
         with _lock:
