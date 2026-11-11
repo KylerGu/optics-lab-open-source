@@ -1,0 +1,156 @@
+/* Research page only. The same conversation mounted inside the builder is excluded,
+   so the builder body keeps its own scale. */
+.research-workspace:not(.rw-builder-conversation) {
+  color: var(--sb-body-color);
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+}
+.research-workspace:not(.rw-builder-conversation) :is(
+  .rw-welcome h1,
+  .rw-projects-title,
+  .rw-project-header input,
+  .rw-inspector-heading h2,
+  .rw-inspector-section h3,
+  .rw-dialog > header h2,
+  .rw-results h2,
+  .rw-results .rw-detail-section h3,
+  .rw-results .rw-recommendation h3
+) {
+  font-size: var(--sb-title-size);
+  font-weight: var(--sb-title-weight);
+  color: var(--sb-title-color);
+  letter-spacing: 0;
+}
+.research-workspace:not(.rw-builder-conversation) :is(
+  .rw-user-message > p,
+  .rw-agent-message,
+  .agent-markdown,
+  .rw-composer textarea,
+  .rw-plan > li > div > p,
+  .rw-plan-note,
+  .rw-sidebar-details,
+  .rw-sidebar-details p,
+  .rw-results .rw-result-description,
+  .rw-results .rw-recommendation p,
+  .rw-dialog,
+  .rw-import-box,
+  .rw-object-search input
+) {
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+  color: var(--sb-body-color);
+}
+.research-workspace:not(.rw-builder-conversation) .agent-markdown :is(h1, h2, h3) {
+  font-size: var(--sb-title-size);
+  font-weight: var(--sb-title-weight);
+  color: var(--sb-title-color);
+}
+.research-workspace:not(.rw-builder-conversation) :is(
+  .rw-project-item strong,
+  .rw-starters strong,
+  .rw-records strong,
+  .rw-device-link span,
+  .rw-object-choice strong,
+  .rw-device-choices strong,
+  .rw-attached-object .rw-device-link
+) {
+  font-size: var(--sb-body-size);
+  font-weight: 600;
+  color: var(--sb-body-color);
+}
+.research-workspace:not(.rw-builder-conversation) :is(
+  .rw-button,
+  .rw-text-button,
+  .rw-project-menu button,
+  .rw-object-tabs button,
+  .rw-detail-tabs button,
+  .rw-starters button,
+  .rw-turn-artifacts button,
+  .rw-visual-actions button,
+  .rw-chart-controls label,
+  .rw-chart-controls select,
+  .rw-composer-actions
+) {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.research-workspace:not(.rw-builder-conversation) :is(.rw-primary, .rw-turn-artifacts button) {
+  font-weight: 700;
+}
+.research-workspace:not(.rw-builder-conversation) .rw-primary {
+  color: #fff;
+  background: var(--sb-action);
+  border-color: var(--sb-action);
+}
+.research-workspace:not(.rw-builder-conversation) .rw-primary:hover:not(:disabled) {
+  color: #fff;
+  background: var(--sb-action-hover);
+  border-color: var(--sb-action-hover);
+}
+.research-workspace:not(.rw-builder-conversation) .rw-danger {
+  color: #b42318;
+  background: #fff5f4;
+  border-color: #ffd6d1;
+  font-weight: 700;
+}
+.research-workspace:not(.rw-builder-conversation) :is(.rw-project-item, .rw-device-link, .rw-records button, .rw-object-choice) { color: var(--sb-body-color); }
+.research-workspace:not(.rw-builder-conversation) :is(
+  .rw-project-item.is-selected strong,
+  .rw-object-tabs button[aria-selected="true"],
+  .rw-detail-tabs button[aria-selected="true"],
+  .rw-object-choice.is-selected strong,
+  .rw-text-button[aria-pressed="true"],
+  .rw-agent-name,
+  .rw-turn-artifacts button
+) {
+  color: var(--sb-action);
+  font-weight: 700;
+}
+.research-workspace:not(.rw-builder-conversation) :is(
+  .rw-save-status,
+  .rw-small-note,
+  .rw-project-item small,
+  .rw-user-message > span,
+  .rw-composer-actions > span,
+  .rw-current-object,
+  .rw-current-object small,
+  .rw-object-meta > span,
+  .rw-object-time,
+  .rw-object-choice small,
+  .rw-object-choice em,
+  .rw-record-count,
+  .rw-records small,
+  .rw-dialog > header p,
+  .rw-dialog > header > span,
+  .rw-process-record,
+  .rw-process-record li,
+  .rw-import-box small,
+  .rw-result-note,
+  .rw-result-method,
+  .rw-results .rw-result-highlights small,
+  .rw-results .rw-comparison-source,
+  .rw-visual-actions small,
+  .rw-plan-status,
+  .rw-selected-objects button
+) {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+}
+.research-workspace:not(.rw-builder-conversation) .rw-plan-completed .rw-plan-status { color: #166534; }
+.research-workspace:not(.rw-builder-conversation) .rw-plan-needs_validation .rw-plan-status { color: #7a4e12; }
+.research-workspace:not(.rw-builder-conversation) :is(.rw-composer textarea, .rw-object-search input)::placeholder { color: var(--sb-note-color); }
+.research-workspace:not(.rw-builder-conversation) .rw-connection { font-size: var(--sb-label-size); font-weight: 500; color: #7a4e12; }
+.research-workspace:not(.rw-builder-conversation) .rw-input-error,
+.research-workspace:not(.rw-builder-conversation) .rw-turn-error { color: #9a3412; font-size: var(--sb-label-size); }
+.research-workspace:not(.rw-builder-conversation) .rw-warning { color: #7a4e12; font-size: var(--sb-note-size); }
+.research-workspace:not(.rw-builder-conversation) .rw-results .rw-result-highlights dt { font-size: var(--sb-label-size); font-weight: 500; color: var(--sb-label-color); }
+.research-workspace:not(.rw-builder-conversation) .rw-results .rw-result-highlights dd { color: var(--sb-title-color); font-weight: 700; }
+.research-workspace:not(.rw-builder-conversation) .rw-results .rw-table-wrap table { font-size: var(--sb-body-size); color: var(--sb-body-color); }
+.research-workspace:not(.rw-builder-conversation) .rw-results .rw-table-wrap th { font-weight: 600; color: var(--sb-title-color); }
+.research-workspace:not(.rw-builder-conversation) .rw-line-chart text { fill: var(--sb-note-color); font-size: var(--sb-note-size); }
+.research-workspace:not(.rw-builder-conversation) .rw-welcome h1 { margin: 4px 0 0; }
+.research-workspace:not(.rw-builder-conversation) .rw-starters { margin-top: 22px; }
+.research-workspace:not(.rw-builder-conversation) .rw-icon-button { color: var(--sb-note-color); }
+.research-workspace:not(.rw-builder-conversation) .rw-icon-button:hover { color: var(--sb-action); }

@@ -8,6 +8,7 @@ import 'katex/dist/katex.min.css';
 import './readability.css';
 import './spatial-build.css';
 import './ui-consistency.css';
+import './type-scale.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><App /></React.StrictMode>,

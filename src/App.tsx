@@ -63,7 +63,7 @@ export default function App() {
 
   return <ModelSettingsContext.Provider value={openModelSettings}><div className={`app-shell ${surface === 'courses' ? 'is-scenes-area' : 'is-optical-area'}${route.area === 'research' ? ' is-inquiry-area' : ''}`}>
     <header className="topbar">
-      <a className="brand" href="#" onClick={event=>{event.preventDefault();openDirectory();}} aria-label="光学智研首页"><div className="brand-mark"><Focus size={26}/></div><div><strong>光学智研<span>OPTICS LAB</span></strong><small>让光学探索，从一个想法开始</small></div></a>
+      <a className="brand" href="#" onClick={event=>{event.preventDefault();openDirectory();}} aria-label="光学智研首页"><div className="brand-mark"><Focus size={26}/></div><strong>光学智研</strong></a>
       <nav className="mode-switch" aria-label="工作区域">
         <button className={surface==='courses'?'active':''} onClick={() => resumeWorkspace('scenes')} aria-pressed={surface==='courses'}><BookOpen size={15}/>仿真场景库</button>
         <button className={surface==='formulas'?'active':''} onClick={() => resumeWorkspace('formulas')} aria-pressed={surface==='formulas'}><BookOpen size={15}/>公式库</button>
