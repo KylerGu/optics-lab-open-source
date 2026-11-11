@@ -149,3 +149,27 @@
   .research-workspace > .rw-main { grid-column:2; }
   .research-workspace.rw-right-hidden { grid-template-rows:minmax(460px,1fr); }
 }
+
+/* Per-conversation actions live on the row, not in the header. */
+.rw-project-item { align-items: stretch; gap: 0; padding: 0; }
+.rw-project-open { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; margin: 0; padding: 12px 2px 12px 10px; background: transparent; color: inherit; text-align: left; border-radius: 7px; }
+.rw-project-open > svg { margin-top: 3px; flex: none; }
+.rw-project-open > span { min-width: 0; flex: 1; }
+.rw-project-rename { flex: 1; width: 100%; min-width: 0; margin: 0; padding: 1px 6px; border: 1px solid #b8cafa; border-radius: 5px; background: #fff; color: var(--sb-title-color); font-size: var(--sb-body-size); font-weight: 600; }
+.rw-project-more { flex: none; align-self: flex-start; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin: 8px 4px 0 0; padding: 0; border-radius: 6px; background: transparent; color: var(--sb-label-color); opacity: 0; pointer-events: none; }
+.rw-project-item:hover .rw-project-more,
+.rw-project-item:focus-within .rw-project-more,
+.rw-project-item.is-selected .rw-project-more,
+.rw-project-more[aria-expanded="true"] { opacity: 1; pointer-events: auto; }
+.rw-project-more:hover,
+.rw-project-more[aria-expanded="true"] { background: #e7efff; color: var(--sb-action); }
+@media (hover: none) { .rw-project-more { opacity: 1; pointer-events: auto; } }
+.rw-row-menu { position: fixed; z-index: 40; min-width: 148px; max-width: calc(100vw - 16px); margin: 0; padding: 6px; background: #fff; border: 1px solid #d8e2ed; border-radius: 8px; box-shadow: 0 8px 24px #1e293b1f; }
+.rw-row-menu button { display: block; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-radius: 5px; background: transparent; text-align: left; color: var(--sb-label-color); font-size: var(--sb-label-size); font-weight: 500; line-height: 1.4; }
+.rw-row-menu button:hover,
+.rw-row-menu button:focus-visible { background: #eaf1ff; }
+.rw-row-menu button.is-danger { color: #b42318; }
+.rw-row-menu button.is-danger:hover,
+.rw-row-menu button.is-danger:focus-visible { background: #fff5f4; }
+.rw-row-menu button.is-backup { color: var(--sb-note-color); font-weight: 400; }
+.rw-row-menu button:disabled { opacity: 1; color: #5c6b80; background: transparent; cursor: not-allowed; }
