@@ -220,5 +220,42 @@
   .research-workspace:not(.rw-builder-conversation) :is(.rw-conversation, .rw-project-list, .rw-inspector) { contain: paint; }
 }
 
+/* Research chrome only: warm paper, regular-weight list titles, no cool selected bar. */
+body .research-workspace:not(.rw-builder-conversation) { --rw-line: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) :is(.rw-projects, .rw-inspector) { background: #faf9f5; }
+body .research-workspace:not(.rw-builder-conversation) .rw-projects { border-right-color: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) .rw-main .rw-project-header { border-bottom-color: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-inspector-section,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-record-item,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-records button { border-color: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) .rw-resize-handle::before { background: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) aside.rw-projects .rw-projects-title { color: #3d3929; font-weight: 500; }
+body .research-workspace:not(.rw-builder-conversation) .rw-projects .rw-new-research { color: #3d3929; background: #fff; border-color: #e8e6dc; font-weight: 500; }
+body .research-workspace:not(.rw-builder-conversation) .rw-projects .rw-new-research:hover:not(:disabled) { background: #f7f5ee; border-color: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item { background: transparent; box-shadow: none; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item:hover { background: #f7f5ee; box-shadow: none; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item.is-selected,
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item.is-selected:hover { background: #f0eee6; box-shadow: none; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item strong { font-size: 14px; font-weight: 400; color: #3d3929; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item.is-selected strong,
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item.is-selected .rw-project-open,
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item.is-selected .rw-project-open svg { color: #3d3929; font-weight: 400; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-item small { font-size: 12px; font-weight: 400; color: #8a8578; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-more { color: #8a8578; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-more:hover,
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-more[aria-expanded="true"] { background: #f0eee6; color: #3d3929; }
+body .research-workspace:not(.rw-builder-conversation) .rw-main .rw-project-header input { font-size: 15px; font-weight: 500; color: #3d3929; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-inspector-heading,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-inspector-heading h2,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-inspector-section h3,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-records strong,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-device-link,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-device-link span { color: #3d3929; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector :is(.rw-object-meta > span, .rw-object-time, .rw-record-count, .rw-records small) { color: #8a8578; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-button:not(.rw-primary) { color: #3d3929; background: #fff; border-color: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-button:not(.rw-primary):hover:not(:disabled) { background: #f7f5ee; border-color: #e8e6dc; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-attached-object { border-color: #e8e6dc; background: #fff; }
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-attached-object.is-current { border-color: #e0ddd0; background: #f7f5ee; }
+
 /* The saved state is quiet. A failed save uses the existing warning text. */
 .research-workspace:not(.rw-builder-conversation) .rw-project-header .rw-save-status { display: inline-flex; align-items: center; flex: none; max-width: 100%; color: #7a4e12; background: #fff8ea; border: 1px solid #f1e3c5; border-radius: 6px; padding: 2px 8px; font-size: var(--sb-note-size); font-weight: var(--sb-note-weight); line-height: 1.5; }
