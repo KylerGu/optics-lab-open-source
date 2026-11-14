@@ -334,5 +334,28 @@ body .research-workspace:not(.rw-builder-conversation) .rw-conversation:hover::-
 .research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown .katex { color: #334155; }
 .research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown :is(pre, code) { color: #334155; }
 
+/* Empty research conversations keep the prompt, tagline and starters together, a little above the pane center. */
+.rw-chat-column { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+.research-workspace:not(.rw-builder-conversation) .rw-chat-column { overflow: hidden; contain: paint; }
+.research-workspace:not(.rw-builder-conversation) .rw-conversation,
+.research-workspace:not(.rw-builder-conversation) .rw-empty-tail,
+.research-workspace:not(.rw-builder-conversation) .rw-composer { transition: flex-grow 200ms ease, max-width 200ms ease, border-radius 200ms ease, box-shadow 200ms ease; }
+.research-workspace:not(.rw-builder-conversation) .rw-empty-tail { flex: 0 1 0px; min-height: 0; overflow: hidden; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-conversation { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 0; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-empty-tail { flex: 1.35 1 0px; display: flex; justify-content: center; align-items: flex-start; overflow: auto; padding: 0 16px 20px; }
+.research-workspace:not(.rw-builder-conversation) .rw-empty-head { display: flex; align-items: center; justify-content: center; gap: 12px; max-width: calc(100% - 32px); margin: 0 0 22px; color: #4676c1; }
+.research-workspace:not(.rw-builder-conversation) .rw-empty-head h1 { font-family: "Source Serif 4", "Source Serif 4 Variable", "Noto Serif SC", "Songti SC", serif; font-size: 30px; font-weight: 500; line-height: 1.25; letter-spacing: 0; color: #29261b; white-space: nowrap; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-composer-area { width: min(680px, calc(100% - 32px)); max-width: 680px; align-self: center; margin: 0; padding: 0; background: transparent; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-composer { width: 100%; max-width: 680px; border-radius: 16px; box-shadow: 0 8px 28px #23324612; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-composer:focus-within { box-shadow: 0 8px 28px #23324612, 0 0 0 3px #2258cf12; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-connection,
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-input-error,
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-current-object { max-width: 680px; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-starters { width: min(680px, 100%); margin-top: 16px; }
+.research-workspace:not(.rw-builder-conversation).rw-empty-chat .rw-starters button { min-width: 0; flex: 1 1 150px; }
+@media (prefers-reduced-motion: reduce) {
+  .research-workspace:not(.rw-builder-conversation) :is(.rw-conversation, .rw-empty-tail, .rw-composer) { transition: none; }
+}
+
 /* The saved state is quiet. A failed save uses the existing warning text. */
 .research-workspace:not(.rw-builder-conversation) .rw-project-header .rw-save-status { display: inline-flex; align-items: center; flex: none; max-width: 100%; color: #7a4e12; background: #fff8ea; border: 1px solid #f1e3c5; border-radius: 6px; padding: 2px 8px; font-size: var(--sb-note-size); font-weight: var(--sb-note-weight); line-height: 1.5; }
