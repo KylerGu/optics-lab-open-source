@@ -161,6 +161,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     const el = conversation.current; if (el) el.scrollTop = el.scrollHeight;
   }, [project.id, project.turns, busy, steps]);
   const emptyResearch = !inBuilder && project.turns.length === 0;
+  const emptyBuilder = inBuilder && project.turns.length === 0;
   useEffect(() => {
     const el = textarea.current;
     if (!el) return;
@@ -172,9 +173,9 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     el.style.overflowY = el.scrollHeight > max + 1 ? 'auto' : 'hidden';
   }, [project.draft, inBuilder, emptyResearch]);
   useEffect(() => {
-    if (!emptyResearch || !visible) return;
-    textarea.current?.focus();
-  }, [emptyResearch, visible, project.id]);
+    if (emptyResearch) { if (visible) textarea.current?.focus(); return; }
+    if (emptyBuilder && builderContext?.host) textarea.current?.focus();
+  }, [emptyResearch, emptyBuilder, visible, project.id, builderContext?.host]);
   const marqueeFrame = useRef(0);
   const marqueeEl = useRef<HTMLElement | null>(null);
   function stopTitleMarquee() {
@@ -446,7 +447,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   }
   const menuProject = store.projects.find(p => p.id === menuId) ?? null;
 
-  const content = <main ref={layout.workspace} style={layout.style} className={`research-workspace${inBuilder?' rw-builder-conversation':''}${emptyResearch ? ' rw-empty-chat' : ''}${layout.dragging ? ' rw-resizing' : ''}${layout.leftHidden ? ' rw-left-hidden' : ''}${layout.rightHidden ? ' rw-right-hidden' : ''}`} aria-label="实验探究工作区">
+  const content = <main ref={layout.workspace} style={layout.style} className={`research-workspace${inBuilder?' rw-builder-conversation':''}${emptyResearch || emptyBuilder ? ' rw-empty-chat' : ''}${layout.dragging ? ' rw-resizing' : ''}${layout.leftHidden ? ' rw-left-hidden' : ''}${layout.rightHidden ? ' rw-right-hidden' : ''}`} aria-label="实验探究工作区">
     <aside id="research-projects" className="rw-projects" hidden={layout.leftHidden}>
       <div className="rw-projects-title"><span><FolderOpen size={17}/>我的探究</span><button type="button" className="rw-panel-toggle" aria-label="收起我的探究" title="收起我的探究" aria-expanded aria-controls="research-projects" onClick={() => layout.toggle('left')}><PanelLeftClose size={18}/></button></div>
       <button className="rw-button rw-new-research" onClick={startNew}><Plus size={16}/>新建探究</button>
@@ -466,7 +467,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       {storageError && <div className="rw-warning" role="status">{storageError}</div>}
       <div className="rw-chat-column">
       <div className="rw-conversation" ref={conversation} data-navigation-scroll="research-conversation" role="log" aria-label="探究对话" aria-live="polite">
-        {inBuilder&&(binding?.missing||binding?.ambiguous)?null:!project.turns.length ? (inBuilder ? <div className="rw-welcome"><div className="rw-welcome-symbol"><Sparkles size={27}/></div><h1>用实验，看懂光学</h1></div> : <div className="rw-empty-head"><Sparkles size={30}/><h1>用实验，看懂光学</h1></div>) : project.turns.map(turn => {
+        {inBuilder&&(binding?.missing||binding?.ambiguous)?null:!project.turns.length ? <div className="rw-empty-head"><Sparkles size={inBuilder ? 18 : 30}/><h1>用实验，看懂光学</h1></div> : project.turns.map(turn => {
           const turnRecords = records.filter(record => record.requestId === turn.id);
           return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span className="sr-only">你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><span className="sr-only">光学实验探究助手</span><AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.reply.answer.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.error.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending"><LoaderCircle size={16}/><span>{pendingLabel}</span></div>}</article>;
         })}
@@ -477,7 +478,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         {!currentObject && modelSources.length>0 && <div className="rw-current-object"><Paperclip size={13}/><span>当前模型：{modelSources.at(-1)!.title.split(' · ')[0]}</span></div>}
         <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" rows={emptyResearch ? 3 : inBuilder ? 2 : 1} value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button" type="button" onClick={stopResearch}><Square size={12}/>停止</button> : <button className="rw-button rw-primary" type="submit" title="Ctrl+Enter 发送" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}>发送<ArrowRight size={16}/></button>}</div></form>
       </div>
-      {!inBuilder && <div className="rw-empty-tail">{emptyResearch && <div className="rw-starters">{STARTERS.map(item => { const Icon = item.icon; return <button key={item.title} type="button" disabled={busy} onClick={() => { setDraft(item.text); textarea.current?.focus(); }}><Icon size={20}/><strong>{item.title}</strong><ChevronRight size={15}/></button>; })}</div>}</div>}
+      <div className="rw-empty-tail">{emptyResearch && <div className="rw-starters">{STARTERS.map(item => { const Icon = item.icon; return <button key={item.title} type="button" disabled={busy} onClick={() => { setDraft(item.text); textarea.current?.focus(); }}><Icon size={20}/><strong>{item.title}</strong><ChevronRight size={15}/></button>; })}</div>}</div>
       </div>
     </section>
     <div className="rw-resize-handle rw-resize-right" {...layout.rightSeparator}/>
