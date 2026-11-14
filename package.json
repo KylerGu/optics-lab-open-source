@@ -15,7 +15,9 @@
     "test:research-results": "tsx --test src/researchVisual.test.tsx src/ResearchResults.test.tsx src/researchModels.test.tsx src/researchResultRecords.test.tsx src/researchBuilderLink.test.ts src/researchConversation.test.ts src/builderTabs.test.ts src/ResearchSidebar.test.tsx src/AssistantAnswer.test.tsx src/researchSession.test.ts src/research.test.ts src/tolerance.test.ts"
   },
   "dependencies": {
+    "@fontsource-variable/hanken-grotesk": "^5.3.0",
     "@fontsource-variable/source-serif-4": "^5.3.1",
+    "@fontsource/noto-sans-sc": "^5.3.1",
     "@fontsource/noto-serif-sc": "^5.3.1",
     "katex": "^0.19.0",
     "lucide-react": "^0.468.0",

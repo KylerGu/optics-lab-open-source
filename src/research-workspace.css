@@ -257,5 +257,28 @@ body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-button:
 body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-attached-object { border-color: #e8e6dc; background: #fff; }
 body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-attached-object.is-current { border-color: #e0ddd0; background: #f7f5ee; }
 
+/* Chrome uses the self-hosted sans. Conversation bubbles keep their own serif. */
+body .research-workspace:not(.rw-builder-conversation) { font-family: "Hanken Grotesk Variable", "Hanken Grotesk", "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+.research-workspace:not(.rw-builder-conversation) .rw-composer textarea { min-height: 1.5em; max-height: 200px; line-height: 1.5; overflow-y: hidden; }
+.research-workspace:not(.rw-builder-conversation) .rw-project-open > span { overflow: hidden; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list .rw-project-open.is-marquee strong { display: inline-block; width: max-content; max-width: none; overflow: visible; text-overflow: clip; }
+body .research-workspace:not(.rw-builder-conversation) .rw-main .rw-project-header input { text-overflow: ellipsis; }
+body .research-workspace:not(.rw-builder-conversation) :is(.rw-project-list, .rw-inspector, .rw-conversation) { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+body .research-workspace:not(.rw-builder-conversation) .rw-projects:hover .rw-project-list,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector:hover,
+body .research-workspace:not(.rw-builder-conversation) .rw-conversation:hover { scrollbar-color: #d9d3c4 transparent; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list::-webkit-scrollbar,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector::-webkit-scrollbar,
+body .research-workspace:not(.rw-builder-conversation) .rw-conversation::-webkit-scrollbar { width: 8px; height: 8px; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list::-webkit-scrollbar-track,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector::-webkit-scrollbar-track,
+body .research-workspace:not(.rw-builder-conversation) .rw-conversation::-webkit-scrollbar-track { background: transparent; }
+body .research-workspace:not(.rw-builder-conversation) .rw-project-list::-webkit-scrollbar-thumb,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector::-webkit-scrollbar-thumb,
+body .research-workspace:not(.rw-builder-conversation) .rw-conversation::-webkit-scrollbar-thumb { background: transparent; border-radius: 8px; }
+body .research-workspace:not(.rw-builder-conversation) .rw-projects:hover .rw-project-list::-webkit-scrollbar-thumb,
+body .research-workspace:not(.rw-builder-conversation) .rw-inspector:hover::-webkit-scrollbar-thumb,
+body .research-workspace:not(.rw-builder-conversation) .rw-conversation:hover::-webkit-scrollbar-thumb { background: #d9d3c4; }
+
 /* The saved state is quiet. A failed save uses the existing warning text. */
 .research-workspace:not(.rw-builder-conversation) .rw-project-header .rw-save-status { display: inline-flex; align-items: center; flex: none; max-width: 100%; color: #7a4e12; background: #fff8ea; border: 1px solid #f1e3c5; border-radius: 6px; padding: 2px 8px; font-size: var(--sb-note-size); font-weight: var(--sb-note-weight); line-height: 1.5; }

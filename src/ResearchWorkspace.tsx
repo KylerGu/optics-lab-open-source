@@ -158,9 +158,49 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     const el = conversation.current; if (el) el.scrollTop = el.scrollHeight;
   }, [project.id, project.turns, busy, steps]);
   useEffect(() => {
-    if (!textarea.current) return;
-    textarea.current.style.height = 'auto'; textarea.current.style.height = Math.min(180, Math.max(72, textarea.current.scrollHeight)) + 'px';
-  }, [project.draft]);
+    const el = textarea.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    if (inBuilder) { el.style.height = Math.min(180, Math.max(72, el.scrollHeight)) + 'px'; return; }
+    const max = 200;
+    el.style.height = Math.min(max, el.scrollHeight) + 'px';
+    el.style.overflowY = el.scrollHeight > max + 1 ? 'auto' : 'hidden';
+  }, [project.draft, inBuilder]);
+  const marqueeFrame = useRef(0);
+  const marqueeEl = useRef<HTMLElement | null>(null);
+  function stopTitleMarquee() {
+    cancelAnimationFrame(marqueeFrame.current);
+    const el = marqueeEl.current;
+    marqueeEl.current = null;
+    if (!el) return;
+    el.style.transform = '';
+    if (el instanceof HTMLInputElement) el.scrollLeft = 0;
+    el.closest('.is-marquee')?.classList.remove('is-marquee');
+  }
+  function startTitleMarquee(el: HTMLElement, host?: HTMLElement) {
+    stopTitleMarquee();
+    if (el instanceof HTMLInputElement && document.activeElement === el) return;
+    const overflow = Math.ceil(el.scrollWidth - el.clientWidth);
+    if (overflow <= 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    host?.classList.add('is-marquee');
+    marqueeEl.current = el;
+    const distance = overflow + 16;
+    const duration = Math.max(900, (distance / 36) * 1000);
+    const delay = 400;
+    const origin = performance.now();
+    const tick = (now: number) => {
+      if (marqueeEl.current !== el) return;
+      const elapsed = now - origin - delay;
+      if (elapsed < 0) { marqueeFrame.current = requestAnimationFrame(tick); return; }
+      const cycle = (elapsed % (duration * 2)) / duration;
+      const shift = distance * (cycle <= 1 ? cycle : 2 - cycle);
+      if (el instanceof HTMLInputElement) el.scrollLeft = shift;
+      else el.style.transform = `translateX(${-shift}px)`;
+      marqueeFrame.current = requestAnimationFrame(tick);
+    };
+    marqueeFrame.current = requestAnimationFrame(tick);
+  }
+  useEffect(() => () => cancelAnimationFrame(marqueeFrame.current), []);
 
   function startNew() {
     if (store.projects.length >= 30) { setError('最多保留 30 项探究，请先导出并整理已有记录。'); return; }
@@ -405,14 +445,14 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         const selected = p.id === project.id;
         const meta = p.objects.length ? `${p.objects.length} 个装置` : p.turns.length ? `${p.turns.length} 轮探究` : '';
         return <div key={p.id} className={`rw-project-item${selected ? ' is-selected' : ''}`}>
-          {renamingId === p.id ? <div className="rw-project-open"><MessageSquare size={16}/><input id={'rw-rename-' + p.id} className="rw-project-rename" aria-label="探究名称" defaultValue={p.title} maxLength={80} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } if (event.key === 'Escape') { event.preventDefault(); renameCancel.current = true; event.currentTarget.blur(); } }} onBlur={event => { const cancel = renameCancel.current; renameCancel.current = false; if (cancel) { setRenamingId(null); return; } commitRename(p.id, event.currentTarget.value); }}/></div> : <button type="button" className="rw-project-open" title={p.title} aria-current={selected ? 'page' : undefined} onClick={() => { setMenuId(null); setStore(s => ({ ...s, selectedId: p.id })); setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null); }}><MessageSquare size={16}/><span><strong>{p.title}</strong>{meta && <small>{meta}</small>}</span></button>}
+          {renamingId === p.id ? <div className="rw-project-open"><MessageSquare size={16}/><input id={'rw-rename-' + p.id} className="rw-project-rename" aria-label="探究名称" defaultValue={p.title} maxLength={80} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } if (event.key === 'Escape') { event.preventDefault(); renameCancel.current = true; event.currentTarget.blur(); } }} onBlur={event => { const cancel = renameCancel.current; renameCancel.current = false; if (cancel) { setRenamingId(null); return; } commitRename(p.id, event.currentTarget.value); }}/></div> : <button type="button" className="rw-project-open" title={p.title} aria-current={selected ? 'page' : undefined} onMouseEnter={event => { const strong = event.currentTarget.querySelector('strong'); if (strong) startTitleMarquee(strong, event.currentTarget); }} onMouseLeave={stopTitleMarquee} onClick={() => { setMenuId(null); setStore(s => ({ ...s, selectedId: p.id })); setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null); }}><MessageSquare size={16}/><span><strong>{p.title}</strong>{meta && <small>{meta}</small>}</span></button>}
           <button type="button" id={'rw-more-' + p.id} className="rw-project-more" aria-label={`探究操作：${p.title}`} aria-haspopup="menu" aria-expanded={menuId === p.id} aria-controls={menuId === p.id ? 'rw-row-menu' : undefined} onClick={event => { event.stopPropagation(); toggleMenu(p.id, event.currentTarget); }}><MoreHorizontal size={16}/></button>
         </div>;
       })}</nav>
     </aside>
     <div className="rw-resize-handle rw-resize-left" {...layout.leftSeparator}/>
     <section className="rw-main">
-      <header className="rw-project-header"><button className="rw-panel-toggle" aria-label={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} aria-expanded={!layout.leftHidden} aria-controls="research-projects" title={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} onClick={() => layout.toggle('left')}><FolderOpen size={18}/></button><div><input aria-label="探究名称" value={project.title} maxLength={80} disabled={busy} onChange={event => setManualTitle(project.id, event.target.value.trim() ? event.target.value : '未命名探究')}/>{storageError && <span className="rw-save-status" role="status">记录未保存，请导出备份</span>}</div><button className="rw-panel-toggle" aria-label={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} aria-expanded={!layout.rightHidden} aria-controls="research-inspector" title={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} onClick={() => layout.toggle('right')}><FileText size={18}/></button></header>
+      <header className="rw-project-header"><button className="rw-panel-toggle" aria-label={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} aria-expanded={!layout.leftHidden} aria-controls="research-projects" title={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} onClick={() => layout.toggle('left')}><FolderOpen size={18}/></button><div><input aria-label="探究名称" title={project.title} value={project.title} maxLength={80} disabled={busy} onMouseEnter={event => startTitleMarquee(event.currentTarget)} onMouseLeave={stopTitleMarquee} onChange={event => setManualTitle(project.id, event.target.value.trim() ? event.target.value : '未命名探究')}/>{storageError && <span className="rw-save-status" role="status">记录未保存，请导出备份</span>}</div><button className="rw-panel-toggle" aria-label={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} aria-expanded={!layout.rightHidden} aria-controls="research-inspector" title={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} onClick={() => layout.toggle('right')}><FileText size={18}/></button></header>
       {inBuilder&&<div className="rw-builder-context"><strong>{binding?.selected?binding.selected.project.title:'独立光路对话'}</strong><span>当前装置：{builderContext?.tab.history.present.name}</span>{builderContext?.selectedElementId&&<small>选中器件：{builderContext.tab.history.present.elements.find(e=>e.id===builderContext.selectedElementId)?.name}</small>}{binding&&binding.candidates.length>1&&<label>所属探究<select aria-label="选择关联探究" value={binding.selected?.key??''} disabled={busy} onChange={e=>{const c=binding.candidates.find(c=>c.key===e.target.value);if(c&&builderContext)builderContext.bind(c.key,builderContext.tab.history.present);}}><option value="" disabled>请选择要继续的探究</option>{binding.candidates.map(c=><option key={c.key} value={c.key}>{c.project.title} · {c.object.experiment.name}</option>)}</select></label>}{binding?.missing&&<p role="alert">原关联探究或装置已移除，无法确定对话归属。请从需要继续的探究重新打开装置，或新建独立光路。</p>}{binding?.ambiguous&&<p role="alert">此装置关联多个探究，请先选择要继续的对话。</p>}{binding?.conflict&&<div role="alert"><p>探究与光路中的装置参数版本不同。请选择后续使用的版本；历史结果保持原参数。</p><button disabled={busy} onClick={()=>resolveVersion(true)}>使用当前光路参数</button><button disabled={busy} onClick={()=>resolveVersion(false)}>使用探究中的参数</button></div>}{detachedInitial.warning&&<p role="alert">{detachedInitial.warning}</p>}</div>}
       {storageError && <div className="rw-warning" role="status">{storageError}</div>}
       <div className="rw-conversation" ref={conversation} data-navigation-scroll="research-conversation" role="log" aria-label="探究对话" aria-live="polite">
@@ -425,7 +465,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         {(statusError || configured === false) && <div className="rw-connection"><span>{statusError ?? '请先在「模型设置」中填写你的 DeepSeek API Key。'}</span><button type="button" className="rw-text-button" disabled={busy} onClick={openModelSettings}>模型设置</button><button className="rw-text-button" disabled={checking || busy} onClick={() => void checkStatus()}><RefreshCw size={14}/>{checking ? '检测中' : '重新检测'}</button></div>}
         {error && <p className="rw-input-error" role="alert">{error}</p>}
         {currentObject ? <div className="rw-current-object"><Paperclip size={13}/><span>当前装置：{currentObject.experiment.name}</span>{project.objects.length > 1 && <small>可在问题中指定多个对象进行比较</small>}</div>:modelSources.length>0&&<div className="rw-current-object"><Paperclip size={13}/><span>当前模型：{modelSources.at(-1)!.title.split(' · ')[0]}</span></div>}
-        <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button" type="button" onClick={stopResearch}><Square size={12}/>停止</button> : <button className="rw-button rw-primary" type="submit" title="Ctrl+Enter 发送" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}>发送<ArrowRight size={16}/></button>}</div></form>
+        <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" rows={inBuilder ? 2 : 1} value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button" type="button" onClick={stopResearch}><Square size={12}/>停止</button> : <button className="rw-button rw-primary" type="submit" title="Ctrl+Enter 发送" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}>发送<ArrowRight size={16}/></button>}</div></form>
       </div>
     </section>
     <div className="rw-resize-handle rw-resize-right" {...layout.rightSeparator}/>
