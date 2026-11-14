@@ -15,8 +15,9 @@
 
 .app-shell > .topbar { border-bottom-color: var(--ui-border); }
 .topbar .mode-switch { background: var(--ui-soft); border-color: var(--ui-border); border-radius: 10px; }
-.topbar .mode-switch button { border-radius: 7px; color: var(--ui-muted); }
-.topbar .mode-switch button.active { color: var(--ui-accent); background: var(--ui-selected); box-shadow: inset 0 0 0 1px #c8d6f6; }
+.topbar .brand strong { font-size: var(--sb-title-size); font-weight: var(--sb-title-weight); color: var(--sb-title-color); letter-spacing: 0; }
+.topbar .mode-switch button { border-radius: 7px; color: var(--sb-label-color); font-size: var(--sb-label-size); font-weight: 500; }
+.topbar .mode-switch button.active { color: var(--sb-action); font-weight: 700; background: #e7efff; box-shadow: inset 0 0 0 1px #b8cafa; }
 
 /* The two libraries share a bounded reading width and the same card rhythm. */
 .scene-catalog-page, .fk-library {

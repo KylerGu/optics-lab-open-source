@@ -13,18 +13,20 @@
   border: 1px solid var(--ui-border);
   border-radius: 7px;
   background: var(--ui-surface);
-  color: var(--ui-muted);
-  font-size: 13px;
+  color: var(--sb-label-color);
+  font-size: var(--sb-label-size);
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap;
 }
-.model-settings-entry:hover { background: var(--ui-soft); color: var(--ui-text); }
+.model-settings-entry:hover { background: #eaf1ff; color: var(--sb-action); }
 .model-settings-entry:focus-visible { outline: 2px solid #465a7c; outline-offset: 4px; }
-.model-settings-status { display: inline-flex; align-items: center; gap: 5px; color: var(--ui-muted); font-size: 12px; }
-.model-settings-dot { width: 6px; height: 6px; border-radius: 50%; background: #c5d0dc; flex: 0 0 auto; }
-.model-settings-entry.is-ready { color: var(--ui-text); }
-.model-settings-entry.is-ready .model-settings-status { color: var(--ui-accent); }
-.model-settings-entry.is-ready .model-settings-dot { background: var(--ui-accent); }
+.model-settings-label { color: var(--sb-label-color); font-weight: 500; }
+.model-settings-status { display: inline-flex; align-items: center; gap: 5px; color: var(--sb-note-color); font-size: var(--sb-note-size); font-weight: var(--sb-note-weight); }
+.model-settings-dot { width: 6px; height: 6px; border-radius: 50%; background: #8aa0b8; flex: 0 0 auto; }
+.model-settings-entry.is-ready { color: var(--sb-label-color); }
+.model-settings-entry.is-ready .model-settings-status { color: var(--sb-action); font-weight: 700; }
+.model-settings-entry.is-ready .model-settings-dot { background: var(--sb-action); }
 
 .modal.model-settings-dialog {
   width: min(480px, calc(100vw - 32px));

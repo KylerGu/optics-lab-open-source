@@ -1,10 +1,10 @@
 import { builderConversationId } from './builderTabs';
 import { createPortal } from 'react-dom';
 import { builderConversation, promoteBuilderConversation, sameApparatus, updateConversationObject, type BuilderConversationContext } from './researchConversation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useOpenModelSettings } from './ModelSettingsDialog';
 import { listenModelSettings, modelHeaders } from './modelSettings';
-import { ArrowRight, ArrowUpRight, BarChart3, Check, ChevronRight, CircleHelp, Download, FileText, FlaskConical, FolderOpen, LoaderCircle, MessageSquare, MoreHorizontal, Paperclip, Plus, RefreshCw, Sparkles, Square, Trash2, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BarChart3, Check, ChevronRight, CircleHelp, FileText, FlaskConical, FolderOpen, LoaderCircle, MessageSquare, MoreHorizontal, Paperclip, Plus, RefreshCw, Sparkles, Square, X } from 'lucide-react';
 import AssistantAnswer from './AssistantAnswer';
 import ResearchVisualActions from './ResearchVisualActions';
 import type { ResearchVisualGuide } from './researchVisual';
@@ -296,29 +296,126 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     if (!requestId) return;
     void cancelResearchAgent(requestId);
   }
-  function exportProject(format: 'json' | 'md') {
-    downloadResearch(format === 'json' ? { schemaVersion: 2, selectedId: project.id, projects: [project] } : researchReport(project), project.title + '-探究记录', format);
+  function setManualTitle(id: string, title: string) {
+    changeProject(id, p => ({ ...p, title, titleMode: 'manual' }));
+  }
+  function exportProject(target: ResearchProject, format: 'json' | 'md') {
+    downloadResearch(format === 'json' ? { schemaVersion: 2, selectedId: target.id, projects: [target] } : researchReport(target), target.title + '-探究记录', format);
+  }
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const menuAnchor = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const renameCancel = useRef(false);
+  const deleteTarget = store.projects.find(p => p.id === deleteId) ?? null;
+  function placeMenu(anchor: HTMLElement, menuEl?: HTMLElement | null) {
+    const rect = anchor.getBoundingClientRect();
+    const width = menuEl?.offsetWidth || 168;
+    const height = menuEl?.offsetHeight || 132;
+    const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    const below = rect.bottom + 4;
+    const above = rect.top - height - 4;
+    let top = below;
+    if (below + height > window.innerHeight - 8 && above >= 8) top = above;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8);
+    return { top, left };
+  }
+  function closeMenu(restoreFocus: boolean) {
+    const id = menuId;
+    setMenuId(null);
+    if (restoreFocus && id) document.getElementById('rw-more-' + id)?.focus();
+  }
+  function toggleMenu(id: string, anchor: HTMLButtonElement) {
+    if (menuId === id) { closeMenu(false); return; }
+    menuAnchor.current = anchor;
+    setMenuPos(placeMenu(anchor));
+    setMenuId(id);
+  }
+  useLayoutEffect(() => {
+    const anchor = menuAnchor.current;
+    if (!menuId || !anchor || !menuRef.current) return;
+    setMenuPos(placeMenu(anchor, menuRef.current));
+  }, [menuId, storageError]);
+  useEffect(() => {
+    if (!menuId) return;
+    const anchor = menuAnchor.current;
+    const list = document.querySelector<HTMLElement>('.rw-project-list');
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')?.focus();
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); closeMenu(true); } };
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (menuRef.current?.contains(target) || anchor?.contains(target)) return;
+      setMenuId(null);
+    };
+    const follow = () => {
+      const button = menuAnchor.current;
+      if (!button || !list) { setMenuId(null); return; }
+      const row = button.getBoundingClientRect();
+      const box = list.getBoundingClientRect();
+      if (row.bottom <= box.top || row.top >= box.bottom) { setMenuId(null); return; }
+      setMenuPos(placeMenu(button, menuRef.current));
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    list?.addEventListener('scroll', follow, { passive: true });
+    window.addEventListener('resize', follow);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
+      list?.removeEventListener('scroll', follow);
+      window.removeEventListener('resize', follow);
+    };
+  }, [menuId]);
+  useEffect(() => {
+    if (!renamingId) return;
+    const input = document.getElementById('rw-rename-' + renamingId) as HTMLInputElement | null;
+    input?.focus();
+    input?.select();
+  }, [renamingId]);
+  function commitRename(id: string, value: string) {
+    const title = value.trim();
+    setRenamingId(null);
+    if (!title) return;
+    setManualTitle(id, title.slice(0, 80));
   }
   function deleteProject() {
-    if (busy) return;
-    const remaining = store.projects.filter(p => p.id !== project.id);
-    if (!remaining.length) remaining.push(newResearchProject());
-    setStore({ schemaVersion: 2, selectedId: remaining[0].id, projects: remaining }); deleteDialog.current?.close(); setArtifactId(null); setError(null);
+    const id = deleteId;
+    if (!id || id in running) return;
+    const wasSelected = store.selectedId === id;
+    setStore(s => {
+      const projects = s.projects.filter(p => p.id !== id);
+      const next = projects.length ? projects : [newResearchProject()];
+      const selectedId = s.selectedId === id ? next[0].id : (next.some(p => p.id === s.selectedId) ? s.selectedId : next[0].id);
+      return { schemaVersion: 2, selectedId, projects: next };
+    });
+    if (wasSelected) { setArtifactId(null); setError(null); }
+    deleteDialog.current?.close();
+    setDeleteId(null);
   }
+  const menuProject = store.projects.find(p => p.id === menuId) ?? null;
 
   const content = <main ref={layout.workspace} style={layout.style} className={`research-workspace${inBuilder?' rw-builder-conversation':''}${layout.dragging ? ' rw-resizing' : ''}${layout.leftHidden ? ' rw-left-hidden' : ''}${layout.rightHidden ? ' rw-right-hidden' : ''}`} aria-label="实验探究工作区">
     <aside id="research-projects" className="rw-projects" hidden={layout.leftHidden}>
       <div className="rw-projects-title"><span><FolderOpen size={17}/>我的探究</span></div>
       <button className="rw-button rw-new-research" onClick={startNew}><Plus size={16}/>新建探究</button>
-      <nav className="rw-project-list" aria-label="探究记录" data-navigation-scroll="research-projects">{store.projects.map(p => <button key={p.id} className={`rw-project-item ${p.id === project.id ? 'is-selected' : ''}`} aria-current={p.id === project.id ? 'page' : undefined} onClick={() => { setStore(s => ({ ...s, selectedId: p.id })); setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null); }}><MessageSquare size={16}/><span><strong>{p.title}</strong><small>{p.objects.length ? `${p.objects.length} 个装置` : p.turns.length ? `${p.turns.length} 轮探究` : '从一个问题开始'}</small></span></button>)}</nav>
+      <nav className="rw-project-list" aria-label="探究记录" data-navigation-scroll="research-projects">{store.projects.map(p => {
+        const selected = p.id === project.id;
+        const meta = p.objects.length ? `${p.objects.length} 个装置` : p.turns.length ? `${p.turns.length} 轮探究` : '';
+        return <div key={p.id} className={`rw-project-item${selected ? ' is-selected' : ''}`}>
+          {renamingId === p.id ? <div className="rw-project-open"><MessageSquare size={16}/><input id={'rw-rename-' + p.id} className="rw-project-rename" aria-label="探究名称" defaultValue={p.title} maxLength={80} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } if (event.key === 'Escape') { event.preventDefault(); renameCancel.current = true; event.currentTarget.blur(); } }} onBlur={event => { const cancel = renameCancel.current; renameCancel.current = false; if (cancel) { setRenamingId(null); return; } commitRename(p.id, event.currentTarget.value); }}/></div> : <button type="button" className="rw-project-open" aria-current={selected ? 'page' : undefined} onClick={() => { setMenuId(null); setStore(s => ({ ...s, selectedId: p.id })); setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null); }}><MessageSquare size={16}/><span><strong>{p.title}</strong>{meta && <small>{meta}</small>}</span></button>}
+          <button type="button" id={'rw-more-' + p.id} className="rw-project-more" aria-label={`探究操作：${p.title}`} aria-haspopup="menu" aria-expanded={menuId === p.id} aria-controls={menuId === p.id ? 'rw-row-menu' : undefined} onClick={event => { event.stopPropagation(); toggleMenu(p.id, event.currentTarget); }}><MoreHorizontal size={16}/></button>
+        </div>;
+      })}</nav>
     </aside>
     <div className="rw-resize-handle rw-resize-left" {...layout.leftSeparator}/>
     <section className="rw-main">
-      <header className="rw-project-header"><button className="rw-panel-toggle" aria-label={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} aria-expanded={!layout.leftHidden} aria-controls="research-projects" title={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} onClick={() => layout.toggle('left')}><FolderOpen size={18}/></button><div><input aria-label="探究名称" value={project.title} maxLength={80} disabled={busy} onChange={event => changeProject(project.id, p => ({ ...p, title: event.target.value.trim() ? event.target.value : '未命名探究', titleMode: 'manual' }))}/><span className="rw-save-status">{storageError ? '记录未保存，请导出备份' : '自动保存'}</span></div><button className="rw-panel-toggle" aria-label={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} aria-expanded={!layout.rightHidden} aria-controls="research-inspector" title={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} onClick={() => layout.toggle('right')}><FileText size={18}/></button><details className="rw-project-menu"><summary aria-label="探究操作"><MoreHorizontal size={20}/></summary><div><button onClick={startNew}><Plus size={15}/>新建探究</button>{plan.length > 0 && <button onClick={() => planDialog.current?.showModal()}><FileText size={15}/>查看探究计划</button>}<button onClick={() => exportProject('md')}><FileText size={15}/>下载探究笔记</button><button onClick={() => exportProject('json')}><Download size={15}/>保存探究记录</button><button disabled={busy} onClick={() => deleteDialog.current?.showModal()}><Trash2 size={15}/>删除这项探究</button></div></details></header>
+      <header className="rw-project-header"><button className="rw-panel-toggle" aria-label={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} aria-expanded={!layout.leftHidden} aria-controls="research-projects" title={layout.leftHidden ? '展开探究记录栏' : '收起探究记录栏'} onClick={() => layout.toggle('left')}><FolderOpen size={18}/></button><div><input aria-label="探究名称" value={project.title} maxLength={80} disabled={busy} onChange={event => setManualTitle(project.id, event.target.value.trim() ? event.target.value : '未命名探究')}/><span className="rw-save-status">{storageError ? '记录未保存，请导出备份' : '自动保存'}</span></div><button className="rw-panel-toggle" aria-label={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} aria-expanded={!layout.rightHidden} aria-controls="research-inspector" title={layout.rightHidden ? '展开装置与结果栏' : '收起装置与结果栏'} onClick={() => layout.toggle('right')}><FileText size={18}/></button></header>
       {inBuilder&&<div className="rw-builder-context"><strong>{binding?.selected?binding.selected.project.title:'独立光路对话'}</strong><span>当前装置：{builderContext?.tab.history.present.name}</span>{builderContext?.selectedElementId&&<small>选中器件：{builderContext.tab.history.present.elements.find(e=>e.id===builderContext.selectedElementId)?.name}</small>}{binding&&binding.candidates.length>1&&<label>所属探究<select aria-label="选择关联探究" value={binding.selected?.key??''} disabled={busy} onChange={e=>{const c=binding.candidates.find(c=>c.key===e.target.value);if(c&&builderContext)builderContext.bind(c.key,builderContext.tab.history.present);}}><option value="" disabled>请选择要继续的探究</option>{binding.candidates.map(c=><option key={c.key} value={c.key}>{c.project.title} · {c.object.experiment.name}</option>)}</select></label>}{binding?.missing&&<p role="alert">原关联探究或装置已移除，无法确定对话归属。请从需要继续的探究重新打开装置，或新建独立光路。</p>}{binding?.ambiguous&&<p role="alert">此装置关联多个探究，请先选择要继续的对话。</p>}{binding?.conflict&&<div role="alert"><p>探究与光路中的装置参数版本不同。请选择后续使用的版本；历史结果保持原参数。</p><button disabled={busy} onClick={()=>resolveVersion(true)}>使用当前光路参数</button><button disabled={busy} onClick={()=>resolveVersion(false)}>使用探究中的参数</button></div>}{detachedInitial.warning&&<p role="alert">{detachedInitial.warning}</p>}</div>}
       {storageError && <div className="rw-warning" role="status">{storageError}</div>}
       <div className="rw-conversation" ref={conversation} data-navigation-scroll="research-conversation" role="log" aria-label="探究对话" aria-live="polite">
-        {inBuilder&&(binding?.missing||binding?.ambiguous)?null:!project.turns.length ? <div className="rw-welcome"><div className="rw-welcome-symbol"><Sparkles size={27}/></div><span className="rw-eyebrow">光学实验探究助手</span><h1>用实验，看懂光学</h1><p>说说你没想明白的原理或现象，<br/>一起设计实验、观察变化、理解原因。</p><div className="rw-starters">{STARTERS.map(item => { const Icon = item.icon; return <button key={item.title} disabled={busy} onClick={() => { setDraft(item.text); textarea.current?.focus(); }}><Icon size={20}/><strong>{item.title}</strong><ChevronRight size={15}/></button>; })}</div></div> : project.turns.map(turn => {
+        {inBuilder&&(binding?.missing||binding?.ambiguous)?null:!project.turns.length ? <div className="rw-welcome"><div className="rw-welcome-symbol"><Sparkles size={27}/></div>{inBuilder && <span className="rw-eyebrow">光学实验探究助手</span>}<h1>用实验，看懂光学</h1>{inBuilder && <p>说说你没想明白的原理或现象，<br/>一起设计实验、观察变化、理解原因。</p>}<div className="rw-starters">{STARTERS.map(item => { const Icon = item.icon; return <button key={item.title} disabled={busy} onClick={() => { setDraft(item.text); textarea.current?.focus(); }}><Icon size={20}/><strong>{item.title}</strong><ChevronRight size={15}/></button>; })}</div></div> : project.turns.map(turn => {
           const turnRecords = records.filter(record => record.requestId === turn.id);
           return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span>你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><div className="rw-agent-name"><Sparkles size={17}/><strong>光学实验探究助手</strong></div><AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.reply.answer.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.error.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending"><LoaderCircle size={16}/><span>{pendingLabel}</span></div>}</article>;
         })}
@@ -327,13 +424,13 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         {(statusError || configured === false) && <div className="rw-connection"><span>{statusError ?? '请先在「模型设置」中填写你的 DeepSeek API Key。'}</span><button type="button" className="rw-text-button" disabled={busy} onClick={openModelSettings}>模型设置</button><button className="rw-text-button" disabled={checking || busy} onClick={() => void checkStatus()}><RefreshCw size={14}/>{checking ? '检测中' : '重新检测'}</button></div>}
         {error && <p className="rw-input-error" role="alert">{error}</p>}
         {currentObject ? <div className="rw-current-object"><Paperclip size={13}/><span>当前装置：{currentObject.experiment.name}</span>{project.objects.length > 1 && <small>可在问题中指定多个对象进行比较</small>}</div>:modelSources.length>0&&<div className="rw-current-object"><Paperclip size={13}/><span>当前模型：{modelSources.at(-1)!.title.split(' · ')[0]}</span></div>}
-        <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…'} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : 'Ctrl + Enter 发送'}</span>{busy ? <button className="rw-button" type="button" onClick={stopResearch}><Square size={12}/>停止</button> : <button className="rw-button rw-primary" type="submit" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}>发送<ArrowRight size={16}/></button>}</div></form>
+        <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button" type="button" onClick={stopResearch}><Square size={12}/>停止</button> : <button className="rw-button rw-primary" type="submit" title="Ctrl+Enter 发送" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}>发送<ArrowRight size={16}/></button>}</div></form>
       </div>
     </section>
     <div className="rw-resize-handle rw-resize-right" {...layout.rightSeparator}/>
     <aside id="research-inspector" hidden={layout.rightHidden} className="rw-inspector" aria-label="装置与结果" data-navigation-scroll="research-results">
       <div className="rw-inspector-heading"><FileText size={18}/><h2>装置与结果</h2></div>
-      <section className="rw-inspector-section"><div className="rw-section-heading"><h3>实验装置 {project.objects.length > 0 && `· ${project.objects.length}`}</h3><button className="rw-icon-button" aria-label="添加探究对象" disabled={busy} onClick={chooseDevice}><Plus size={15}/></button></div>{project.objects.length ? <><div className="rw-attached-objects">{project.objects.map(object => <div key={object.id} className={`rw-attached-object ${object.id === project.activeObjectId ? 'is-current' : ''}`}><div className="rw-object-meta"><span>{SOURCE_LABELS[object.source]}</span><button className="rw-text-button" aria-pressed={object.id === project.activeObjectId} disabled={busy} onClick={() => changeProject(project.id, p => ({ ...p, activeObjectId: object.id }))}>{object.id === project.activeObjectId ? <><Check size={12}/>当前装置</> : '设为当前'}</button></div><button className="rw-device-link" disabled={busy} onClick={() => openObject(object)}><Paperclip size={15}/><span>{object.experiment.name}</span><ArrowUpRight size={14}/></button><div className="rw-object-actions">{(object.source !== 'generated' || linkedArchive(object)) && <button className="rw-text-button" disabled={busy} onClick={() => refreshObject(object)}><RefreshCw size={12}/>{object.source === 'file' && !linkedArchive(object) ? '重新导入参数' : '更新参数'}</button>}<button className="rw-text-button" aria-label={`移除探究对象 ${object.experiment.name}`} disabled={busy} onClick={() => removeObject(object.id)}><X size={12}/>移除</button></div>{object.source === 'file' && <small className="rw-object-time">{object.label}</small>}</div>)}</div></> : <p className="rw-empty-text">直接提问即可，助手会按需选择模型或搭建装置。也可以选入你已有的装置。</p>}<button className="rw-button" disabled={busy} onClick={chooseDevice}><Plus size={14}/>选择装置</button></section>
+      <section className="rw-inspector-section"><div className="rw-section-heading"><h3>实验装置 {project.objects.length > 0 && `· ${project.objects.length}`}</h3><button className="rw-icon-button" aria-label="添加探究对象" disabled={busy} onClick={chooseDevice}><Plus size={15}/></button></div>{project.objects.length ? <><div className="rw-attached-objects">{project.objects.map(object => <div key={object.id} className={`rw-attached-object ${object.id === project.activeObjectId ? 'is-current' : ''}`}><div className="rw-object-meta"><span>{SOURCE_LABELS[object.source]}</span><button className="rw-text-button" aria-pressed={object.id === project.activeObjectId} disabled={busy} onClick={() => changeProject(project.id, p => ({ ...p, activeObjectId: object.id }))}>{object.id === project.activeObjectId ? <><Check size={12}/>当前装置</> : '设为当前'}</button></div><button className="rw-device-link" disabled={busy} onClick={() => openObject(object)}><Paperclip size={15}/><span>{object.experiment.name}</span><ArrowUpRight size={14}/></button><div className="rw-object-actions">{(object.source !== 'generated' || linkedArchive(object)) && <button className="rw-text-button" disabled={busy} onClick={() => refreshObject(object)}><RefreshCw size={12}/>{object.source === 'file' && !linkedArchive(object) ? '重新导入参数' : '更新参数'}</button>}<button className="rw-text-button" aria-label={`移除探究对象 ${object.experiment.name}`} disabled={busy} onClick={() => removeObject(object.id)}><X size={12}/>移除</button></div>{object.source === 'file' && <small className="rw-object-time">{object.label}</small>}</div>)}</div></> : null}<button className="rw-button" disabled={busy} onClick={chooseDevice}><Plus size={14}/>选择装置</button></section>
       {records.length > 0 && <section className="rw-inspector-section"><div className="rw-section-heading"><h3>实验记录</h3><span className="rw-record-count">{records.length}</span></div><ResearchRecordList records={records} onSelect={viewArtifact}/></section>}
     </aside>
     {pickerOpen && <ResearchObjectPicker objects={project.objects} onChoose={attachObjects} onClose={() => setPickerOpen(false)}/>}
@@ -341,7 +438,15 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     <input ref={file} type="file" accept=".json,application/json" hidden aria-label="重新导入探究对象参数" onChange={e => { const input = e.target.files?.[0]; if (input) void updateFile(input); e.target.value = ''; }}/>
     <dialog ref={resultDialog} className="rw-dialog rw-result-dialog" aria-label="探究计算结果"><header><span>实验记录</span><button className="rw-icon-button" aria-label="关闭探究结果" onClick={() => resultDialog.current?.close()}><X size={20}/></button></header>{selectedRecord && selectedArtifact && <ResearchRecordResults record={selectedRecord} selectedArtifactId={selectedArtifact.id} onSelectArtifact={setArtifactId} onOpenBuilder={input => { resultDialog.current?.close(); onOpenBuilder(input); }}/>}</dialog>
     <dialog ref={planDialog} className="rw-dialog rw-plan-dialog" aria-labelledby="research-plan-title"><header><h2 id="research-plan-title">探究计划</h2><button className="rw-icon-button" aria-label="关闭探究计划" onClick={() => planDialog.current?.close()}><X size={20}/></button></header><ResearchPlanList plan={plan} hasProgress={hasPlanProgress} artifacts={artifacts} onSelect={id => { planDialog.current?.close(); viewArtifact(id); }}/></dialog>
-    <dialog ref={deleteDialog} className="rw-dialog rw-delete-dialog" aria-labelledby="research-delete-title"><header><h2 id="research-delete-title">删除这项探究？</h2><button className="rw-icon-button" aria-label="关闭删除确认" onClick={() => deleteDialog.current?.close()}><X size={19}/></button></header><p>将移除“{project.title}”的对话和计算记录。关联的光路装置仍保留。</p><div className="rw-dialog-actions"><button className="rw-button" onClick={() => exportProject('json')}>先导出记录</button><button className="rw-button" onClick={() => deleteDialog.current?.close()}>取消</button><button className="rw-button rw-danger" onClick={deleteProject}>删除探究</button></div></dialog>
+    <dialog ref={deleteDialog} className="rw-dialog rw-delete-dialog" aria-labelledby="research-delete-title" onClose={() => setDeleteId(null)}><header><h2 id="research-delete-title">删除这项探究？</h2><button className="rw-icon-button" aria-label="关闭删除确认" onClick={() => deleteDialog.current?.close()}><X size={19}/></button></header><p>将移除“{deleteTarget?.title ?? project.title}”的对话和计算记录。关联的光路装置仍保留。</p><div className="rw-dialog-actions"><button className="rw-button" onClick={() => { if (deleteTarget) exportProject(deleteTarget, 'json'); }}>先导出记录</button><button className="rw-button" onClick={() => deleteDialog.current?.close()}>取消</button><button className="rw-button rw-danger" onClick={deleteProject}>删除探究</button></div></dialog>
+    {menuProject && createPortal(<div ref={menuRef} id="rw-row-menu" className="rw-row-menu" role="menu" aria-label={`探究操作：${menuProject.title}`} style={{ top: menuPos.top, left: menuPos.left }} onKeyDown={event => {
+      const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])];
+      const index = items.indexOf(document.activeElement as HTMLButtonElement);
+      if (event.key === 'ArrowDown') { event.preventDefault(); items[(index + 1) % items.length]?.focus(); }
+      if (event.key === 'ArrowUp') { event.preventDefault(); items[(index - 1 + items.length) % items.length]?.focus(); }
+      if (event.key === 'Home') { event.preventDefault(); items[0]?.focus(); }
+      if (event.key === 'End') { event.preventDefault(); items.at(-1)?.focus(); }
+    }}><button type="button" role="menuitem" onClick={() => { const id = menuProject.id; closeMenu(false); setRenamingId(id); }}>重命名</button><button type="button" role="menuitem" onClick={() => { exportProject(menuProject, 'md'); closeMenu(false); }}>下载笔记</button>{currentResearchPlan(menuProject.turns).length > 0 && <button type="button" role="menuitem" onClick={() => { const id = menuProject.id; closeMenu(false); if (id !== project.id) { setStore(s => ({ ...s, selectedId: id })); setError(null); setArtifactId(null); } planDialog.current?.showModal(); }}>查看探究计划</button>}<button type="button" role="menuitem" className="is-danger" disabled={menuProject.id in running} onClick={() => { const id = menuProject.id; closeMenu(false); setDeleteId(id); deleteDialog.current?.showModal(); }}>删除</button>{storageError && <button type="button" role="menuitem" className="is-backup" onClick={() => { exportProject(menuProject, 'json'); closeMenu(false); }}>导出备份</button>}</div>, document.body)}
   </main>;
   return inBuilder&&builderContext?.host?createPortal(content,builderContext.host):content;
 }
