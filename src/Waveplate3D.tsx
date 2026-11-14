@@ -9,6 +9,7 @@ import { waveplate, fieldPoint, type WaveplateParameters } from './waveplate';
 import { waveplateAngleFromPlane, waveplateSpatialField, WAVEPLATE_INPUT_X as INPUT, WAVEPLATE_OUTPUT_X as OUTPUT } from './waveplateGeometry';
 import { numberText } from './sceneRuntime';
 import { WAVEPLATE_COLORS as C } from './quantityColors';
+import ScenePointerHint from './ScenePointerHint';
 
 export type WaveplateAnnotation='inputAngleDeg'|'axisAngleDeg'|'majorAngleDeg';
 type AngleField='inputAngleDeg'|'axisAngleDeg';
@@ -82,6 +83,6 @@ export default function Waveplate3D(props:Props){
         </div>)}
       </div>}
       {error&&<div className="waveplate-3d-error" role="alert"><p>{error}</p><button onClick={()=>setRetry(v=>v+1)}>重试 3D</button></div>}
-    </div><div className="gs-visual-footer"><span>{dragNotice||'拖端点调角度 · 拖空白转视角'}</span><div className="waveplate-view-actions"><button className="waveplate-play" aria-label={props.playing?'暂停偏振动画':'播放偏振动画'} onClick={props.onTogglePlaying}>{props.playing?<Pause size={13}/>:<Play size={13}/>} {props.playing?'暂停':'播放'}</button><button className="waveplate-play" aria-label="恢复三维视角" onClick={()=>runtime.current?.reset()}><RotateCcw size={13}/>复位视角</button></div></div><div className="waveplate-field-note">曲线表示电场端点，光沿直轴传播 · 动画慢放</div>
+    </div><div className="gs-visual-footer">{dragNotice ? <span>{dragNotice}</span> : <ScenePointerHint>拖端点调角度 · 拖空白转视角</ScenePointerHint>}<div className="waveplate-view-actions"><button className="waveplate-play" aria-label={props.playing?'暂停偏振动画':'播放偏振动画'} onClick={props.onTogglePlaying}>{props.playing?<Pause size={13}/>:<Play size={13}/>} {props.playing?'暂停':'播放'}</button><button className="waveplate-play" aria-label="恢复三维视角" onClick={()=>runtime.current?.reset()}><RotateCcw size={13}/>复位视角</button></div></div><div className="waveplate-field-note">曲线表示电场端点，光沿直轴传播 · 动画慢放</div>
   </div>;
 }

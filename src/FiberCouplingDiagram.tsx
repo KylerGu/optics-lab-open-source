@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type PointerEvent as Pointer } from 'react
 import { fiberCoupling, type CouplingParameters } from './fiberCoupling';
 import { arcPath, clamp } from './fiberDiagramGeometry';
 import { numberText } from './sceneRuntime';
+import ScenePointerHint from './ScenePointerHint';
 
 export type CouplingAnnotation='beamRadiusUm'|'modeRadiusUm'|'offsetUm'|'tiltDeg';
 interface Props {p:CouplingParameters;annotations:CouplingAnnotation[];onStart:()=>void;onChange:(key:keyof CouplingParameters,value:number)=>void;onFinish:()=>void}
@@ -43,6 +44,6 @@ export default function FiberCouplingDiagram({p,annotations,onStart,onChange,onF
       {annotation('modeRadiusUm',<><path d={`M${right-12} ${cy}V${cy-mhalf}M${right-16} ${cy}h8M${right-16} ${cy-mhalf}h8`} fill="none" stroke={COUPLING_COLORS.modeRadiusUm}/><text x={right-20} y={cy-mhalf-12} textAnchor="end" className="fiber-symbol">w<tspan baselineShift="sub" fontSize={10}>f</tspan> = {numberText(p.modeRadiusUm)} μm</text></>)}
       {annotation('offsetUm',<><path d={`M${facet+26} ${cy}V${beamY}M${facet+22} ${cy}h8M${facet+22} ${beamY}h8`} fill="none" stroke="#6a91b4"/><text x={facet+34} y={Math.min(cy,beamY)-12} className="fiber-symbol">d = {numberText(p.offsetUm)} μm</text></>)}
       {annotation('tiltDeg',<><line x1={facet-72} x2={facet} y1={beamY} y2={beamY} stroke="#acb9c7" strokeDasharray="3 4"/><path d={arcPath(facet,beamY,58,Math.PI-theta,Math.PI)} stroke={COUPLING_COLORS.beamRadiusUm} strokeWidth={1.8} fill="none"/><path d={`M${facet-90} ${beamY+36}L${facet-56} ${beamY+Math.sin(theta/2)*58}`} stroke={COUPLING_COLORS.beamRadiusUm} fill="none"/><text x={facet-105} y={beamY+51} textAnchor="middle" className="fiber-symbol">θ = {numberText(p.tiltDeg)}°</text></>)}
-    </svg></div><div className="gs-visual-footer"><span>拖动光斑中心、边缘或入射光源</span><span>光束与模场示意</span></div>
+    </svg></div><div className="gs-visual-footer"><ScenePointerHint>拖动光斑中心、边缘或入射光源</ScenePointerHint><span>光束与模场示意</span></div>
   </div>;
 }

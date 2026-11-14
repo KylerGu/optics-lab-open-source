@@ -14,6 +14,7 @@ import './gaussian-scene.css';
 import './gaussian-focus.css';
 import './resonator-scene.css';
 import './circular-diffraction.css';
+import ScenePointerHint from './ScenePointerHint';
 
 type Field = keyof CircularParameters;
 type Annotation = 'wavelengthNm' | 'apertureDiameterMm' | 'focalLengthMm' | 'observationRadiusUm' | 'airyDiameter' | 'firstDark' | 'theta' | 'intensity';
@@ -125,7 +126,7 @@ export default function CircularDiffractionScene({ onDirectory, assistantOpen, o
         <div className="gs-plot circular-device-stage">
           <CircularDiffractionApparatus p={p} annotations={annotations} viewRadius={viewRadius} onStart={start} onChange={change} onFinish={finish}/>
         </div>
-        <div className="gs-visual-footer"><span>拖圆孔边缘改 D · 拖焦平面改 f</span><span>屏到透镜的距离 = f</span></div>
+        <div className="gs-visual-footer"><ScenePointerHint>拖圆孔边缘改 D · 拖焦平面改 f</ScenePointerHint><span>屏到透镜的距离 = f</span></div>
 
       </main>
       {resultsOpen && <><div className="gs-panel-resizer" {...layout.results.separator}/><aside className="gs-sidebar gfocus-results" style={{ width: layout.results.width }} aria-label="衍射结果"><div className="gs-sidebar-title"><h2>衍射结果</h2><button className="icon-button" aria-label="收起衍射结果" onClick={() => setResultsOpen(false)}><X size={17}/></button></div><div className="gs-sidebar-scroll">

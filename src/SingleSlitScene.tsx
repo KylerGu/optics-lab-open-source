@@ -13,6 +13,7 @@ import './gaussian-scene.css';
 import './gaussian-focus.css';
 import './resonator-scene.css';
 import './single-slit.css';
+import ScenePointerHint from './ScenePointerHint';
 
 type Field = keyof SlitParameters;
 type Annotation = 'wavelengthNm' | 'slitWidthMm' | 'screenDistanceM' | 'observationMm' | 'centralWidth' | 'firstMinimum' | 'theta' | 'intensity';
@@ -188,7 +189,7 @@ export default function SingleSlitScene({ onDirectory, assistantOpen, onCloseAss
             <text className="gs-axis-label" x={screenX+stripWidth/2} y={bottom+43} textAnchor="middle">y / mm</text><text className="gs-axis-label" x={curveX+curveWidth/2} y={bottom+43} textAnchor="middle">I / I₀ →</text>
           </svg>
         </div>
-        <div className="gs-visual-footer"><span>点击名称开关标注 · 拖动观察点</span><div className="gs-plot-controls"><button className="text-button" onClick={() => { const span = Math.min(160,Math.max(12,b.centralWidthMm*3.5,Math.abs(p.observationMm)*2.3)); setView({center:0,span}); setZoom(40/span); }}>适配图样</button><button className="icon-button" aria-label="缩小单缝图" disabled={zoom <= .25} onClick={() => adjustZoom(1/1.35)}><Minus size={16}/></button><span>{fmt(zoom)}×</span><button className="icon-button" aria-label="放大单缝图" disabled={zoom >= 12} onClick={() => adjustZoom(1.35)}><Plus size={16}/></button></div></div>
+        <div className="gs-visual-footer"><ScenePointerHint>点击名称开关标注 · 拖动观察点</ScenePointerHint><div className="gs-plot-controls"><button className="text-button" onClick={() => { const span = Math.min(160,Math.max(12,b.centralWidthMm*3.5,Math.abs(p.observationMm)*2.3)); setView({center:0,span}); setZoom(40/span); }}>适配图样</button><button className="icon-button" aria-label="缩小单缝图" disabled={zoom <= .25} onClick={() => adjustZoom(1/1.35)}><Minus size={16}/></button><span>{fmt(zoom)}×</span><button className="icon-button" aria-label="放大单缝图" disabled={zoom >= 12} onClick={() => adjustZoom(1.35)}><Plus size={16}/></button></div></div>
       </main>
       {resultsOpen && <><div className="gs-panel-resizer" {...layout.results.separator}/><aside className="gs-sidebar gfocus-results" style={{ width: layout.results.width }} aria-label="衍射结果"><div className="gs-sidebar-title"><h2>衍射结果</h2><button className="icon-button" aria-label="收起衍射结果" onClick={() => setResultsOpen(false)}><X size={17}/></button></div><div className="gs-sidebar-scroll">
         <section className="gs-readouts gfocus-main-readouts"><div className="gs-primary-reading gs-tone-output"><small>{label('centralWidth','中央亮纹宽度','w')}</small><strong data-testid="slit-width">{fmt(b.centralWidthMm)}<span> mm</span></strong></div><div className="gs-primary-reading gs-tone-output"><small>{label('intensity','观察点相对光强','I / I₀')}</small><strong data-testid="slit-intensity">{fmt(b.observation.intensity)}</strong><div className="slit-meter"><i style={{width:`${b.observation.intensity*100}%`}}/></div></div><p className="slit-status" data-testid="slit-status">{b.status}</p></section>

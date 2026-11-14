@@ -16,6 +16,7 @@ import './gaussian-focus.css';
 import './resonator-scene.css';
 import './michelson-scene.css';
 import Michelson3D from './Michelson3D';
+import ScenePointerHint from './ScenePointerHint';
 
 type Field = keyof MichelsonParameters;
 type Annotation = MichelsonAnnotation;
@@ -162,7 +163,7 @@ export default function MichelsonScene({ onDirectory, assistantOpen, onCloseAssi
         <div className="gs-plot michelson-center" data-testid="michelson-3d-stage">
           <div className="michelson-path-switch" aria-label="选择显示光路">{[{key:'both',title:'两路光路'},{key:'arm1',title:'经 M₁'},{key:'arm2',title:'经 M₂'}].map(t=><button key={t.key} aria-pressed={path===t.key} onClick={()=>setPath(t.key as MichelsonPath)}>{t.title}</button>)}</div>
           <Michelson3D p={p} view={apparatusView} reset={viewReset} path={path} selected={device} annotations={annotations} onSelect={setDevice} onStart={start} onChange={change} onFinish={finish}/>
-        </div><div className="gs-visual-footer"><span>拖空白旋转 · 滚轮缩放 · 拖器件沿光路移动</span><button className="text-button" onClick={()=>setViewReset(n=>n+1)}><RotateCcw size={15}/>复位视角</button></div>
+        </div><div className="gs-visual-footer"><ScenePointerHint>拖空白旋转 · 滚轮缩放 · 拖器件沿光路移动</ScenePointerHint><button className="text-button" onClick={()=>setViewReset(n=>n+1)}><RotateCcw size={15}/>复位视角</button></div>
       </main>
       {resultsOpen&&<><div className="gs-panel-resizer" {...layout.results.separator}/><aside className="gs-sidebar gfocus-results" style={{width:layout.results.width}} aria-label="干涉结果"><div className="gs-sidebar-title"><h2>干涉结果</h2><button className="icon-button" aria-label="收起干涉结果" onClick={()=>setResultsOpen(false)}><X size={17}/></button></div><div className="gs-sidebar-scroll">
         <div ref={plot} className="gs-plot michelson-results-plot" style={{height}}>
@@ -208,7 +209,7 @@ export default function MichelsonScene({ onDirectory, assistantOpen, onCloseAssi
         </dl></section></details>
         <details className="michelson-details"><summary>模型条件</summary><p>单色光，两路等强、同偏振；两镜等效平行，玻璃光程已补偿。</p><p>观察屏在透镜后方一个焦距处；未考虑镜面倾斜。</p><p>移镜距离在装置中放大显示，读数与圆环使用真实数值。</p></details>
       </div></aside></>}
-    </div><div className="gs-model-strip"><span>点击带下划线的中文名称，显示或隐藏对应标注</span><span>移镜示意放大 · 圆环按毫米标尺</span></div>
+    </div><div className="gs-model-strip"><ScenePointerHint>点击带下划线的中文名称，显示或隐藏对应标注</ScenePointerHint><span>移镜示意放大 · 圆环按毫米标尺</span></div>
     {formulaOpen&&<SceneFormulaSheet state={michelsonState(p)} onClose={()=>setFormulaOpen(false)}/>}
     {assistantOpen&&<aside className="gs-drawer gs-assistant" aria-label="场景AI助手"><button className="gs-assistant-close icon-button" aria-label="关闭场景AI助手" onClick={onCloseAssistant}><X size={18}/></button><AssistantPanel sceneState={michelsonState(p)} editing={gesture.current||preview!==null} onApplyScene={applyAssistant} onRestoreScene={restoreAssistant}/></aside>}
     {notice&&<div className="gs-notice" role="status">{notice}<button className="icon-button" aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}

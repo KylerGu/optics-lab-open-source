@@ -14,6 +14,7 @@ import './gaussian-scene.css';
 import './gaussian-focus.css';
 import './resonator-scene.css';
 import './fourier-lens.css';
+import ScenePointerHint from './ScenePointerHint';
 
 type Field = keyof FourierParameters;
 type Annotation = keyof FourierParameters | 'spatialFrequency' | 'orderPosition' | 'spectrumWidth' | 'intensity';
@@ -125,7 +126,7 @@ export default function FourierDiffractionScene({ onDirectory, assistantOpen, on
       </div><div className="gs-sidebar-footer"><button className="text-button" onClick={reset}><RotateCcw size={14}/>恢复默认</button><span>{saveFailed?'本机保存不可用':'已自动保存'}</span></div></aside><div className="gs-panel-resizer" {...layout.separator}/></>}
       <main className="gs-visual"><div className="gs-toolbar"><div className="gs-toolbar-left">{!panelOpen&&<button className="icon-button" aria-label="展开左侧参数" onClick={()=>{setPanelOpen(true);if(compact)setResultsOpen(false);}}><PanelLeftOpen size={17}/></button>}<span className="gfocus-view-title">二维光路</span></div><div className="gs-toolbar-right"><button className="icon-button" aria-label="撤销傅里叶参数" disabled={!history.past.length&&!preview} onClick={()=>{finish();dispatch({type:'undo'});}}><Undo2 size={16}/></button><button className="icon-button" aria-label="重做傅里叶参数" disabled={!history.future.length} onClick={()=>{finish();dispatch({type:'redo'});}}><Redo2 size={16}/></button>{!resultsOpen&&<button className="gs-spot-toggle" aria-label="展开频谱结果" onClick={()=>{setResultsOpen(true);if(compact)setPanelOpen(false);}}><ScanLine size={15}/>结果</button>}</div></div>
         <div className="gs-plot fourier-stage"><FourierApparatus p={p} annotations={annotations} viewRadius={viewRadius} onStart={start} onChange={change} onFinish={finish}/></div>
-        <div className="gs-visual-footer"><span>拖条纹改 d · 拖半径标记改 w · 拖频谱面改 f</span><span>前后焦距均为 f</span></div>
+        <div className="gs-visual-footer"><ScenePointerHint>拖条纹改 d · 拖半径标记改 w · 拖频谱面改 f</ScenePointerHint><span>前后焦距均为 f</span></div>
       </main>
       {resultsOpen&&<><div className="gs-panel-resizer" {...layout.results.separator}/><aside className="gs-sidebar gfocus-results" style={{width:layout.results.width}} aria-label="频谱结果"><div className="gs-sidebar-title"><h2>频谱结果</h2><button className="icon-button" aria-label="收起频谱结果" onClick={()=>setResultsOpen(false)}><X size={17}/></button></div><div className="gs-sidebar-scroll">
         <FourierScreen p={p} annotations={annotations} viewRadius={viewRadius} zoom={zoom} onZoom={adjustZoom} onFit={fitScreen} onStart={start} onChange={v=>change('observationUm',v)} onFinish={finish}/>

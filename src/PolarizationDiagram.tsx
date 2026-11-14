@@ -4,6 +4,7 @@ import { crystalLayout,refractionLayout } from './polarizationDiagramGeometry';
 import { arcPath } from './fiberDiagramGeometry';
 import { REFRACTION_COLORS as C,quantityStyle } from './quantityColors';
 import { numberText } from './sceneRuntime';
+import ScenePointerHint from './ScenePointerHint';
 export type RefractionAnnotation='n1'|'n2'|'angleDeg'|'brewsterDeg'|'transmissionDeg'|'ordinaryIndex'|'extraordinaryIndex'|'axisAngleDeg'|'thicknessMm'|'walkoffDeg'|'separationMm';
 interface Props {p:PolarizationRefractionParameters;annotations:RefractionAnnotation[];onStart:()=>void;onChange:(key:keyof PolarizationRefractionParameters,value:number)=>void;onFinish:()=>void}
 const RAD=Math.PI/180,fmt=(v:number)=>Number(v.toFixed(2)).toString();
@@ -52,5 +53,5 @@ export default function PolarizationDiagram({p,annotations,onStart,onChange,onFi
       {tag('separationMm',<><path data-testid="pr-separation-dimension" d={`M${q.endX+5} ${q.cy}h10m-5 0V${q.exitY}m-5 0h10`} stroke="currentColor" fill="none"/>{label(q.endX+14,(q.cy+q.exitY)/2-7,`d = ${fmt(c.separationMm)} mm`,'end')}</>)}
       {tag('walkoffDeg',<><path d={arcPath(q.left,q.cy,Math.min(65,(q.right-q.left)*.3),Math.min(0,-c.walkoffDeg*RAD),Math.max(0,-c.walkoffDeg*RAD))} stroke="currentColor" fill="none"/>{label(q.left+12,q.cy+(c.tangent>0?35:-30),`ρ = ${fmt(c.walkoffDeg)}°`,'start')}</>)}
     </>}
-  </svg></div><div className="gs-visual-footer"><span>{p.mode===0?'拖动入射光端点调角度':'拖动光轴端点调角度'}</span><span>{p.mode===0?'角度从法线量起':'横纵比例一致 · 正入射'}</span></div></div>;
+  </svg></div><div className="gs-visual-footer"><ScenePointerHint>{p.mode===0?'拖动入射光端点调角度':'拖动光轴端点调角度'}</ScenePointerHint><span>{p.mode===0?'角度从法线量起':'横纵比例一致 · 正入射'}</span></div></div>;
 }

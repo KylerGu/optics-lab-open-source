@@ -41,7 +41,7 @@ export function TelescopeRayResults({result}:{result:SceneResult}){
     <div style={{'--quantity-color':'#8a5eac'} as CSSProperties}><dt>成像方向</dt><dd>{o.afocal?(o.M!<0?'倒像':'正像'):'—'}</dd></div>
     <div style={{'--quantity-color':o.afocal?'#26836a':'#c16b37'} as CSSProperties}><dt>对焦状态</dt><dd data-testid="telescope-focus-status">{o.afocal?'已对焦':'未对焦'}</dd></div>
   </dl>
-  <MicroscopeDetails id="telescope-ray-explanation" title="详细说明"><p>d = d₀ 时平行出射，Δθ′ = 0；未对焦可点击“恢复平行出射”。</p><p>开普勒倒像，伽利略正像。Δθ′ 按物镜全口径计算，单位 mrad（毫弧度）；采用理想薄透镜、小角度近似。</p>{result.warnings.filter(w=>!w.startsWith('两镜间距偏离')).map(w=><p className="os-warning" key={w}>{w}</p>)}</MicroscopeDetails></section>;
+  <MicroscopeDetails id="telescope-ray-explanation" title="详细说明"><p>d = d₀ 时平行出射，Δθ′ = 0；未对焦时出射方向不同。</p><p>开普勒倒像，伽利略正像。Δθ′ 按物镜全口径计算，单位 mrad（毫弧度）；采用理想薄透镜、小角度近似。</p>{result.warnings.filter(w=>!w.startsWith('两镜间距偏离')).map(w=><p className="os-warning" key={w}>{w}</p>)}</MicroscopeDetails></section>;
 }
 
 export function TelescopeRayOptics({state,result,x,y,width,height}:{state:SceneState;result:SceneResult;x:(n:number)=>number;y:(n:number)=>number;width:number;height:number}){

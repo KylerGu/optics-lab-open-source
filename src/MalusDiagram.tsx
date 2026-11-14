@@ -3,6 +3,7 @@ import { malus, type MalusParameters } from './malus';
 import { arcPath } from './fiberDiagramGeometry';
 import { numberText } from './sceneRuntime';
 import { MALUS_COLORS, quantityStyle } from './quantityColors';
+import ScenePointerHint from './ScenePointerHint';
 
 export type MalusAnnotation='inputAngleDeg'|'axisAngleDeg'|'relativeAngleDeg';
 type AngleField='inputAngleDeg'|'axisAngleDeg';
@@ -38,6 +39,6 @@ export default function MalusDiagram({p,annotations,onStart,onChange,onFinish}:P
       {mark('axisAngleDeg',<><path d={arcPath(cx,cy,R*.8,-p.axisAngleDeg*rad,0)} fill="none" stroke="currentColor"/><text className="fiber-symbol" x={betaX} y={betaLabel.y-14} textAnchor={p.axisAngleDeg<90?'start':'end'}>β = {numberText(p.axisAngleDeg)}°</text></>)}
       {mark('relativeAngleDeg',<><path d={arcPath(cx,cy,R*.27,Math.min(arcStart,arcEnd),Math.max(arcStart,arcEnd))} fill="none" stroke="currentColor" strokeWidth={2}/><text className="fiber-symbol" x={thetaLabel.x} y={thetaLabel.y-9} textAnchor="middle">θ = {numberText(b.relativeAngleDeg)}°</text></>)}
       <circle cx={cx} cy={cy} r={3} fill="#7890a6"/>
-    </svg></div><div className="gs-visual-footer"><span>拖动蓝色或紫色端点旋转方向</span><span>沿光传播方向观察</span></div>
+    </svg></div><div className="gs-visual-footer"><ScenePointerHint>拖动蓝色或紫色端点旋转方向</ScenePointerHint><span>沿光传播方向观察</span></div>
   </div>;
 }

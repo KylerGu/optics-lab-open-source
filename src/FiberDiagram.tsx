@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { fiberModes, type FiberParameters } from './fiberModes';
 import { angleFromPoint, arcPath, diagramLayout } from './fiberDiagramGeometry';
 import { numberText } from './sceneRuntime';
+import ScenePointerHint from './ScenePointerHint';
 
 export type FiberAnnotation = 'coreIndex'|'claddingIndex'|'radiusUm'|'angleDeg'|'acceptanceDeg'|'criticalDeg'|'internalDeg'|'incidenceDeg';
 interface Props { p: FiberParameters; annotations: FiberAnnotation[]; onStart: () => void; onChange: (field: keyof FiberParameters, value: number) => void; onFinish: () => void }
@@ -54,6 +55,6 @@ export default function FiberDiagram({ p, annotations, onStart, onChange, onFini
       {hit&&(marked('incidenceDeg')||marked('criticalDeg'))&&<line x1={hx} x2={hx} y1={hy-20} y2={hy+50} stroke="#9aacbf" strokeDasharray="4 3"/>}
       {hit&&tag('incidenceDeg',<><path d={arcPath(hx,hy,18,Math.PI/2,Math.PI-alpha)} stroke={FIBER_COLORS.angleDeg} fill="none" strokeWidth={1.8}/>{label(hx-14,hy-28,`i = ${deg(b.incidenceDeg)}`,'end')}{leader(`${hx-22},${hy-20} ${hx-25},${hy+9}`,'#b38c4f')}</>)}
       {hit&&b.criticalDeg!==null&&tag('criticalDeg',<><path d={arcPath(hx,hy,29,Math.PI/2,Math.PI/2+b.criticalDeg*Math.PI/180)} stroke="#8c71a4" fill="none" strokeWidth={1.8}/><path d={`M${hx} ${hy}l${-45*Math.sin(b.criticalDeg*Math.PI/180)} ${45*Math.cos(b.criticalDeg*Math.PI/180)}`} stroke="#8c71a4" strokeDasharray="3 3" fill="none"/>{label(hx+15,hy-9,`θc = ${deg(b.criticalDeg)}`)}{leader(`${hx+17},${hy-5} ${hx+12},${hy+30} ${hx-18},${hy+22}`,'#8c71a4')}</>)}
-    </svg></div><div className="gs-visual-footer"><span>拖动入射光线调角度{!hit&&p.angleDeg>0?' · 首次交点在视窗外':''}</span><span>等比例 · 视窗 {Math.round(g.viewUm)} μm</span></div>
+    </svg></div><div className="gs-visual-footer"><ScenePointerHint>拖动入射光线调角度</ScenePointerHint>{!hit&&p.angleDeg>0&&<span>首次交点在视窗外</span>}<span>等比例 · 视窗 {Math.round(g.viewUm)} μm</span></div>
   </div>;
 }

@@ -21,7 +21,7 @@ export default function CourseCenter({ onOpenGaussian, route, onNavigate }: Prop
   const page = Math.min(pageCount, route.page ?? 1);
   const visible = shown.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   return <main className="scene-catalog-page scene-library" aria-label="仿真场景库" data-navigation-scroll="scene-library">
-    <header className="sc-header"><div><h1>仿真场景库</h1><p className="ui-page-description">选择一个光学现象，调节参数，观察变化。</p></div><label className="sc-search"><Search size={17} /><input aria-label="搜索仿真场景" placeholder="搜索场景或装置" value={query} onChange={event => onNavigate({ ...route, query: event.target.value, page: 1 }, true)} /></label></header>
+    <header className="sc-header"><label className="sc-search"><Search size={17} /><input aria-label="搜索仿真场景" placeholder="搜索场景或装置" value={query} onChange={event => onNavigate({ ...route, query: event.target.value, page: 1 }, true)} /></label></header>
     <div className="sc-layout">
       <OpticsDirectory kind="scenes" selected={category} onSelect={chooseCategory} count={count} />
       <section className="sc-content" aria-label="场景卡片列表">

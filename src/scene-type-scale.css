@@ -1,0 +1,260 @@
+/* Classic scenes only. Formula library, builder, research and the header stay outside .scenes-area. */
+.scenes-area {
+  color: var(--sb-body-color);
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+}
+
+/* Scene list */
+.scenes-area .sc-header { margin-bottom: 16px; justify-content: flex-end; }
+.scenes-area .sc-search input {
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+  color: var(--sb-body-color);
+}
+.scenes-area .sc-search input::placeholder { color: var(--sb-note-color); }
+.scenes-area .optics-directory h2 {
+  font-size: var(--sb-title-size);
+  font-weight: var(--sb-title-weight);
+  color: var(--sb-title-color);
+}
+.scenes-area .optics-directory .od-select {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .optics-directory .od-select.active,
+.scenes-area .optics-directory .od-select.active small {
+  color: var(--sb-action);
+  font-weight: 700;
+}
+.scenes-area .optics-directory .od-select small {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+}
+.scenes-area .sc-category h2 {
+  font-size: var(--sb-title-size);
+  font-weight: var(--sb-title-weight);
+  color: var(--sb-title-color);
+}
+.scenes-area .sc-category > span,
+.scenes-area .sc-pagination > span,
+.scenes-area .sc-empty,
+.scenes-area .sc-empty p {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+}
+.scenes-area .sc-card h3 {
+  font-size: var(--sb-body-size);
+  font-weight: 600;
+  color: var(--sb-body-color);
+}
+.scenes-area .sc-card p {
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+  color: var(--sb-body-color);
+}
+.scenes-area .sc-open,
+.scenes-area .sc-pagination button,
+.scenes-area .sc-empty .text-button {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-action);
+}
+.scenes-area .sc-pagination button { color: var(--sb-label-color); }
+.scenes-area .sc-pagination button:hover:not(:disabled) { color: var(--sb-action); }
+
+/* Shared scene chrome. Diagram marks and quantity colors stay on the drawings. */
+.scenes-area .gaussian-scene .gs-title h1 {
+  font-size: var(--sb-title-size);
+  font-weight: var(--sb-title-weight);
+  color: var(--sb-title-color);
+  letter-spacing: 0;
+}
+.scenes-area .gaussian-scene :is(.gs-sidebar-title h2, .gs-spot-heading h2, .gs-drawer > header h2, .agent-sidebar .assistant-heading h2) {
+  font-size: var(--sb-title-size);
+  font-weight: var(--sb-title-weight);
+  color: var(--sb-title-color);
+}
+.scenes-area .gaussian-scene :is(.gs-sidebar-scroll h3, .gs-readouts h3, .os-system-readouts > h3, .os-image-preview h3, .os-double-trend > h3, .os-lens-trend > h3, .os-microscope-observation h3) {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .gaussian-scene .gs-parameter label > span,
+.scenes-area .gaussian-scene .gs-sidebar .resonator-parameter-line > :is(.resonator-quantity-label, .resonator-quantity-text),
+.scenes-area .gaussian-scene :is(.gexpander-parameter-line, .gain-parameter-line) > :is(.gexpander-quantity-label, .gexpander-quantity-text, .gain-quantity-label, .gain-quantity-text),
+.scenes-area .gaussian-scene .os-quantity-toggle {
+  font-size: var(--sb-label-size) !important;
+  font-weight: 500;
+  color: var(--sb-label-color) !important;
+  line-height: 1.5;
+}
+.scenes-area .gaussian-scene :is(.gs-parameter, .resonator-parameter-line, .gexpander-parameter-line, .gain-parameter-line) .gs-quantity-symbol {
+  color: inherit;
+}
+.scenes-area .gaussian-scene :is(.resonator-quantity-label, .os-quantity-toggle)[aria-pressed="true"] {
+  color: var(--sb-action) !important;
+  font-weight: 700;
+}
+.scenes-area .gaussian-scene :is(.gs-sidebar .gs-number input, .gs-sidebar .os-parameter select) {
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+  color: var(--sb-body-color);
+}
+.scenes-area .gaussian-scene .gs-number > span,
+.scenes-area .gaussian-scene :is(.gs-readouts dd span, .gs-primary-reading strong span, .os-microscope-primary strong small) {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+}
+.scenes-area .gaussian-scene .gs-readouts dt {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .gaussian-scene .gs-readouts dd {
+  font-size: var(--sb-body-size);
+  font-weight: 600;
+}
+.scenes-area .gaussian-scene :is(.gs-primary-reading strong, .os-microscope-primary strong, .os-aperture-throughput dd, .os-aperture-throughput .os-aperture-value, .os-aberration-main [data-testid="scene-metric-rmsRadius"]) {
+  font-size: var(--sb-title-size) !important;
+  font-weight: 700;
+}
+.scenes-area .gaussian-scene .gs-primary-reading small,
+.scenes-area .gaussian-scene .os-microscope-primary > span {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .gaussian-scene :is(.gs-presets button, .os-presets button, .gs-plot-switch button, .gs-spot-toggle, .os-aberration-controls button, .os-reset-view, .gs-heading-actions .outline-button, .gs-heading-actions .assistant-toggle, .gs-sidebar-footer .text-button, .gs-visual-footer .text-button, .gs-plot-controls .text-button) {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .gaussian-scene :is(.gs-presets button.selected, .gs-plot-switch button.active, .gs-spot-toggle.active, .os-aberration-controls button[aria-pressed="true"], .assistant-toggle.active) {
+  color: var(--sb-action);
+  font-weight: 700;
+}
+.scenes-area .gaussian-scene .gs-copy-button,
+.scenes-area .agent-sidebar .primary-button {
+  font-size: var(--sb-label-size) !important;
+  font-weight: 700;
+  color: #fff !important;
+  background: var(--sb-action);
+  border-color: var(--sb-action);
+}
+.scenes-area .gaussian-scene .gs-copy-button:hover:not(:disabled),
+.scenes-area .agent-sidebar .primary-button:hover:not(:disabled) {
+  color: #fff !important;
+  background: var(--sb-action-hover);
+  border-color: var(--sb-action-hover);
+}
+.scenes-area .gaussian-scene .gs-copy-button:disabled,
+.scenes-area .agent-sidebar .primary-button:disabled {
+  color: #5c6b80 !important;
+  background: #e7edf4;
+  border-color: #e7edf4;
+  opacity: 1;
+}
+.scenes-area .gaussian-scene :is(.gs-range-caption, .gs-field-hint, .gs-sidebar-footer, .gs-visual-footer, .gs-model-strip, .os-legend, .os-metric-note, .os-calculating, .young-primary-note, .point-label-hint, .gs-spot-caption, .gs-spot-reading small, .gs-spot-heading p) {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+}
+.scenes-area .gaussian-scene .gs-model-strip,
+.scenes-area .gaussian-scene .gs-visual-footer { font-size: var(--sb-note-size); }
+.scenes-area .gaussian-scene .gs-plot-controls span {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .gaussian-scene :is(.gs-error, .gs-parameter [role="alert"], .os-warning) {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+}
+.scenes-area .gaussian-scene .gs-error,
+.scenes-area .gaussian-scene .gs-parameter [role="alert"] { color: #9a3412; }
+.scenes-area .gaussian-scene .os-warning { color: #7a4e12; }
+.scenes-area .gaussian-scene .young-status {
+  font-size: var(--sb-body-size);
+  font-weight: 600;
+  color: var(--sb-body-color);
+}
+.scenes-area .gaussian-scene .gs-region { font-size: var(--sb-note-size); }
+.scenes-area .gaussian-scene .gs-region strong { font-size: var(--sb-label-size); font-weight: 700; }
+.scenes-area :is(.fiber-conditions, .point-conditions, .young-details, .wave-details, .film-details, .michelson-details, .os-microscope-details) > p,
+.scenes-area :is(.fiber-conditions, .point-conditions, .young-details, .wave-details, .film-details, .michelson-details, .os-microscope-details) p:not(.os-warning) {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+  line-height: 1.7;
+}
+.scenes-area :is(.fiber-conditions, .point-conditions, .young-details, .wave-details, .film-details, .michelson-details, .os-microscope-details) summary {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+
+/* Mouse hints stay in the footer, and show only while hovered or focused. */
+.scenes-area .gaussian-scene :is(.gs-visual-footer, .gs-model-strip) > .gs-pointer-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 0 1 auto;
+  color: var(--sb-note-color);
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+}
+.scenes-area .gs-pointer-hint-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-note-color);
+  flex-shrink: 0;
+}
+.scenes-area .gs-pointer-hint-button:hover,
+.scenes-area .gs-pointer-hint-button:focus-visible { background: #eaf1ff; color: var(--sb-action); }
+.scenes-area .gs-pointer-tip {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0;
+  width: 0;
+}
+.scenes-area .gs-pointer-hint:hover .gs-pointer-tip,
+.scenes-area .gs-pointer-hint:focus-within .gs-pointer-tip {
+  opacity: 1;
+  width: auto;
+  max-width: min(520px, calc(100vw - 80px));
+}
+
+/* Assistant drawer on a scene. */
+.scenes-area .agent-sidebar { color: var(--sb-body-color); font-size: var(--sb-body-size); }
+.scenes-area .agent-sidebar :is(.agent-user, .agent-answer, .agent-markdown, .agent-compose textarea) {
+  font-size: var(--sb-body-size);
+  font-weight: var(--sb-body-weight);
+  color: var(--sb-body-color);
+}
+.scenes-area .agent-sidebar .agent-starters button,
+.scenes-area .agent-sidebar .agent-compose-actions .text-button,
+.scenes-area .agent-sidebar .agent-setup button {
+  font-size: var(--sb-label-size);
+  font-weight: 500;
+  color: var(--sb-label-color);
+}
+.scenes-area .agent-sidebar :is(.agent-user > small, .agent-application, .agent-setup p, .agent-compose textarea::placeholder) {
+  font-size: var(--sb-note-size);
+  font-weight: var(--sb-note-weight);
+  color: var(--sb-note-color);
+}
+.scenes-area .agent-sidebar .agent-error { color: #9a3412; font-size: var(--sb-label-size); }

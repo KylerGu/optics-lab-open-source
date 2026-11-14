@@ -10,6 +10,7 @@ import './gaussian-scene.css';
 import './gaussian-focus.css';
 import './resonator-scene.css';
 import './young-double-slit.css';
+import ScenePointerHint from './ScenePointerHint';
 
 type Field = keyof YoungParameters;
 type Annotation = 'slitDistanceMm' | 'screenDistanceM' | 'observationMm' | 'spacing' | 'r1' | 'r2';
@@ -180,13 +181,13 @@ export default function YoungDoubleSlitScene({ onDirectory, assistantOpen, onClo
             <text className="gs-axis-label" x={screenX+stripWidth/2} y={bottom+43} textAnchor="middle">y / mm</text><text className="gs-axis-label" x={curveX+curveWidth/2} y={bottom+43} textAnchor="middle">I / Iₘₐₓ →</text>
           </svg>
         </div>
-        <div className="gs-visual-footer"><span>拖动观察点 · 滚轮缩放</span><div className="gs-plot-controls"><button className="icon-button" aria-label="缩小双缝图" disabled={zoom <= .25} onClick={() => adjustZoom(1/1.35)}><Minus size={16}/></button><span>{fmt(zoom)}×</span><button className="icon-button" aria-label="放大双缝图" disabled={zoom >= 12} onClick={() => adjustZoom(1.35)}><Plus size={16}/></button></div></div>
+        <div className="gs-visual-footer"><ScenePointerHint>拖动观察点 · 滚轮缩放</ScenePointerHint><div className="gs-plot-controls"><button className="icon-button" aria-label="缩小双缝图" disabled={zoom <= .25} onClick={() => adjustZoom(1/1.35)}><Minus size={16}/></button><span>{fmt(zoom)}×</span><button className="icon-button" aria-label="放大双缝图" disabled={zoom >= 12} onClick={() => adjustZoom(1.35)}><Plus size={16}/></button></div></div>
       </main>
       {resultsOpen && <><div className="gs-panel-resizer" {...layout.results.separator}/><aside className="gs-sidebar gfocus-results" style={{ width: layout.results.width }} aria-label="干涉结果"><div className="gs-sidebar-title"><h2>干涉结果</h2><button className="icon-button" aria-label="收起干涉结果" onClick={() => setResultsOpen(false)}><X size={17}/></button></div><div className="gs-sidebar-scroll">
         <section className="gs-readouts gfocus-main-readouts"><div className="gs-primary-reading gs-tone-output"><small>{label('spacing','条纹间距','Δy')}</small><strong data-testid="young-spacing">{fmt(b.spacingApproxMm)}<span> mm</span></strong><span className="young-primary-note">近轴近似</span></div><div className="gs-primary-reading gs-tone-output"><small>观察点相对光强 <i className="gs-quantity-symbol">I / Iₘₐₓ</i></small><strong data-testid="young-intensity">{fmt(b.observation.intensity)}</strong></div><p className="young-status" data-testid="young-status">{b.status}</p></section>
         <section className="gs-readouts"><h3>同一观察点</h3><dl><div><dt>有向光程差 <i className="gs-quantity-symbol">δ</i></dt><dd data-testid="young-delta">{fmt(b.observation.deltaUm)} μm</dd></div><div><dt>光程差 / 波长</dt><dd data-testid="young-cycles">{fmt(b.observation.cycles)}</dd></div></dl><p className="young-primary-note">整数为亮纹 · 半整数为暗纹</p></section>
         <section className="gs-readouts"><h3>两条光程</h3><dl>{[{ key:'r1' as const, title:'上缝到观察点', symbol:'r₁', value:b.observation.r1 },{ key:'r2' as const, title:'下缝到观察点', symbol:'r₂', value:b.observation.r2 }].map(t => <div key={t.key}><dt>{label(t.key,t.title,t.symbol)}</dt><dd>{(t.value/1000).toFixed(7)} m</dd></div>)}</dl></section>
-        <details className="young-details"><summary>模型条件</summary><p>单色、等强、同相、同偏振且完全相干。采用理想窄缝，忽略单缝衍射包络、传播振幅衰减与部分相干；显示时间平均光强，最亮为1。</p><p>按两条完整距离之差计算光程差与亮暗。双缝局部放大；屏上的毫米标尺与光强曲线共用同一位置坐标。条纹颜色仅示意波长。</p></details>
+        <details className="young-details"><summary>模型条件</summary><p>理想窄缝，单色、等强、同相、同偏振且完全相干。忽略单缝衍射包络、传播衰减与部分相干；显示时间平均光强，最亮为 1。光程差按两条完整距离之差计算。双缝局部放大，屏上标尺与光强曲线共用位置。条纹颜色只示意波长。</p></details>
       </div></aside></>}
     </div><div className="gs-model-strip"><span>双缝局部放大 · 屏上位置按毫米标尺</span><span>δ = r₂ − r₁</span></div>
     {formulaOpen && <SceneFormulaSheet state={youngState(p)} onClose={() => setFormulaOpen(false)}/>}

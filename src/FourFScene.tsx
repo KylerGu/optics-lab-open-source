@@ -15,6 +15,7 @@ import './gaussian-focus.css';
 import './resonator-scene.css';
 import './fourier-lens.css';
 import './four-f.css';
+import ScenePointerHint from './ScenePointerHint';
 
 type Field = keyof FourFParameters;
 type Annotation = keyof FourFParameters | 'transmission' | 'cutoffFrequency' | 'intensity';
@@ -127,7 +128,7 @@ export default function FourFDiffractionScene({ onDirectory, assistantOpen, onCl
         <details className="fourier-details"><summary>符号与操作</summary><p>点击中文名称开关字母标注。拖滤波边缘改 a，拖中心改 c，拖输出面改 f。</p><p>a 是滤波片全宽；w 是光束半径，上下合起来为 2w。λ 波长 · d 条纹周期 · m 条纹对比 · x′ 输出观察位置。</p><p>T 总功率透过比 · ν꜀ 滤波半带宽。输入、输出以毫米计；滤波面以微米计。</p></details>
       </div><div className="gs-sidebar-footer"><button className="text-button" onClick={reset}><RotateCcw size={14}/>恢复默认</button><span>{saveFailed?'本机保存不可用':'已自动保存'}</span></div></aside><div className="gs-panel-resizer" {...layout.separator}/></>}
       <main className="gs-visual"><div className="gs-toolbar"><div className="gs-toolbar-left">{!panelOpen&&<button className="icon-button" aria-label="展开左侧参数" onClick={()=>{setPanelOpen(true);if(compact)setResultsOpen(false);}}><PanelLeftOpen size={17}/></button>}<span className="gfocus-view-title">二维光路</span></div><div className="gs-toolbar-right"><button className="icon-button" aria-label="撤销4f参数" disabled={!history.past.length&&!preview} onClick={()=>{finish();dispatch({type:'undo'});}}><Undo2 size={16}/></button><button className="icon-button" aria-label="重做4f参数" disabled={!history.future.length} onClick={()=>{finish();dispatch({type:'redo'});}}><Redo2 size={16}/></button>{!resultsOpen&&<button className="gs-spot-toggle" aria-label="展开滤波结果" onClick={()=>{setResultsOpen(true);if(compact)setPanelOpen(false);}}><ScanLine size={15}/>结果</button>}</div></div>
-        <div className="gs-plot fourier-stage"><FourFApparatus p={p} annotations={annotations} onStart={start} onChange={change} onFinish={finish}/></div><div className="gs-visual-footer"><span>拖边缘改 a · 拖滤波片改 c · 拖输出面改 f</span><span>两镜间距 2f</span></div>
+        <div className="gs-plot fourier-stage"><FourFApparatus p={p} annotations={annotations} onStart={start} onChange={change} onFinish={finish}/></div><div className="gs-visual-footer"><ScenePointerHint>拖边缘改 a · 拖滤波片改 c · 拖输出面改 f</ScenePointerHint><span>两镜间距 2f</span></div>
       </main>
       {resultsOpen&&<><div className="gs-panel-resizer" {...layout.results.separator}/><aside className="gs-sidebar gfocus-results" style={{width:layout.results.width}} aria-label="滤波结果"><div className="gs-sidebar-title"><h2>滤波结果</h2><button className="icon-button" aria-label="收起滤波结果" onClick={()=>setResultsOpen(false)}><X size={17}/></button></div><div className="gs-sidebar-scroll">
         <FourFScreen p={p} b={b} annotations={annotations} viewRadius={viewRadius} zoom={zoom} onZoom={adjustZoom} onFit={fitScreen} onStart={start} onChange={v=>change('observationMm',v)} onFinish={finish}/>
