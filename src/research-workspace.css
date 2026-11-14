@@ -138,6 +138,7 @@
 .rw-panel-toggle:hover, .rw-panel-toggle[aria-expanded=false] { background:#e9f1ff; color:#2563eb; }
 @media(min-width:901px) {
   .research-workspace:not(.rw-builder-conversation) { grid-template-columns:minmax(0,var(--rw-projects-width,200px)) 9px minmax(0,1fr) 9px minmax(0,var(--rw-inspector-width,272px)); width:100%; max-width:100%; min-width:0; }
+  .research-workspace.rw-left-hidden:not(.rw-builder-conversation) { grid-template-columns:0 0 minmax(0,1fr) 9px minmax(0,var(--rw-inspector-width,272px)); }
   .research-workspace > .rw-projects { grid-column:1; grid-row:1; }
   .rw-resize-left { grid-column:2; grid-row:1; }
   .research-workspace > .rw-main { grid-column:3; grid-row:1; }
@@ -256,6 +257,15 @@ body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-button:
 body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-button:not(.rw-primary):hover:not(:disabled) { background: #f7f5ee; border-color: #e8e6dc; }
 body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-attached-object { border-color: #e8e6dc; background: #fff; }
 body .research-workspace:not(.rw-builder-conversation) .rw-inspector .rw-attached-object.is-current { border-color: #e0ddd0; background: #f7f5ee; }
+
+body .research-workspace:not(.rw-builder-conversation) .rw-panel-toggle { background: transparent; color: #8a8578; }
+body .research-workspace:not(.rw-builder-conversation) .rw-panel-toggle:hover,
+body .research-workspace:not(.rw-builder-conversation) .rw-panel-toggle[aria-expanded="false"] { background: #f0eee6; color: #3d3929; }
+body .research-workspace:not(.rw-builder-conversation) .rw-projects-title > span { min-width: 0; }
+body .research-workspace:not(.rw-builder-conversation) .rw-header-left-toggle { display: none; }
+@media (max-width: 900px) {
+  body .research-workspace:not(.rw-builder-conversation) .rw-header-left-toggle { display: inline-flex; }
+}
 
 /* Chrome uses the self-hosted sans. Conversation bubbles keep their own serif. */
 body .research-workspace:not(.rw-builder-conversation) { font-family: "Hanken Grotesk Variable", "Hanken Grotesk", "Noto Sans SC", "Microsoft YaHei", sans-serif; }
