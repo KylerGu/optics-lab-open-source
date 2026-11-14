@@ -2,18 +2,25 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, ty
 
 type Side = 'left' | 'right';
 const KEY = 'optics-research-panels-v2';
-const DEFAULT = { left: 224, right: 360, leftHidden: false, rightHidden: false };
+const DEFAULT = { left: 200, right: 272, leftHidden: false, rightHidden: false, rightChoice: false };
 const MIN = { left: 180, right: 240 };
 const MAX = { left: 420, right: 600 };
 const COLLAPSE = { left: 120, right: 180 };
+const NARROW_RIGHT = '(max-width: 1279px)';
+function narrowRight() {
+  try { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(NARROW_RIGHT).matches; }
+  catch { return false; }
+}
 function readLayout() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     const oldRight = Number(localStorage.getItem('optics-research-sidebar-width-v1'));
-    return { left: Number.isFinite(saved?.left) ? Math.max(MIN.left, Math.min(MAX.left, saved.left)) : DEFAULT.left,
-      right: Number.isFinite(saved?.right) ? Math.max(MIN.right, Math.min(MAX.right, saved.right)) : oldRight >= 300 && oldRight <= 600 ? oldRight : DEFAULT.right,
-      leftHidden: saved?.leftHidden === true, rightHidden: saved?.rightHidden === true };
-  } catch { return DEFAULT; }
+    const legacy = saved?.left === 224 && saved?.right === 360;
+    const chosen = saved?.rightChoice === true;
+    const left = !legacy && Number.isFinite(saved?.left) ? Math.max(MIN.left, Math.min(MAX.left, saved.left)) : DEFAULT.left;
+    const right = !legacy && Number.isFinite(saved?.right) ? Math.max(MIN.right, Math.min(MAX.right, saved.right)) : oldRight >= 300 && oldRight <= 600 ? oldRight : DEFAULT.right;
+    return { left, right, leftHidden: saved?.leftHidden === true, rightHidden: chosen ? saved?.rightHidden === true : narrowRight(), rightChoice: chosen };
+  } catch { return { ...DEFAULT, rightHidden: narrowRight() }; }
 }
 export function useResearchLayout() {
   const workspace = useRef<HTMLElement>(null);
@@ -27,6 +34,11 @@ export function useResearchLayout() {
     const measure = () => {
       // Hidden workspaces must not overwrite the last usable size.
       if (root.clientWidth) setBounds({ width: root.clientWidth, desktop: window.matchMedia('(min-width: 901px)').matches });
+      setPanels(current => {
+        if (current.rightChoice) return current;
+        const rightHidden = narrowRight();
+        return current.rightHidden === rightHidden ? current : { ...current, rightHidden };
+      });
     };
     measure();
     const observer = new ResizeObserver(measure); observer.observe(root);
@@ -40,11 +52,14 @@ export function useResearchLayout() {
   const scale = Math.min(1, budget / Math.max(1, desiredLeft + desiredRight));
   const widths = { left: Math.round(desiredLeft * scale), right: Math.floor(desiredRight * scale) };
   const maximum = (side: Side) => Math.max(MIN[side], Math.min(MAX[side], budget - widths[side === 'left' ? 'right' : 'left']));
-  const toggle = (side: Side) => setPanels(p => ({ ...p, [side + 'Hidden']: !p[side === 'left' ? 'leftHidden' : 'rightHidden'] }));
+  const toggle = (side: Side) => setPanels(p => ({ ...p, [side + 'Hidden']: !p[side === 'left' ? 'leftHidden' : 'rightHidden'], ...(side === 'right' ? { rightChoice: true } : {}) }));
   function adjust(side: Side, value: number) {
-    setPanels(p => value < COLLAPSE[side]
-      ? { ...p, [side + 'Hidden']: true }
-      : { ...p, [side + 'Hidden']: false, [side]: Math.round(Math.max(MIN[side], Math.min(maximum(side), value))) });
+    setPanels(p => {
+      const choice = side === 'right' ? { rightChoice: true } : {};
+      return value < COLLAPSE[side]
+        ? { ...p, ...choice, [side + 'Hidden']: true }
+        : { ...p, ...choice, [side + 'Hidden']: false, [side]: Math.round(Math.max(MIN[side], Math.min(maximum(side), value))) };
+    });
   }
   function stop(event: PointerEvent<HTMLDivElement>) {
     if (drag.current?.pointerId !== event.pointerId) return;
@@ -80,7 +95,7 @@ export function useResearchLayout() {
           adjust(side, hidden && delta > 0 ? MIN[side] : widths[side] === MIN[side] && delta < 0 ? 0 : widths[side] + delta);
         }
       },
-      onDoubleClick: () => setPanels(p => ({ ...p, [side]: DEFAULT[side], [side + 'Hidden']: false })),
+      onDoubleClick: () => setPanels(p => ({ ...p, [side]: DEFAULT[side], [side + 'Hidden']: false, ...(side === 'right' ? { rightChoice: true } : {}) })),
     };
   }
   return { workspace, dragging, leftHidden: panels.leftHidden, rightHidden: panels.rightHidden, toggle,

@@ -23,7 +23,7 @@ export function ResearchPlanList({ plan, hasProgress, artifacts, onSelect }: {
 }
 
 export function ResearchRecordList({ records, onSelect }: { records: ResearchResultRecord[]; onSelect: (id: string) => void }) {
-  return <div className="rw-records">{[...records].reverse().map(record => <button key={record.id} onClick={() => onSelect(record.id)}>
+  return <div className="rw-records">{[...records].reverse().map(record => <button key={record.id} title={record.title} onClick={() => onSelect(record.id)}>
     <BarChart3 size={17}/><span><strong>{record.title}</strong></span><ChevronRight size={15}/>
   </button>)}</div>;
 }
