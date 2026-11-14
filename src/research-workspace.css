@@ -291,5 +291,39 @@ body .research-workspace:not(.rw-builder-conversation) .rw-projects:hover .rw-pr
 body .research-workspace:not(.rw-builder-conversation) .rw-inspector:hover::-webkit-scrollbar-thumb,
 body .research-workspace:not(.rw-builder-conversation) .rw-conversation:hover::-webkit-scrollbar-thumb { background: #d9d3c4; }
 
+/* Builder assistant messages use the research reading serif. The panel chrome stays sans. */
+.research-workspace.rw-builder-conversation .rw-conversation .rw-user-message > p {
+  font-family: "Source Serif 4", "Source Serif 4 Variable", "Noto Serif SC", "Songti SC", serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #40516a;
+}
+.research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown {
+  font-family: "Source Serif 4", "Source Serif 4 Variable", "Noto Serif SC", "Songti SC", serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #29261b;
+}
+.research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown :is(h1, h2, h3) {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #29261b;
+}
+.research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown :is(p, li, td) {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #29261b;
+}
+.research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown th {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--sb-title-color);
+}
+.research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown .katex { color: #334155; }
+.research-workspace.rw-builder-conversation .rw-conversation .rw-agent-message .agent-markdown :is(pre, code) { color: #334155; }
+
 /* The saved state is quiet. A failed save uses the existing warning text. */
 .research-workspace:not(.rw-builder-conversation) .rw-project-header .rw-save-status { display: inline-flex; align-items: center; flex: none; max-width: 100%; color: #7a4e12; background: #fff8ea; border: 1px solid #f1e3c5; border-radius: 6px; padding: 2px 8px; font-size: var(--sb-note-size); font-weight: var(--sb-note-weight); line-height: 1.5; }

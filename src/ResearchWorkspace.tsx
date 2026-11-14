@@ -141,7 +141,10 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     finally { setChecking(false); }
   }
   useEffect(() => { void checkStatus(); const stop = listenModelSettings(() => { void checkStatus(); }); return () => { stop(); for (const controller of active.current.values()) controller.abort('unmount'); }; }, []);
-  useEffect(() => { if (!visible || inBuilder) return; void import('./researchReadingFonts'); }, [visible, inBuilder]);
+  useEffect(() => {
+    if (!(visible && !inBuilder) && !(inBuilder && builderContext?.host)) return;
+    void import('./researchReadingFonts');
+  }, [visible, inBuilder, builderContext?.host]);
   useEffect(() => {
     if (visible) { try { setSavedApparatus(readSavedSpatial()); } catch { /* Keep the last readable list. */ } }
     else {
