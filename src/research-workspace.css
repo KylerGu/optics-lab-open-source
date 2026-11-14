@@ -262,7 +262,8 @@ body .research-workspace:not(.rw-builder-conversation) .rw-panel-toggle { backgr
 body .research-workspace:not(.rw-builder-conversation) .rw-panel-toggle:hover,
 body .research-workspace:not(.rw-builder-conversation) .rw-panel-toggle[aria-expanded="false"] { background: #f0eee6; color: #3d3929; }
 body .research-workspace:not(.rw-builder-conversation) .rw-projects-title > span { min-width: 0; }
-body .research-workspace:not(.rw-builder-conversation) .rw-header-left-toggle { display: none; }
+body .research-workspace:not(.rw-builder-conversation) .rw-header-left-toggle,
+body .research-workspace:not(.rw-builder-conversation) .rw-header-right-toggle { display: none; }
 @media (max-width: 900px) {
   body .research-workspace:not(.rw-builder-conversation) .rw-header-left-toggle { display: inline-flex; }
 }
