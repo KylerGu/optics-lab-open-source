@@ -246,6 +246,22 @@ export function newResearchProject(): ResearchProject {
   return { id: crypto.randomUUID(), title: '未命名探究', titleMode: 'pending', createdAt: now, updatedAt: now, draft: '', objects: [], activeObjectId: null, turns: [] };
 }
 
+export function isBlankResearchProject(project: ResearchProject): boolean {
+  return project.turns.length === 0 && !project.draft.trim() && project.objects.length === 0 && project.titleMode === 'pending';
+}
+
+export function selectResearchProject(
+  storage: ResearchStorage,
+  targetId: string,
+  running?: Readonly<Record<string, unknown>>,
+): ResearchStorage {
+  if (!storage.projects.some(p => p.id === targetId)) return storage;
+  const projects = storage.projects.filter(
+    p => p.id === targetId || !!(running && p.id in running) || !isBlankResearchProject(p),
+  );
+  return { ...storage, selectedId: targetId, projects };
+}
+
 function stoppedNotes(turn: ResearchTurn): string {
   const done = (turn.steps ?? []).map(step => step.summary).filter(summary => summary && !summary.startsWith('正在')).slice(-12).join('；');
   return ((turn.error ?? '已停止') + (done ? '\n已完成：' + done : '')).slice(0, 2500);

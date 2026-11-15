@@ -16,7 +16,7 @@ import type { SpatialExperiment } from './builderModel';
 import { MAX_RESEARCH_OBJECTS, SOURCE_LABELS, attachResearchObject, importedObjectChoice, readResearchObjectSources, refreshedResearchObject, type ObjectChoice, type ResearchObject } from './researchObjects';
 import { assistantErrorMessage } from './agent';
 import { type AgentStep } from './spatialAgent';
-import { RESEARCH_WORKSPACE_KEY, parseResearchStorage, cancelResearchAgent, downloadResearch, newResearchProject, readResearchStorage, requestResearchAgent, researchHistory, researchReport, retainResearchBuilds, type ResearchProject, type ResearchStorage, type ResearchTurn } from './researchSession';
+import { RESEARCH_WORKSPACE_KEY, cancelResearchAgent, downloadResearch, isBlankResearchProject, newResearchProject, parseResearchStorage, readResearchStorage, requestResearchAgent, researchHistory, researchReport, retainResearchBuilds, selectResearchProject, type ResearchProject, type ResearchStorage, type ResearchTurn } from './researchSession';
 import './research-workspace.css';
 import { applyResearchTitle } from './researchTitle';
 import { currentResearchPlan } from './researchPlan';
@@ -39,7 +39,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   const [initial] = useState(readResearchStorage);
   const [savedApparatus, setSavedApparatus] = useState(() => { try { return readSavedSpatial(); } catch { return []; } });
   const [store, setStore] = useState<ResearchStorage>(() => {
-    if (initial.projects.length) return initial;
+    if (initial.projects.length) return selectResearchProject(initial, initial.selectedId ?? initial.projects[0].id);
     const project = newResearchProject(); return { schemaVersion: 2, selectedId: project.id, projects: [project] };
   });
   const [detachedInitial] = useState(() => {
@@ -224,8 +224,20 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   useEffect(() => () => cancelAnimationFrame(marqueeFrame.current), []);
 
   function startNew() {
-    if (store.projects.length >= 30) { setError('最多保留 30 项探究，请先导出并整理已有记录。'); return; }
-    const next = newResearchProject(); setStore(s => ({ ...s, selectedId: next.id, projects: [next, ...s.projects] })); setError(null); setArtifactId(null);
+    if (!(project.id in running) && isBlankResearchProject(project)) {
+      setError(null); setArtifactId(null); textarea.current?.focus();
+      return;
+    }
+    const kept = store.projects.filter(p => (p.id in running) || !isBlankResearchProject(p));
+    if (kept.length >= 30) { setError('最多保留 30 项探究，请先导出并整理已有记录。'); return; }
+    const next = newResearchProject();
+    setStore({ schemaVersion: 2, selectedId: next.id, projects: [next, ...kept] });
+    setError(null); setArtifactId(null);
+  }
+  function selectProject(targetId: string) {
+    setMenuId(null);
+    setStore(s => selectResearchProject(s, targetId, running));
+    setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null);
   }
   function chooseDevice() {
     if (project.objects.length >= MAX_RESEARCH_OBJECTS) { setError(`每项探究最多保留 ${MAX_RESEARCH_OBJECTS} 个对象，请先移除不用的对象。`); return; }
@@ -442,6 +454,8 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     const title = value.trim();
     setRenamingId(null);
     if (!title) return;
+    const target = store.projects.find(p => p.id === id);
+    if (target?.titleMode === 'pending' && title === '未命名探究') return;
     setManualTitle(id, title.slice(0, 80));
   }
   function deleteProject() {
@@ -471,7 +485,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         const selected = p.id === project.id;
         const meta = p.objects.length ? `${p.objects.length} 个装置` : p.turns.length ? `${p.turns.length} 轮探究` : '';
         return <div key={p.id} className={`rw-project-item${selected ? ' is-selected' : ''}`}>
-          {renamingId === p.id ? <div className="rw-project-open"><MessageSquare size={16}/><input id={'rw-rename-' + p.id} className="rw-project-rename" aria-label="探究名称" defaultValue={p.title} maxLength={80} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } if (event.key === 'Escape') { event.preventDefault(); renameCancel.current = true; event.currentTarget.blur(); } }} onBlur={event => { const cancel = renameCancel.current; renameCancel.current = false; if (cancel) { setRenamingId(null); return; } commitRename(p.id, event.currentTarget.value); }}/></div> : <button type="button" className="rw-project-open" title={p.title} aria-current={selected ? 'page' : undefined} onMouseEnter={event => { const strong = event.currentTarget.querySelector('strong'); if (strong) startTitleMarquee(strong, event.currentTarget); }} onMouseLeave={stopTitleMarquee} onClick={() => { setMenuId(null); setStore(s => ({ ...s, selectedId: p.id })); setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null); }}><MessageSquare size={16}/><span><strong>{p.title}</strong>{meta && <small>{meta}</small>}</span></button>}
+          {renamingId === p.id ? <div className="rw-project-open"><MessageSquare size={16}/><input id={'rw-rename-' + p.id} className="rw-project-rename" aria-label="探究名称" defaultValue={p.title} maxLength={80} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } if (event.key === 'Escape') { event.preventDefault(); renameCancel.current = true; event.currentTarget.blur(); } }} onBlur={event => { const cancel = renameCancel.current; renameCancel.current = false; if (cancel) { setRenamingId(null); return; } commitRename(p.id, event.currentTarget.value); }}/></div> : <button type="button" className="rw-project-open" title={p.title} aria-current={selected ? 'page' : undefined} onMouseEnter={event => { const strong = event.currentTarget.querySelector('strong'); if (strong) startTitleMarquee(strong, event.currentTarget); }} onMouseLeave={stopTitleMarquee} onClick={() => selectProject(p.id)}><MessageSquare size={16}/><span><strong>{p.title}</strong>{meta && <small>{meta}</small>}</span></button>}
           <button type="button" id={'rw-more-' + p.id} className="rw-project-more" aria-label={`探究操作：${p.title}`} aria-haspopup="menu" aria-expanded={menuId === p.id} aria-controls={menuId === p.id ? 'rw-row-menu' : undefined} onClick={event => { event.stopPropagation(); toggleMenu(p.id, event.currentTarget); }}><MoreHorizontal size={16}/></button>
         </div>;
       })}</nav>
@@ -516,7 +530,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       if (event.key === 'ArrowUp') { event.preventDefault(); items[(index - 1 + items.length) % items.length]?.focus(); }
       if (event.key === 'Home') { event.preventDefault(); items[0]?.focus(); }
       if (event.key === 'End') { event.preventDefault(); items.at(-1)?.focus(); }
-    }}><button type="button" role="menuitem" onClick={() => { const id = menuProject.id; closeMenu(false); setRenamingId(id); }}>重命名</button><button type="button" role="menuitem" onClick={() => { exportProject(menuProject, 'md'); closeMenu(false); }}>下载笔记</button>{currentResearchPlan(menuProject.turns).length > 0 && <button type="button" role="menuitem" onClick={() => { const id = menuProject.id; closeMenu(false); if (id !== project.id) { setStore(s => ({ ...s, selectedId: id })); setError(null); setArtifactId(null); } planDialog.current?.showModal(); }}>查看探究计划</button>}<button type="button" role="menuitem" className="is-danger" disabled={menuProject.id in running} onClick={() => { const id = menuProject.id; closeMenu(false); setDeleteId(id); deleteDialog.current?.showModal(); }}>删除</button>{storageError && <button type="button" role="menuitem" className="is-backup" onClick={() => { exportProject(menuProject, 'json'); closeMenu(false); }}>导出备份</button>}</div>, document.body)}
+    }}><button type="button" role="menuitem" onClick={() => { const id = menuProject.id; closeMenu(false); setRenamingId(id); }}>重命名</button><button type="button" role="menuitem" onClick={() => { exportProject(menuProject, 'md'); closeMenu(false); }}>下载笔记</button>{currentResearchPlan(menuProject.turns).length > 0 && <button type="button" role="menuitem" onClick={() => { const id = menuProject.id; closeMenu(false); if (id !== project.id) selectProject(id); planDialog.current?.showModal(); }}>查看探究计划</button>}<button type="button" role="menuitem" className="is-danger" disabled={menuProject.id in running} onClick={() => { const id = menuProject.id; closeMenu(false); setDeleteId(id); deleteDialog.current?.showModal(); }}>删除</button>{storageError && <button type="button" role="menuitem" className="is-backup" onClick={() => { exportProject(menuProject, 'json'); closeMenu(false); }}>导出备份</button>}</div>, document.body)}
   </main>;
   return inBuilder&&builderContext?.host?createPortal(content,builderContext.host):content;
 }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSpatial, spatialTemplate, toLegacy, type SpatialExperiment } from './builderModel';
-import { parseResearchStorage, newResearchProject, recommendedSpatial, cancelResearchAgent, requestResearchAgent, researchHistory, researchReport, validateResearchReply, retainResearchBuilds, type ResearchProject, type ResearchTurn } from './researchSession';
+import { isBlankResearchProject, parseResearchStorage, newResearchProject, recommendedSpatial, cancelResearchAgent, requestResearchAgent, researchHistory, researchReport, selectResearchProject, validateResearchReply, retainResearchBuilds, type ResearchProject, type ResearchTurn } from './researchSession';
 import { collectResearchArtifacts } from './researchResultRecords';
 import { hasResearchEvidence } from './researchPlan';
 import { attachResearchObject, importedObjectChoice, objectInputs, readResearchObjectSources, refreshedResearchObject, type ResearchObject } from './researchObjects';
@@ -443,4 +443,28 @@ test('new apparatus can be corrected immediately and retains final parameters af
   const bad=JSON.parse(JSON.stringify(bundle)) as typeof bundle;
   bad.apparatusEdits[0].reply.inputSnapshot.elements.find(e=>e.kind==='screen')!.position[0]+=10;
   assert.throws(()=>validateResearchReply(bad,'r',null,[],null));
+});
+
+test('switching conversations drops unused empty threads while keeping drafts, devices, or manual titles', () => {
+  const existing = { ...newResearchProject(), id: 'existing', title: '已有探究', titleMode: 'manual' as const };
+  const untouched = { ...newResearchProject(), id: 'untouched', draft: '   ' };
+  const withDraft = { ...newResearchProject(), id: 'with-draft', draft: '为什么会有像差' };
+  const withManualTitle = { ...newResearchProject(), id: 'manual-title', title: '新课题', titleMode: 'manual' as const };
+
+  assert.equal(isBlankResearchProject(untouched), true);
+  assert.equal(isBlankResearchProject(withDraft), false);
+  assert.equal(isBlankResearchProject(withManualTitle), false);
+
+  const switched = selectResearchProject(
+    { schemaVersion: 2, selectedId: untouched.id, projects: [untouched, withDraft, withManualTitle, existing] },
+    existing.id,
+  );
+  assert.equal(switched.selectedId, existing.id);
+  assert.deepEqual(switched.projects.map(p => p.id), ['with-draft', 'manual-title', 'existing']);
+
+  const stayOnBlank = selectResearchProject(
+    { schemaVersion: 2, selectedId: existing.id, projects: [untouched, existing] },
+    untouched.id,
+  );
+  assert.deepEqual(stayOnBlank.projects.map(p => p.id), ['untouched', 'existing']);
 });
