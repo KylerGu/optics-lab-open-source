@@ -12,6 +12,14 @@
 .sb-document-tab>[role=tab]{display:flex;align-items:center;gap:7px;min-width:0;max-width:195px;padding:9px 7px 9px 11px;background:none;color:inherit;font-size:var(--sb-label-size);font-weight:500;white-space:nowrap}
 .sb-document-tab.active>[role=tab]{font-weight:700}
 .sb-document-tab>[role=tab]>span{overflow:hidden;text-overflow:ellipsis}
+.sb-tab-rename{width:148px;max-width:100%;margin:4px 6px;padding:4px 6px;border:1px solid #9cbaf0;border-radius:5px;background:#fff;color:#334155;font:inherit;font-size:13px;font-weight:600}
+.sb-library-actions{display:flex;align-items:center;gap:4px;min-width:0}
+.sb-panel-edge,.sb-panel-reopen{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border-radius:8px;background:transparent;color:#64748b;flex:none}
+.sb-panel-edge:hover,.sb-panel-reopen:hover{background:#edf3fd;color:#2563eb}
+.sb-panel-reopen{position:absolute;z-index:4;top:12px;background:#ffffffeb;border:1px solid #e0e7f0}
+.sb-panel-reopen-left{left:12px}
+.sb-panel-reopen-right{right:12px}
+.sb-inspector-heading{justify-content:flex-start;gap:8px}
 .sb-document-tab svg,.sb-unsaved-dot{flex-shrink:0}
 .sb-unsaved-dot{width:6px;height:6px;background:#ce9651;border-radius:50%}
 .sb-tab-close{display:grid;place-items:center;width:26px;height:27px;margin-right:3px;background:none;color:var(--sb-note-color);border-radius:4px;flex-shrink:0}

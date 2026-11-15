@@ -379,6 +379,8 @@ body .research-workspace:not(.rw-builder-conversation) .rw-conversation:hover::-
 .research-workspace.rw-builder-conversation .rw-composer-actions { justify-content: flex-end; }
 .research-workspace .rw-composer-actions > span { margin-left: 0; }
 .research-workspace .rw-composer-actions > button.rw-send { width: 32px; height: 32px; margin-left: auto; padding: 0; border: 0; border-radius: 50%; flex: none; background: var(--ui-accent, #2258cf); color: #fff; }
+.research-workspace:not(.rw-builder-conversation) .rw-composer-actions > button.rw-send:not(:disabled),
+.research-workspace:not(.rw-builder-conversation) .rw-composer-actions > button.rw-send:not(:disabled) svg { color: #fff; }
 .research-workspace .rw-composer-actions > button.rw-send:hover:not(:disabled) { background: #1946aa; }
 .research-workspace .rw-composer-actions > button.rw-send:disabled { background: #e4e7ee; color: #98a2b3; opacity: 1; cursor: not-allowed; }
 .research-workspace .rw-composer-actions > button.rw-send.is-busy svg { animation: rw-spin 1.3s linear infinite; }
