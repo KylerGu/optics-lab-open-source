@@ -8,6 +8,15 @@ export function researchBuilderKey(origin: ResearchBuilderOrigin): string {
   return JSON.stringify([origin.projectId, origin.objectId]);
 }
 
+export function researchKeyMatchesProject(key: string, projectId: string): boolean {
+  try {
+    const parts: unknown = JSON.parse(key);
+    return Array.isArray(parts) && parts.length === 2 && parts[0] === projectId;
+  } catch {
+    return false;
+  }
+}
+
 export function parseResearchBuilderKeys(value: unknown): string[] | undefined {
   if (value === undefined) return undefined;
   if (!Array.isArray(value) || value.length > 180) throw new Error('研究装置关联无效。');

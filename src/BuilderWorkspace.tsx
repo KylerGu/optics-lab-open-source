@@ -25,7 +25,7 @@ import { isPhysicalLens, physicalLensSurfaces as lensSurfaces, physicalLensSpan 
 import { alignmentAxes, alignedPose } from './spatialAlignment';
 import { BUILDER_ACTIVE_SAVED, readSavedSpatial as readSaved, type SavedSpatial as Saved } from './spatialStorage';
 import {BUILDER_TABS,rememberBuilderConversations,saveBuilderTabSnapshot,initialBuilderTabs,parseBuilderTabs,serializeBuilderTabs,openBuilderTab,closeBuilderTab,builderTabDirty,type BuilderTabs,type BuilderHistory} from './builderTabs';
-import {openResearchBuilderTab,type ResearchBuilderCopy} from './researchBuilderLink';
+import {openResearchBuilderTab,unlinkResearchReferences,type ResearchBuilderCopy} from './researchBuilderLink';
 import './builder.css';
 import './builderPanels.css';
 import './lens-settings.css';
@@ -309,6 +309,17 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
         const state=workspaceRef.current;
         if(state.activeId!==activeTab.id)return;
         changeWorkspace({...state,tabs:state.tabs.map(t=>t.id===activeTab.id?{...t,researchKeys:[...new Set([...(t.researchKeys??[]),key])],researchContext:{key,baseline:structuredClone(baseline)}}:t)});
+      },
+      unlink:(matchKey)=>{
+        let savedRows:Saved[]=[];
+        try{savedRows=readSaved();}catch{/* Keep unreadable saved archives intact. */}
+        const next=unlinkResearchReferences(workspaceRef.current,savedRows,matchKey);
+        if(!next.changed)return;
+        if(next.saved!==savedRows){
+          try{localStorage.setItem(BUILDER_SAVED,JSON.stringify(next.saved));}catch{/* Keep existing storage on write failure. */}
+          setSaved(next.saved);
+        }
+        if(next.workspace&&next.workspace!==workspaceRef.current)changeWorkspace(next.workspace);
       }
     });
   },[activeTab,selectedId,editing,assistantHost,onConversation]);

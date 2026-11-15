@@ -22,8 +22,8 @@ import { applyResearchTitle } from './researchTitle';
 import { currentResearchPlan } from './researchPlan';
 import { ResearchPlanList, ResearchRecordList } from './ResearchSidebar';
 import { useResearchLayout } from './researchLayout';
-import { findResearchArchive } from './researchBuilderLink';
-import type { ResearchBuilderOrigin } from './researchBuilderIdentity';
+import { findResearchArchive, unlinkResearchStorage } from './researchBuilderLink';
+import { researchBuilderKey, researchKeyMatchesProject, type ResearchBuilderOrigin } from './researchBuilderIdentity';
 import { readSavedSpatial } from './spatialStorage';
 
 interface Props { builderContext?: BuilderConversationContext | null; inBuilder?: boolean; visible?: boolean; onOpenBuilder: (experiment?: SpatialExperiment, origin?: ResearchBuilderOrigin, guide?: ResearchVisualGuide) => void }
@@ -115,6 +115,17 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       if(!detached.some(row=>row.id===p.id)||!sameApparatus(p.objects.find(o=>o.id===p.activeObjectId)?.experiment,builderContext.tab.history.present))changeProject(p.id,row=>updateConversationObject(row,row.activeObjectId!,builderContext.tab.history.present));
     }
   },[builderContext,inBuilder,store.projects,standaloneId,detached]);
+  function unlinkBuilderReferences(matchKey: (key: string) => boolean) {
+    if (latest.current.builderContext) latest.current.builderContext.unlink(matchKey);
+    else unlinkResearchStorage(matchKey);
+  }
+  useEffect(() => {
+    if (!initial.writable || !builderContext || !binding?.missing) return;
+    const validKeys = new Set(store.projects.flatMap(p => p.objects.map(o => researchBuilderKey({ projectId: p.id, objectId: o.id, savedId: null }))));
+    if ((builderContext.tab.researchKeys ?? []).some(key => !validKeys.has(key))) {
+      builderContext.unlink(key => !validKeys.has(key));
+    }
+  }, [initial.writable, builderContext, binding?.missing, store.projects]);
   useEffect(()=>{
     if(detachedInitial.warning)return;
     try{localStorage.setItem('optics-builder-conversations-v1',JSON.stringify({schemaVersion:2,selectedId:null,projects:detached}));}
@@ -228,7 +239,9 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     } catch (reason) { setError(reason instanceof Error ? reason.message : '选入对象失败。'); }
   }
   function removeObject(id: string) {
+    const removedKey = researchBuilderKey({ projectId: project.id, objectId: id, savedId: null });
     changeProject(project.id, p => { const objects = p.objects.filter(o => o.id !== id); return { ...p, objects, activeObjectId: p.activeObjectId === id ? objects[0]?.id ?? null : p.activeObjectId }; });
+    unlinkBuilderReferences(key => key === removedKey);
   }
   function builderOrigin(object: ResearchObject): ResearchBuilderOrigin {
     return { projectId: project.id, objectId: object.id, savedId: object.source === 'saved' && !object.sourceId.startsWith('legacy:') ? object.sourceId : null };
@@ -435,12 +448,15 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     const id = deleteId;
     if (!id || id in running) return;
     const wasSelected = store.selectedId === id;
+    promotedIds.current.delete(id);
+    setDetached(s => s.filter(p => p.id !== id));
     setStore(s => {
       const projects = s.projects.filter(p => p.id !== id);
       const next = projects.length ? projects : [newResearchProject()];
       const selectedId = s.selectedId === id ? next[0].id : (next.some(p => p.id === s.selectedId) ? s.selectedId : next[0].id);
       return { schemaVersion: 2, selectedId, projects: next };
     });
+    unlinkBuilderReferences(key => researchKeyMatchesProject(key, id));
     if (wasSelected) { setArtifactId(null); setError(null); }
     deleteDialog.current?.close();
     setDeleteId(null);

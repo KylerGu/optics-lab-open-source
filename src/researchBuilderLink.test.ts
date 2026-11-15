@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spatialTemplate } from './builderModel';
-import { builderTabDirty, closeBuilderTab, initialBuilderTabs, openBuilderTab, parseBuilderTabs, serializeBuilderTabs } from './builderTabs';
+import { BUILDER_SAVED, spatialTemplate } from './builderModel';
+import { builderTabDirty, closeBuilderTab, initialBuilderTabs, openBuilderTab, parseBuilderTabs, rememberBuilderConversations, saveBuilderTabSnapshot, serializeBuilderTabs } from './builderTabs';
 import { readSavedSpatial, saveSpatialSnapshot } from './spatialStorage';
-import { findResearchArchive, openResearchBuilderTab } from './researchBuilderLink';
-import { parseResearchBuilderKeys, researchBuilderKey, type ResearchBuilderOrigin } from './researchBuilderIdentity';
+import { findResearchArchive, openResearchBuilderTab, unlinkResearchReferences, unlinkResearchStorage } from './researchBuilderLink';
+import { parseResearchBuilderKeys, researchBuilderKey, researchKeyMatchesProject, type ResearchBuilderOrigin } from './researchBuilderIdentity';
 
 const origin: ResearchBuilderOrigin = { projectId: 'project', objectId: 'object', savedId: null };
 
@@ -120,4 +120,66 @@ test('ambiguous linked archives and conflicting open versions are reported rathe
   assert.throws(()=>openResearchBuilderTab(initialBuilderTabs(input),input,origin,saved),/多个装置版本/);
   const opened=openResearchBuilderTab(initialBuilderTabs(spatialTemplate('empty')),input,origin,[]).workspace;
   assert.throws(()=>openResearchBuilderTab(opened,input,origin,saved.slice(0,1)),/不同版本/);
+});
+
+test('unlinking a deleted research project resets standalone conversation identity across tabs and saved archives', () => {
+  const input = spatialTemplate('fold');
+  const tab = initialBuilderTabs(input).tabs[0];
+  const oldConversationId = tab.conversationId!;
+  const promotedKey = researchBuilderKey({ projectId: 'builder:' + oldConversationId, objectId: 'apparatus', savedId: null });
+  const saved = saveBuilderTabSnapshot([], { ...tab, researchKeys: [promotedKey], researchContext: { key: promotedKey, baseline: input } });
+  const workspace = { activeId: saved.tab.id, tabs: [saved.tab] };
+
+  const unlinked = unlinkResearchReferences(workspace, saved.saved, key => researchKeyMatchesProject(key, 'builder:' + oldConversationId));
+  assert.equal(unlinked.changed, true);
+  const nextTab = unlinked.workspace!.tabs[0];
+  assert.equal(nextTab.researchKeys, undefined);
+  assert.equal(nextTab.researchContext, undefined);
+  assert.notEqual(nextTab.conversationId, oldConversationId);
+  assert.equal(unlinked.saved[0].researchKeys, undefined);
+  assert.equal(unlinked.saved[0].conversationId, nextTab.conversationId);
+  assert.equal(rememberBuilderConversations(unlinked.workspace!.tabs, unlinked.saved), unlinked.saved);
+  assert.equal(parseBuilderTabs(serializeBuilderTabs(unlinked.workspace!), unlinked.saved).tabs[0].conversationId, nextTab.conversationId);
+
+  const otherKey = researchBuilderKey({ projectId: 'other-project', objectId: 'apparatus', savedId: null });
+  const multiTab = { ...saved.tab, researchKeys: [promotedKey, otherKey], researchContext: { key: promotedKey, baseline: input } };
+  const partial = unlinkResearchReferences({ activeId: multiTab.id, tabs: [multiTab] }, saved.saved, key => key === promotedKey);
+  assert.deepEqual(partial.workspace!.tabs[0].researchKeys, [otherKey]);
+  assert.equal(partial.workspace!.tabs[0].researchContext, undefined);
+  assert.equal(partial.workspace!.tabs[0].conversationId, oldConversationId);
+});
+
+test('unlinkResearchStorage cleans unmounted builder tabs and saved archives in localStorage', () => {
+  const input = spatialTemplate('fold');
+  const tab = initialBuilderTabs(input).tabs[0];
+  const oldConversationId = tab.conversationId!;
+  const projectId = 'builder:' + oldConversationId;
+  const promotedKey = researchBuilderKey({ projectId, objectId: 'apparatus', savedId: null });
+  const saved = saveBuilderTabSnapshot([], { ...tab, researchKeys: [promotedKey], researchContext: { key: promotedKey, baseline: input } });
+  const workspace = { activeId: saved.tab.id, tabs: [saved.tab] };
+  const values = new Map<string, string>([
+    [BUILDER_SAVED, JSON.stringify(saved.saved)],
+    ['optics-spatial-tabs-v1', serializeBuilderTabs(workspace)],
+  ]);
+  const prior = globalThis.localStorage;
+  try {
+    globalThis.localStorage = {
+      length: values.size,
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+      removeItem: (key: string) => { values.delete(key); },
+      clear: () => { values.clear(); },
+      key: (index: number) => [...values.keys()][index] ?? null,
+    } as unknown as Storage;
+    unlinkResearchStorage(key => researchKeyMatchesProject(key, projectId));
+    const cleanedSaved = readSavedSpatial();
+    const cleanedTabs = parseBuilderTabs(values.get('optics-spatial-tabs-v1')!, cleanedSaved);
+    assert.equal(cleanedSaved[0].researchKeys, undefined);
+    assert.equal(cleanedTabs.tabs[0].researchKeys, undefined);
+    assert.equal(cleanedTabs.tabs[0].researchContext, undefined);
+    assert.notEqual(cleanedTabs.tabs[0].conversationId, oldConversationId);
+    assert.equal(cleanedSaved[0].conversationId, cleanedTabs.tabs[0].conversationId);
+  } finally {
+    if (prior) globalThis.localStorage = prior; else Reflect.deleteProperty(globalThis, 'localStorage');
+  }
 });

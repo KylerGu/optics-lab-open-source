@@ -11,6 +11,7 @@ export interface BuilderConversationContext {
   host: HTMLElement | null;
   apply: (next: SpatialExperiment, expected: SpatialExperiment) => boolean;
   bind: (key: string, baseline: SpatialExperiment) => void;
+  unlink: (matchKey: (key: string) => boolean) => void;
   locate: (guide: ResearchVisualGuide) => void;
 }
 export const sameApparatus = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);

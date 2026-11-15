@@ -1,16 +1,60 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Maximize2, Minimize2, RefreshCw, Sparkles, Square, Trash2 } from 'lucide-react';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { ArrowUp, LoaderCircle, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 import './assistant.css';
 
 export default function AssistantFrame({title,prompt,onPrompt,busy,configured,checking,setupError,onCheck,onConfigure,onSend,onStop,onClear,canClear,editing,starters,children,inputError,conversationRevision}:{title:string;prompt:string;onPrompt:(value:string)=>void;busy:boolean;configured:boolean;checking:boolean;setupError?:string|null;onCheck:()=>void;onConfigure?:()=>void;onSend:()=>void;onStop:()=>void;onClear:()=>void;canClear:boolean;editing:boolean;starters:string[];children:ReactNode;inputError?:string|null;conversationRevision?:unknown}){
-  const sidebar=useRef<HTMLElement>(null),transcript=useRef<HTMLDivElement>(null);
-  const [height,setHeight]=useState(96),[limit,setLimit]=useState(300),[expanded,setExpanded]=useState(false);
-  const compact=useRef(96),drag=useRef<{id:number;y:number;height:number}|null>(null);
-  useEffect(()=>{if(!sidebar.current)return;const observer=new ResizeObserver(([e])=>{if(e.contentRect.height>0)setLimit(Math.max(68,Math.min(480,e.contentRect.height-230)));});observer.observe(sidebar.current);return()=>observer.disconnect();},[]);
+  const transcript=useRef<HTMLDivElement>(null);
+  const textareaRef=useRef<HTMLTextAreaElement>(null);
+  useEffect(()=>{void import('./researchReadingFonts');},[]);
+  useEffect(()=>{
+    const el=textareaRef.current;
+    if(!el)return;
+    el.style.height='auto';
+    el.style.height=Math.min(180,Math.max(72,el.scrollHeight))+'px';
+  },[prompt,canClear]);
   // Scenes advance this only when conversation content changes, not when viewing a comparison.
   const scrollRevision=conversationRevision===undefined?children:conversationRevision;
   useEffect(()=>{const el=transcript.current,last=el?.lastElementChild;if(el&&last)el.scrollTop+=last.getBoundingClientRect().top-el.getBoundingClientRect().top;},[scrollRevision,busy]);
-  const shown=expanded?limit:Math.min(height,limit);
-  const resize=(n:number)=>{setExpanded(false);setHeight(Math.max(68,Math.min(limit,n)));};
-  return <aside ref={sidebar} className="assistant-sidebar agent-sidebar" aria-label="AI光学助手"><div className="assistant-heading"><div className="assistant-symbol"><Sparkles size={19}/></div><h2>{title}</h2></div>{!configured&&!checking&&<div className="agent-setup"><p>{setupError??'请先在「模型设置」中填写你的 DeepSeek API Key。'}</p>{onConfigure&&<button type="button" className="text-button" onClick={onConfigure} disabled={busy}>模型设置</button>}<button className="text-button" onClick={onCheck} disabled={busy}><RefreshCw size={13}/>重新检测</button></div>}<div className="agent-conversation" ref={transcript} role="log" aria-label="AI对话记录" aria-live="polite">{!canClear&&<div className="agent-welcome"><p>试着问一个问题</p><div className="agent-starters">{starters.map(text=><button key={text} onClick={()=>onPrompt(text)} disabled={busy}>{text}<ArrowRight size={12}/></button>)}</div></div>}{children}</div><form className="agent-compose" onSubmit={e=>{e.preventDefault();onSend();}}><div className="agent-resize-handle" role="separator" aria-label="调节提问框高度" aria-orientation="horizontal" aria-valuemin={68} aria-valuemax={Math.round(limit)} aria-valuenow={Math.round(shown)} tabIndex={0} onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);drag.current={id:e.pointerId,y:e.clientY,height:shown};}} onPointerMove={e=>{const d=drag.current;if(d?.id===e.pointerId)resize(d.height+d.y-e.clientY);}} onPointerUp={()=>drag.current=null} onPointerCancel={()=>drag.current=null} onLostPointerCapture={()=>drag.current=null} onKeyDown={e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();resize(shown+(e.key==='ArrowUp'?20:-20));}}}><span/></div><label className="sr-only" htmlFor="agent-prompt">向AI助手提问</label><textarea id="agent-prompt" aria-label="AI实验指令" rows={3} style={{height:shown}} placeholder={canClear?'继续提问…':'输入你的问题…'} value={prompt} onChange={e=>onPrompt(e.target.value)} maxLength={2000} disabled={busy}/>{inputError&&<p className="agent-error" role="alert">{inputError}</p>}<div className="agent-compose-actions"><div className="agent-compose-tools"><button type="button" className="text-button agent-expand" aria-label={expanded?'收起提问框':'放大提问框'} aria-expanded={expanded} aria-controls="agent-prompt" onClick={()=>{if(expanded){setExpanded(false);setHeight(compact.current);}else{compact.current=shown;setExpanded(true);}}}>{expanded?<Minimize2 size={15}/>:<Maximize2 size={15}/>}</button><button type="button" className="text-button" disabled={busy||!canClear} onClick={onClear}><Trash2 size={13}/>清空对话</button></div>{busy?<button type="button" className="outline-button" onClick={onStop}><Square size={11}/>停止</button>:<button type="submit" className="primary-button" disabled={!configured||!prompt.trim()||editing}>发送<ArrowRight size={13}/></button>}</div></form></aside>;
+  const emptyChat=!canClear;
+  return <aside className={emptyChat?'assistant-sidebar agent-sidebar is-empty-chat':'assistant-sidebar agent-sidebar'} aria-label="AI光学助手">
+    <div className="assistant-heading">
+      <h2>{title}</h2>
+    </div>
+    <div className="agent-chat-column">
+      <div className={emptyChat?'agent-conversation is-empty-chat':'agent-conversation'} ref={transcript} role="log" aria-label="AI对话记录" aria-live="polite">
+        {emptyChat&&<div className="agent-empty-head"><Sparkles size={18}/><h1>用实验，看懂光学</h1></div>}
+        {children}
+      </div>
+      <div className="agent-composer-area">
+        {!configured&&!checking&&<div className="agent-setup"><p>{setupError??'请先在「模型设置」中填写你的 DeepSeek API Key。'}</p>{onConfigure&&<button type="button" className="text-button" onClick={onConfigure} disabled={busy}>模型设置</button>}<button type="button" className="text-button" onClick={onCheck} disabled={busy}><RefreshCw size={13}/>重新检测</button></div>}
+        {inputError&&<p className="agent-error agent-input-error" role="alert">{inputError}</p>}
+        <form className="agent-compose" onSubmit={e=>{e.preventDefault();onSend();}}>
+          <label className="sr-only" htmlFor="agent-prompt">向AI助手提问</label>
+          <textarea
+            ref={textareaRef}
+            id="agent-prompt"
+            aria-label="AI实验指令"
+            rows={2}
+            placeholder={canClear?'继续提问…':'哪个光学现象让你困惑？直接说说你的问题…'}
+            value={prompt}
+            onChange={e=>onPrompt(e.target.value)}
+            onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&!e.nativeEvent.isComposing){e.preventDefault();onSend();}}}
+            maxLength={2000}
+            disabled={busy}
+          />
+          <div className="agent-compose-actions">
+            {canClear&&<button type="button" className="text-button agent-clear" disabled={busy} onClick={onClear}><Trash2 size={13}/>清空对话</button>}
+            {busy
+              ?<button type="button" className="agent-send is-busy" onClick={onStop} aria-label="停止" title="停止"><LoaderCircle size={16}/></button>
+              :<button type="submit" className="agent-send" aria-label="发送" title="发送 (Ctrl/Cmd+Enter)" aria-keyshortcuts="Control+Enter" disabled={!configured||!prompt.trim()||editing}><ArrowUp size={16}/></button>}
+          </div>
+        </form>
+      </div>
+      <div className="agent-empty-tail">
+        {emptyChat&&starters.length>0&&<div className="agent-starters" aria-label="快速提问示例">
+          {starters.map(text=><button key={text} type="button" onClick={()=>{onPrompt(text);textareaRef.current?.focus();}} disabled={busy}>{text}</button>)}
+        </div>}
+      </div>
+    </div>
+  </aside>;
 }
