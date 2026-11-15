@@ -96,7 +96,7 @@ class ResearchClient:
                         index = part['index']
                         if not isinstance(index, int) or not 0 <= index < 24:
                             raise ValueError('invalid tool index')
-                        target = tools.setdefault(index, {'id': '', 'type': 'function', 'function': {'name': '', 'arguments': ''}})
+                        target = tools.setdefault(index, {'id': f'call_{index}', 'type': 'function', 'function': {'name': '', 'arguments': ''}})
                         if part.get('id'):
                             target['id'] = part['id']
                         for key in ['name', 'arguments']:

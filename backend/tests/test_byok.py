@@ -66,6 +66,33 @@ class ByokSettingsTests(unittest.TestCase):
             self.assertEqual(settings.reasoning_effort, "low")
             self.assertTrue(settings.configured)
 
+    def test_open_cloud_providers_and_local_dev_endpoints(self):
+        for base, model in [
+            ("https://api.siliconflow.cn/v1", "Qwen/Qwen3-32B"),
+            ("https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen2.5-72b-instruct"),
+            ("https://openrouter.ai/api/v1", "meta-llama/llama-3.3-70b-instruct"),
+        ]:
+            settings = settings_for_request({"x-ai-key": SECRET, "x-ai-base-url": base, "x-ai-model": model})
+            self.assertEqual(settings.base_url, base)
+            self.assertEqual(settings.model, model)
+            self.assertFalse(settings.uses_deepseek)
+            self.assertFalse(settings.thinking_enabled)
+            self.assertTrue(settings.configured)
+
+        with patch.dict(os.environ, {}, clear=True):
+            local = settings_for_request({"x-ai-base-url": "http://127.0.0.1:11434/v1/", "x-ai-model": "qwen3:14b"})
+            self.assertEqual(local.base_url, "http://127.0.0.1:11434/v1")
+            self.assertEqual(local.api_key, "")
+            self.assertTrue(local.configured)
+
+        with patch.dict(os.environ, {"APP_ENV": "production"}, clear=True):
+            with self.assertRaises(ByokRejected):
+                settings_for_request({"x-ai-base-url": "http://127.0.0.1:11434/v1", "x-ai-model": "qwen3:14b"})
+
+        for bad_local in ["http://169.254.169.254/latest/meta-data", "http://192.168.1.20:11434/v1", "http://127.0.0.1:11434/admin"]:
+            with self.assertRaises(ByokRejected):
+                settings_for_request({"x-ai-base-url": bad_local, "x-ai-model": "qwen3:14b"})
+
     def test_user_key_wins_over_an_enabled_server_key(self):
         headers = {"x-ai-key": SECRET, "x-ai-model": "deepseek-v4-pro"}
         with patch.dict(os.environ, {"AI_ALLOW_SERVER_KEY": "1", "AI_API_KEY": SERVER_SECRET, "AI_MODEL": "server-model", "AI_BASE_URL": "https://example.test"}, clear=True):

@@ -361,8 +361,9 @@ def completion(client, settings, messages, timeout, available_tools=None, *, req
     if settings.uses_deepseek:
         payload['thinking'] = {'type': 'enabled' if settings.thinking_enabled else 'disabled'}
         payload['reasoning_effort'] = settings.reasoning_effort
+    request_headers = {"Authorization": f"Bearer {settings.api_key}"} if settings.api_key else {}
     try:
-        response = client.post(settings.base_url.rstrip("/") + "/chat/completions", headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload, timeout=timeout)
+        response = client.post(settings.base_url.rstrip("/") + "/chat/completions", headers=request_headers, json=payload, timeout=timeout)
     except httpx.TimeoutException:
         raise AgentError(STALL_MESSAGE, 504) from None
     except httpx.HTTPError:

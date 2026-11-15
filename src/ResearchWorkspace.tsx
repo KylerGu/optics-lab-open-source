@@ -147,7 +147,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       if (!response.ok) throw new Error();
       const data = await response.json(); if (typeof data.configured !== 'boolean') throw new Error();
       setConfigured(data.configured);
-      if (!data.configured) setStatusError('请先在「模型设置」中填写你的 DeepSeek API Key。');
+      if (!data.configured) setStatusError('请先在「模型设置」中配置模型接口与密钥。');
     } catch { setConfigured(null); setStatusError('暂时无法连接实验探究助手，请确认后台服务已启动。'); }
     finally { setChecking(false); }
   }
@@ -489,7 +489,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         })}
       </div>
       <div className="rw-composer-area">
-        {(statusError || configured === false) && <div className="rw-connection"><span>{statusError ?? '请先在「模型设置」中填写你的 DeepSeek API Key。'}</span><button type="button" className="rw-text-button" disabled={busy} onClick={openModelSettings}>模型设置</button><button className="rw-text-button" disabled={checking || busy} onClick={() => void checkStatus()}><RefreshCw size={14}/>{checking ? '检测中' : '重新检测'}</button></div>}
+        {(statusError || configured === false) && <div className="rw-connection"><span>{statusError ?? '请先在「模型设置」中配置模型接口与密钥。'}</span><button type="button" className="rw-text-button" disabled={busy} onClick={openModelSettings}>模型设置</button><button className="rw-text-button" disabled={checking || busy} onClick={() => void checkStatus()}><RefreshCw size={14}/>{checking ? '检测中' : '重新检测'}</button></div>}
         {error && <p className="rw-input-error" role="alert">{error}</p>}
         {!currentObject && modelSources.length>0 && <div className="rw-current-object"><Paperclip size={13}/><span>当前模型：{modelSources.at(-1)!.title.split(' · ')[0]}</span></div>}
         <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" rows={emptyResearch ? 3 : inBuilder ? 2 : 1} value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button rw-send is-busy" type="button" onClick={stopResearch} aria-label="停止" title="停止"><LoaderCircle size={16}/></button> : <button className="rw-button rw-send rw-primary" type="submit" aria-label="发送" title="发送 (Ctrl/Cmd+Enter)" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}><ArrowUp size={16}/></button>}</div></form>

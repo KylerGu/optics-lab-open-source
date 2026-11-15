@@ -1,20 +1,46 @@
 """Private local configuration. Never return credentials to the browser."""
 from dataclasses import dataclass
 import os
+import re
 
 from pathlib import Path
 from urllib.parse import urlsplit
 
 ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
-# Browser BYOK may name only these official OpenAI-compatible endpoints.
+# Browser BYOK may target official OpenAI-compatible cloud providers or loopback local runtimes in dev.
 DEEPSEEK_BASE_URLS = frozenset({"https://api.deepseek.com", "https://api.deepseek.com/v1"})
+CLOUD_BASE_URLS = DEEPSEEK_BASE_URLS | frozenset({
+    "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "https://api.siliconflow.cn/v1",
+    "https://openrouter.ai/api/v1",
+})
 DEEPSEEK_MODELS = frozenset({"deepseek-flash", "deepseek-v4-pro"})
 REASONING_EFFORTS = frozenset({"none", "low", "high", "max"})
+OPEN_MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 _CONFIG_KEYS = frozenset({
     "AI_API_KEY", "AI_MODEL", "AI_BASE_URL", "AI_REASONING_EFFORT", "AI_RESEARCH_REASONING_EFFORT",
     "AI_RESEARCH_BUILD_REASONING_EFFORT", "AI_ALLOW_SERVER_KEY", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL",
 })
 _TRUE_FLAGS = frozenset({"1", "true", "yes", "on"})
+
+
+def _is_local_base_url(base: str) -> bool:
+    try:
+        endpoint = urlsplit(base.rstrip("/"))
+        _ = endpoint.port
+    except ValueError:
+        return False
+    return bool(
+        endpoint.scheme in {"http", "https"}
+        and endpoint.hostname
+        and endpoint.hostname.lower() in LOCAL_HOSTS
+        and not endpoint.username
+        and not endpoint.password
+        and not endpoint.query
+        and not endpoint.fragment
+        and (endpoint.path or "").rstrip("/") in {"", "/v1"}
+    )
 
 
 class ByokRejected(Exception):
@@ -56,7 +82,8 @@ class Settings:
     def configured(self):
         try:
             endpoint = urlsplit(self.base_url)
-            return bool(self.api_key.strip() and self.model.strip() and endpoint.scheme in {"http", "https"} and endpoint.hostname and not endpoint.username and not endpoint.password and not endpoint.query and not endpoint.fragment and (not self.uses_deepseek or self.reasoning_effort in {'none', 'low', 'high', 'max'}))
+            has_credential = bool(self.api_key.strip()) or _is_local_base_url(self.base_url)
+            return bool(has_credential and self.model.strip() and endpoint.scheme in {"http", "https"} and endpoint.hostname and not endpoint.username and not endpoint.password and not endpoint.query and not endpoint.fragment and (not self.uses_deepseek or self.reasoning_effort in {'none', 'low', 'high', 'max'}))
         except ValueError:
             return False
 
@@ -128,15 +155,25 @@ def _byok_requested(headers) -> bool:
 
 def _user_settings(headers) -> Settings:
     # Headers are read once and never written to disk, logs, or the returned error text.
-    key = _header(headers, "x-ai-key")
-    if not key or len(key) > 256 or any(ord(character) < 33 or ord(character) > 126 for character in key):
-        raise ByokRejected("API Key 无效。请在「模型设置」中重新填写。")
     base = _header(headers, "x-ai-base-url").rstrip("/") or "https://api.deepseek.com"
-    if base not in DEEPSEEK_BASE_URLS:
-        raise ByokRejected("目前只支持 DeepSeek 官方接口（https://api.deepseek.com）。")
-    model = _header(headers, "x-ai-model") or "deepseek-flash"
-    if model not in DEEPSEEK_MODELS:
-        raise ByokRejected("请选择 DeepSeek 当前提供的模型。")
+    is_local = _is_local_base_url(base)
+    if base not in CLOUD_BASE_URLS and not is_local:
+        raise ByokRejected("不支持该模型接口地址，请选择 DeepSeek、阿里云百炼、硅基流动、OpenRouter 或本地服务。")
+    if is_local and production_mode():
+        raise ByokRejected("公开演示服务不支持访问本地模型地址，请改用云端接口或在本地运行服务。")
+    key = _header(headers, "x-ai-key")
+    if key:
+        if len(key) > 256 or any(ord(character) < 33 or ord(character) > 126 for character in key):
+            raise ByokRejected("API Key 无效。请在「模型设置」中重新填写。")
+    elif not is_local:
+        raise ByokRejected("API Key 无效。请在「模型设置」中重新填写。")
+    model = _header(headers, "x-ai-model")
+    if base in DEEPSEEK_BASE_URLS:
+        model = model or "deepseek-flash"
+        if model not in DEEPSEEK_MODELS:
+            raise ByokRejected("请选择 DeepSeek 当前提供的模型。")
+    elif not model or not OPEN_MODEL_RE.fullmatch(model):
+        raise ByokRejected("请填写有效的模型名称。")
     effort = (_header(headers, "x-ai-reasoning") or "high").lower()
     if effort not in REASONING_EFFORTS:
         raise ByokRejected("思考强度无效。")
@@ -146,7 +183,8 @@ def _user_settings(headers) -> Settings:
 def settings_for_request(headers, *, research=False, research_build=False, loader=None) -> Settings:
     """Credentials for one HTTP call.
 
-    A browser key always wins and is restricted to official DeepSeek.
+    A browser configuration always wins and is restricted to approved cloud providers
+    (or localhost runtimes in local non-production mode).
     The server environment key is used only when AI_ALLOW_SERVER_KEY is explicitly enabled
     and the browser did not send its own configuration. ``loader`` is the server-key
     reader (tests replace the app module's ``get_settings``).

@@ -26,7 +26,7 @@ export default function AssistantFrame({title,prompt,onPrompt,busy,configured,ch
         {children}
       </div>
       <div className="agent-composer-area">
-        {!configured&&!checking&&<div className="agent-setup"><p>{setupError??'请先在「模型设置」中填写你的 DeepSeek API Key。'}</p>{onConfigure&&<button type="button" className="text-button" onClick={onConfigure} disabled={busy}>模型设置</button>}<button type="button" className="text-button" onClick={onCheck} disabled={busy}><RefreshCw size={13}/>重新检测</button></div>}
+        {!configured&&!checking&&<div className="agent-setup"><p>{setupError??'请先在「模型设置」中配置模型接口与密钥。'}</p>{onConfigure&&<button type="button" className="text-button" onClick={onConfigure} disabled={busy}>模型设置</button>}<button type="button" className="text-button" onClick={onCheck} disabled={busy}><RefreshCw size={13}/>重新检测</button></div>}
         {inputError&&<p className="agent-error agent-input-error" role="alert">{inputError}</p>}
         <form className="agent-compose" onSubmit={e=>{e.preventDefault();onSend();}}>
           <label className="sr-only" htmlFor="agent-prompt">向AI助手提问</label>

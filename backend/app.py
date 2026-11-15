@@ -101,7 +101,7 @@ research_requests_lock = Lock()
 spatial_requests = {}
 spatial_requests_lock = Lock()
 STREAM_KEEPALIVE_SECONDS = 10
-UNCONFIGURED = "请先在「模型设置」中填写你的 DeepSeek API Key。"
+UNCONFIGURED = "请先在「模型设置」中配置模型接口与密钥。"
 
 
 def request_settings(request: Request, *, research=False, research_build=False):
