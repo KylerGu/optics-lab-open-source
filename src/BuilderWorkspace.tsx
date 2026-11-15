@@ -30,6 +30,7 @@ import './builder.css';
 import './builderPanels.css';
 import './lens-settings.css';
 import './builder-readability.css';
+import { builderCanvasStatus } from './builderCanvasStatus';
 import { useScenePanelWidth } from './useScenePanelWidth';
 import './builder-resize.css';
 
@@ -160,6 +161,13 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   },[experiment]);
   const liveFocus=rendered&&!!(microscopeLayout(experiment)||telescopeLayout(experiment)||cameraLayout(experiment));
   const simulation=useSpatialSimulation(experiment,visible&&run&&!manualEditing,liveFocus),result=manualEditing?null:simulation.result;
+  const [pendingVisible,setPendingVisible]=useState(false);
+  useEffect(()=>{
+    if(!run||manualEditing||simulation.status!=='pending'){setPendingVisible(false);return;}
+    const timer=window.setTimeout(()=>setPendingVisible(true),300);
+    return ()=>window.clearTimeout(timer);
+  },[run,manualEditing,simulation.status]);
+  const canvasStatus=builderCanvasStatus(run,manualEditing,simulation.status,pendingVisible);
   // Keep rays, hardware and image on the same completed calculation while the next is in flight.
   const benchExperiment=liveFocus&&result?result.inputSnapshot:experiment;
   useLocalDebug('builder', {
@@ -359,7 +367,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
         {guide&&<div className="sb-inquiry-guide" aria-label="探究讲解定位"><div><strong>{guide.action.kind==='compare'?'边调边看':guide.action.kind==='adjust'?'参数定位':'器件定位'} · {guide.snapshot.elements.find(e=>e.id===guide.action.elementId)?.name}{guide.action.field&&' · '+VISUAL_FIELDS[guide.action.field]}</strong><p>{guide.action.explanation}</p></div><div><button disabled={!experiment.elements.some(e=>e.id===guide.action.elementId&&e.kind===guide.snapshot.elements.find(b=>b.id===guide.action.elementId)?.kind)||editing} onClick={()=>{setSelectedId(guide.action.elementId);setRendered(false);setAssistantOpen(false);}}>定位器件</button>{onResearch&&<button onClick={onResearch}>返回探究</button>}<button onClick={()=>setGuide(null)} aria-label="关闭讲解定位">关闭</button></div></div>}
         <div ref={viewport} className={`sb-viewport ${fullscreen?'sb-viewport-fullscreen':''}`}>
           <SpatialBench visible={visible} experiment={benchExperiment} selectedId={selectedId} rendered={rendered} result={result} view={view} reset={reset} tool={tool} showGrid={showGrid} showBeam={showBeam} axes={axes} showAxes={axisHelp&&!rendered&&!!selected} snapEnabled={snapEnabled} onSelect={setSelectedId} onEditing={setEditing} onTransform={update} onFocus={focus}/>
-          {run&&<div className="sb-canvas-status"><span className={`sb-compute-status ${simulation.status==='error'?'error':''}`}>{manualEditing?'松开后更新':simulation.status==='ready'?'光路已更新':simulation.status==='pending'?'计算中…':simulation.status==='error'?'计算未完成':'请添加光源'}</span></div>}
+          {run&&<div className="sb-canvas-status" aria-live="polite">{canvasStatus.visible&&<span className={`sb-compute-status ${simulation.status==='error'?'error':''}`}>{canvasStatus.visible}</span>}{canvasStatus.live==='光路已更新'&&<span className="sr-only">光路已更新</span>}</div>}
           {lightIssue&&<div className="sb-light-hint" role="status"><Sun size={14}/><span>{lightIssue}</span>{!showBeam?<button onClick={()=>setShowBeam(true)}>显示光线</button>:experiment.elements.filter(e=>e.kind==='laser').every(e=>e.powerMw===0)?<button onClick={()=>setSelectedId(experiment.elements.find(e=>e.kind==='laser')!.id)}>选择光源</button>:alignment?<button onClick={alignSelected}>对齐所选器件</button>:<button onClick={()=>setSelectedId(result?.screens.find(s=>s.hits===0)?.elementId??null)}>选择观察屏</button>}</div>}
           {!experiment.elements.length&&<div className="sb-empty"><div className="sb-empty-icon"><Focus size={37} strokeWidth={1}/></div><h1>从一束光开始</h1><div><button onClick={()=>add(CATALOG.find(item=>item.id==='laser-green')!)}><Plus size={14}/>添加光源</button><button onClick={()=>load('fold')}>体验立体折转<Move3D size={14}/></button></div></div>}
           {simulation.status==='error'&&<div className="sb-simulation-error" role="alert">{simulation.error}<button onClick={simulation.retry}>重试</button></div>}
