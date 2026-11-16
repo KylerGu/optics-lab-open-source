@@ -350,13 +350,13 @@ def _gaussian_scans(scans):
     return converted
 
 
-def run_gaussian_propagation(request, settings, client=None):
+def run_gaussian_propagation(request, settings, client=None, *, progress=None, on_delta=None):
     """Free-propagation Gaussian uses the existing verified tools, through the scene assistant."""
     from .agent import AgentRequest, run_agent
     from .models import Experiment
     incoming = request.state.model_dump()
     agent_request = AgentRequest(requestId=request.requestId, experiment=_gaussian_experiment(request.state), message=request.message, mode='teaching', history=list(request.history), scene='gaussian')
-    reply = run_agent(agent_request, settings, client)
+    reply = run_agent(agent_request, settings, client, progress=progress, on_delta=on_delta)
     state = _gaussian_state(Experiment.model_validate(reply['experiment']))
     changed = state['parameters'] != incoming['parameters']
     evidence = SceneWorkspace.summary(calculate(state)) if changed or reply.get('evidence') or reply.get('scans') else None
@@ -364,9 +364,47 @@ def run_gaussian_propagation(request, settings, client=None):
             'answer': reply['answer'], 'evidence': evidence, 'scans': _gaussian_scans(reply['scans']), 'trace': reply['trace']}
 
 
-def run_scene_agent(request,settings,client=None):
+def _scene_pre_step_summary(name, args):
+    if not isinstance(args, dict):
+        args = {}
+    if name == 'read_scene':
+        return '正在读取当前场景参数与公式…'
+    if name == 'calculate_scene':
+        return '正在计算当前场景物理量…'
+    if name == 'compare_parameter':
+        field = args.get('field') or '参数'
+        values = args.get('values') if isinstance(args.get('values'), list) else []
+        return f'正在比较参数 {field}（{len(values)} 个取值）…' if values else f'正在比较参数 {field}…'
+    if name == 'set_parameters':
+        return '正在修改场景参数并重新计算…'
+    if name == 'solve_target':
+        return '正在求解目标参数并核对…' if args.get('apply') else '正在求解目标参数…'
+    return '正在执行场景操作…'
+
+
+def _scene_step_summary(name, args, error=None):
+    if error is not None:
+        return str(error)[:160] or '场景操作未完成'
+    if not isinstance(args, dict):
+        args = {}
+    if name == 'read_scene':
+        return '读取当前场景参数与公式'
+    if name == 'calculate_scene':
+        return '完成当前场景物理计算'
+    if name == 'compare_parameter':
+        field = args.get('field') or '参数'
+        values = args.get('values') if isinstance(args.get('values'), list) else []
+        return f'完成参数 {field} 比较（{len(values)} 组）' if values else f'完成参数 {field} 比较'
+    if name == 'set_parameters':
+        return '完成参数修改与计算核对'
+    if name == 'solve_target':
+        return '求解并应用目标参数' if args.get('apply') else '求解目标参数'
+    return '完成场景操作'
+
+
+def run_scene_agent(request, settings, client=None, progress=None, on_delta=None):
     if getattr(request.state, 'sceneId', None) == 'gaussian-propagation' or (isinstance(request.state, dict) and request.state.get('sceneId') == 'gaussian-propagation'):
-        return run_gaussian_propagation(request, settings, client)
+        return run_gaussian_propagation(request, settings, client, progress=progress, on_delta=on_delta)
     if not settings.configured: raise AgentError('请先配置AI模型接口。',503)
     if not request.message.strip(): raise AgentError('请输入问题。',422)
     # The model understands intent first. Concept-only turns receive no edit tools.
@@ -421,8 +459,12 @@ def run_scene_agent(request,settings,client=None):
     trace=[]
     owned=client is None
     client=client or httpx.Client(follow_redirects=False)
+    def emit(step):
+        if progress:
+            progress(step)
     try:
-        for _ in range(8):
+        for round_number in range(8):
+            emit({'name':'phase_scene','status':'ok','summary':'正在分析当前场景与问题…' if round_number==0 else f'正在结合计算结果继续推理（第 {round_number + 1} 轮）…'})
             message=completion(client,settings,messages,settings.provider_timeout,workspace.tools)
             calls=message.get('tool_calls') or []
             if not isinstance(calls,list) or len(calls)+len(trace)>16: raise AgentError('本轮操作过多，场景未修改。')
@@ -430,27 +472,41 @@ def run_scene_agent(request,settings,client=None):
                 answer=message.get('content')
                 if not isinstance(answer,str) or not answer.strip() or len(answer)>12000: raise AgentError('回答未完整返回，场景未修改。')
                 if workspace.definition['model']=='film-interference' and workspace.state!=request.state.model_dump() and not workspace.scans:
+                    if on_delta:
+                        on_delta(None)
                     from .scene_film_interference import film_change_answer
                     answer=film_change_answer(request.state.model_dump(),workspace.state,workspace.definition)
                 conflicts=answer_conflicts(answer,workspace.evidence,workspace.scans)
                 if conflicts:
+                    if on_delta:
+                        on_delta(None)
+                    emit({'name':'phase_scene','status':'ok','summary':'正在根据计算结果校对回答数值…'})
                     correction=messages+[assistant_context(message,settings.thinking_enabled),{'role':'system','content':'以下明确读数与已计算结果冲突：'+json.dumps(conflicts,ensure_ascii=False)+'。仅用已有计算依据改正这些冲突，不新增计算或修改。依据：'+json.dumps(workspace.evidence,ensure_ascii=False,allow_nan=False)}]
                     revised=completion(client,settings,correction,settings.provider_timeout,[])
                     content=revised.get('content')
                     if isinstance(content,str) and content.strip() and not revised.get('tool_calls') and not answer_conflicts(content,workspace.evidence,workspace.scans): answer=content
                     else: answer='当前计算结果：'+ '；'.join(f"{m['label']}：{m['value']:.6g} {m['unit']}" if m['value'] is not None else f"{m['label']}：无有限读数" for m in workspace.evidence['metrics'])+'。'+workspace.evidence['scope']
                 return {'requestId':request.requestId,'inputSnapshot':request.state.model_dump(),'state':workspace.state,'changed':workspace.state!=request.state.model_dump(),'answer':answer.strip(),'evidence':workspace.evidence,'scans':workspace.scans,'trace':trace}
+            if on_delta:
+                on_delta(None)
             messages.append(assistant_context(message,settings.thinking_enabled))
             for call in calls:
+                args={}
+                name=call.get('function',{}).get('name','invalid')
                 try:
-                    name=call['function']['name']; raw=call['function']['arguments']; call_id=call['id']
+                    raw=call['function']['arguments']; call_id=call['id']
                     if not isinstance(raw,str) or len(raw)>20000: raise ValueError()
                     args=json.loads(raw)
+                    emit({'name':f'phase_{name}','status':'ok','summary':_scene_pre_step_summary(name,args)})
                     result=workspace.execute(name,args)
-                    trace.append({'name':name,'status':'ok'})
+                    step={'name':name,'status':'ok','summary':_scene_step_summary(name,args)}
+                    trace.append(step)
+                    emit(step)
                     output={'ok':True,'data':model_tool_result(result)}
                 except (ValueError,KeyError,TypeError,OverflowError,ZeroDivisionError) as error:
-                    trace.append({'name':call.get('function',{}).get('name','invalid'),'status':'error'})
+                    step={'name':name,'status':'error','summary':_scene_step_summary(name,args,error)}
+                    trace.append(step)
+                    emit(step)
                     output={'ok':False,'error':str(error) or '工具参数无效。'}
                     call_id=call.get('id','invalid')
                 messages.append({'role':'tool','tool_call_id':call_id,'content':json.dumps(output,ensure_ascii=False,allow_nan=False)})

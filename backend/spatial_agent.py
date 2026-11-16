@@ -582,7 +582,39 @@ def delegated_apparatus_parameters(experiment):
                           if k in common | APPLICABLE[e.kind]} for e in experiment.elements]}
 
 
-def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=None, progress=None, cancelled=None, *, delegated=False, diagnostics=None, debug=None, original_message=None):
+def _spatial_pre_step_summary(name, args):
+    if not isinstance(args, dict):
+        args = {}
+    if name == "read_workspace":
+        return "正在读取当前三维装置…"
+    if name == "list_apparatus":
+        return "正在查阅可用光学器材与边界…"
+    if name == "set_goal":
+        count = len(args.get("criteria") or [])
+        return f"正在设定 {count} 项光路验收判据…" if count else "正在设定光路验收判据…"
+    if name == "set_apparatus":
+        count = len((args.get("experiment") or {}).get("elements") or [])
+        return f"正在搭建 {count} 个光学器件…" if count else "正在搭建三维装置…"
+    if name == "add_apparatus":
+        el = args.get("element") or {}
+        label = el.get("name") or el.get("kind") or "新器件"
+        return f"正在添加器件「{str(label)[:24]}」…"
+    if name == "update_apparatus":
+        return "正在微调器件参数…"
+    if name == "remove_apparatus":
+        return "正在移除器件…"
+    if name == "aim_apparatus":
+        return "正在计算对准与反射方向…"
+    if name == "trace_light":
+        return "正在运行三维光线追迹与核对…"
+    if name == "compare_parameter":
+        field = args.get("field") or "参数"
+        count = args.get("count")
+        return f"正在扫描 {field}（{count} 个点）…" if count else f"正在扫描参数 {field}…"
+    return "正在执行光路操作…"
+
+
+def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=None, progress=None, cancelled=None, *, delegated=False, diagnostics=None, debug=None, original_message=None, on_delta=None):
     debug = debug or getattr(diagnostics, 'debug', None)
     if not settings.configured:
         raise AgentError("请先配置AI模型接口。", 503)
@@ -636,10 +668,12 @@ def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=N
     owns_client = client is None
     if client is None:
         from .research_http import ResearchClient
-        client = ResearchClient(cancelled, diagnostics=diagnostics)
+        client = ResearchClient(cancelled, diagnostics=diagnostics, progress=progress, on_delta=None if delegated else on_delta)
     try:
         for round_number in range(12):
             stopped()
+            if progress:
+                progress({"name": "phase_design", "status": "ok", "summary": "正在设计光路方案…" if round_number == 0 else f"正在核对追迹反馈并调整（第 {round_number + 1} 轮）…"})
             current_tools = spatial_tools_for(
                 workspace.experiment.elements,
                 active_topics,
@@ -655,6 +689,8 @@ def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=N
                 if not isinstance(answer, str) or not answer.strip() or len(answer) > 12000:
                     raise AgentError("AI未返回完整说明，装置未修改。")
                 return reply(answer)
+            if on_delta and not delegated:
+                on_delta(None)
             messages.append(assistant_context(message, settings.thinking_enabled))
             ids = set()
             before = workspace.key()
@@ -668,7 +704,10 @@ def run_spatial_agent(request: SpatialAgentRequest, settings: Settings, client=N
                 except (KeyError, TypeError, ValueError):
                     raise AgentError("AI操作格式异常，装置未修改。") from None
                 try:
-                    data, explanation = workspace.execute(name, json.loads(raw))
+                    parsed_args = json.loads(raw)
+                    if progress:
+                        progress({"name": f"phase_{name}", "status": "ok", "summary": _spatial_pre_step_summary(name, parsed_args)})
+                    data, explanation = workspace.execute(name, parsed_args)
                     record(name, "ok", explanation)
                     if name in {"add_apparatus", "set_apparatus"}:
                         extra_guidance = lazy_guidance_for_elements(workspace.experiment.elements, injected_topics, SPATIAL_MODULE_MAP)

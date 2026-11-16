@@ -779,7 +779,51 @@ def research_context_summary(workspace):
     }
 
 
-def run_research_agent(request: ResearchAgentRequest, settings: Settings, client=None, progress=None, cancelled=None, *, builder_settings=None, debug=None):
+def _research_pre_step_summary(name, args):
+    if not isinstance(args, dict):
+        args = {}
+    if name == "read_research":
+        return "正在读取实验装置与模型范围…"
+    if name == "assess_research_method":
+        return "正在核对物理模型适用边界…"
+    if name == "set_research_plan":
+        return "正在制定探究计划…"
+    if name == "update_research_step":
+        step_no = args.get("stepNumber")
+        return f"正在更新第 {step_no} 步探究进度…" if step_no else "正在更新探究计划进度…"
+    if name == "set_research_title":
+        return "正在提炼探究题目…"
+    if name == "build_research_apparatus":
+        return "正在交由搭建助手设计并核验新装置…"
+    if name == "modify_research_apparatus":
+        return "正在交由搭建助手调整并核验装置…"
+    if name == "update_research_element":
+        return "正在修改器件参数并计算…"
+    if name == "simulate_apparatus":
+        return "正在运行三维光路与物理计算…"
+    if name == "compare_parameter":
+        field = args.get("field") or "参数"
+        count = args.get("count")
+        return f"正在扫描参数 {field}（{count} 个取样点）…" if count else f"正在扫描参数 {field}…"
+    if name == "compare_objects":
+        count = len(args.get("objectIds") or [])
+        return f"正在对比 {count} 个实验装置…" if count else "正在对比多个实验装置…"
+    if name == "run_model_experiment":
+        scene_id = args.get("sceneId")
+        title = (RESEARCH_MODELS.get(scene_id) or {}).get("title") or scene_id or "独立模型"
+        return f"正在运行模型实验（{title}）…"
+    if name == "search_focus_design":
+        return "正在搜索最优聚焦方案…"
+    if name == "analyze_tolerance":
+        return "正在评估参数公差稳健性…"
+    if name == "search_robust_focus":
+        return "正在搜索抗误差稳健方案…"
+    if name == "offer_visual_action":
+        return "正在准备界面对照操作入口…"
+    return "正在执行探究操作…"
+
+
+def run_research_agent(request: ResearchAgentRequest, settings: Settings, client=None, progress=None, cancelled=None, *, builder_settings=None, debug=None, on_delta=None):
     if not settings.configured:
         raise AgentError("请先配置AI模型接口。", 503)
     diagnostics = ResearchTrace(debug=debug)
@@ -789,17 +833,28 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
     steps = []
     visual_answers = []
     owns_client = client is None
-    client = client or ResearchClient(cancelled, diagnostics=diagnostics)
+    client = client or ResearchClient(cancelled, diagnostics=diagnostics, progress=progress, on_delta=on_delta)
     delegated_settings = builder_settings or settings
     def build(goal, base):
         if progress:
             progress({'name':'builder_start','status':'ok','summary':'正在设计光路'})
         def builder_progress(step):
             if progress:
-                progress({'name': 'builder_' + step['name'], 'status': step['status'], 'summary': '搭建助手：' + step['summary']})
-        with diagnostics.span('builder'):
-            diagnostics.record('builder.configuration', model=delegated_settings.model, effort=delegated_settings.reasoning_effort)
-            return build_research_apparatus(goal, base, delegated_settings, client, builder_progress, cancelled, diagnostics=diagnostics, original_message=request.message)
+                step_name = str(step.get('name') or '')
+                step_summary = str(step.get('summary') or '')
+                is_phase = step_name.startswith('phase_') or step_name == 'builder_start' or step_summary.startswith('正在')
+                prefixed_name = ('phase_builder_' + (step_name[6:] if step_name.startswith('phase_') else step_name)) if is_phase else ('builder_' + step_name)
+                progress({'name': prefixed_name, 'status': step['status'], 'summary': '搭建助手：' + step_summary})
+        previous_delta = getattr(client, 'on_delta', None)
+        if previous_delta is not None:
+            client.on_delta = None
+        try:
+            with diagnostics.span('builder'):
+                diagnostics.record('builder.configuration', model=delegated_settings.model, effort=delegated_settings.reasoning_effort)
+                return build_research_apparatus(goal, base, delegated_settings, client, builder_progress, cancelled, diagnostics=diagnostics, original_message=request.message)
+        finally:
+            if previous_delta is not None:
+                client.on_delta = previous_delta
     workspace.builder = build
     # Keep full apparatus parameters available on demand, rather than attaching
     # every default and capability catalogue to ordinary conversation.
@@ -839,7 +894,8 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
             stopped()
             try:
                 if progress:
-                    progress({'name':'phase_research','status':'ok','summary':'正在探究问题'})
+                    round_label = '正在分析问题并规划步骤…' if round_number == 0 else f'正在综合结果并推理（第 {round_number + 1} 轮）…'
+                    progress({'name':'phase_research','status':'ok','summary':round_label})
                 current_tools = research_tools_for(workspace, active_topics, trigger_texts)
                 with diagnostics.span('research.model', round=round_number + 1):
                     message = completion(client, settings, messages, settings.provider_timeout, current_tools)
@@ -863,6 +919,8 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
                     raise AgentError("AI未返回完整探究说明，请重试。")
                 stopped()
                 return workspace.reply(request.requestId, '\n\n'.join(dict.fromkeys([*visual_answers, answer.strip()])), steps)
+            if on_delta:
+                on_delta(None)
             messages.append(assistant_context(message, settings.thinking_enabled))
             ids = set()
             for call in calls:
@@ -875,10 +933,11 @@ def run_research_agent(request: ResearchAgentRequest, settings: Settings, client
                 except (KeyError, TypeError, ValueError):
                     raise AgentError("AI探究操作格式异常，请重试。") from None
                 try:
-                    if progress and name in {'simulate_apparatus','compare_parameter','compare_objects','run_model_experiment','search_focus_design','analyze_tolerance','search_robust_focus'}:
-                        progress({'name':'phase_compute','status':'ok','summary':'正在计算'})
+                    parsed_args = json.loads(raw)
+                    if progress:
+                        progress({'name': f'phase_{name}', 'status': 'ok', 'summary': _research_pre_step_summary(name, parsed_args)})
                     with diagnostics.span('research.tool', tool=name):
-                        data, explanation = workspace.execute(name, json.loads(raw))
+                        data, explanation = workspace.execute(name, parsed_args)
                     if name in {'build_research_apparatus', 'modify_research_apparatus'}:
                         extra = lazy_guidance_for_elements([e for o in workspace.objects for e in o.experiment.elements], injected_topics, RESEARCH_MODULE_MAP)
                         if extra:

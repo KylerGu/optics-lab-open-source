@@ -210,9 +210,10 @@
 }
 
 .agent-sidebar .agent-conversation .agent-pending {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   width: fit-content;
   max-width: 85%;
   margin: 18px auto 0 0;
@@ -224,9 +225,114 @@
   line-height: 1.6;
 }
 
-.agent-sidebar .agent-conversation .agent-pending > svg {
+.agent-sidebar .agent-pending-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-sidebar .agent-pending-head > svg {
   flex: none;
   animation: agent-spin 1.3s linear infinite;
+}
+
+.agent-sidebar .agent-pending-meta {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 12px;
+  color: #8b98aa;
+  white-space: nowrap;
+}
+
+.agent-sidebar .agent-live-steps,
+.agent-sidebar .agent-thinking-summary {
+  font-size: 12px;
+  color: #7c8694;
+}
+
+.agent-sidebar .agent-thinking-summary {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
+}
+
+.agent-sidebar .agent-thinking-summary summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  color: #7c8694;
+}
+
+.agent-sidebar .agent-thinking-summary summary::-webkit-details-marker {
+  display: none;
+}
+
+.agent-sidebar .agent-thinking-summary summary > svg {
+  transition: transform 0.16s ease;
+  color: #8c96a4;
+  flex: none;
+}
+
+.agent-sidebar .agent-thinking-summary[open] summary > svg {
+  transform: rotate(180deg);
+}
+
+.agent-sidebar .agent-live-steps summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.agent-sidebar .agent-live-steps ul,
+.agent-sidebar .agent-thinking-summary ul,
+.agent-sidebar .agent-error-steps {
+  list-style: none;
+  padding: 6px 0 0;
+  margin: 0;
+}
+
+.agent-sidebar .agent-live-steps li,
+.agent-sidebar .agent-thinking-summary li,
+.agent-sidebar .agent-error-steps li {
+  display: flex;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+  color: #6f7f94;
+}
+
+.agent-sidebar .agent-live-steps .has-error,
+.agent-sidebar .agent-thinking-summary .has-error {
+  color: #b66a44;
+}
+
+.agent-sidebar .agent-streaming-answer {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  color: #29261b;
+}
+
+.agent-sidebar .agent-streaming-answer .agent-markdown {
+  min-width: 0;
+  max-width: 100%;
+  font-family: "Source Serif 4", "Source Serif 4 Variable", "Noto Serif SC", "Songti SC", serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #29261b;
+  overflow-wrap: anywhere;
+}
+
+.agent-sidebar .agent-streaming-answer .agent-markdown > :first-child {
+  margin-top: 0;
+}
+
+.agent-sidebar .agent-streaming-answer .agent-markdown > :last-child {
+  margin-bottom: 0;
 }
 
 .agent-sidebar .agent-conversation .agent-error {
@@ -569,7 +675,7 @@
   .agent-sidebar .agent-conversation {
     scroll-behavior: auto;
   }
-  .agent-sidebar :is(.agent-pending > svg, .agent-send.is-busy svg) {
+  .agent-sidebar :is(.agent-pending-head > svg, .agent-send.is-busy svg) {
     animation: none;
   }
 }

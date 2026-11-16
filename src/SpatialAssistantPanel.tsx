@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useOpenModelSettings } from './ModelSettingsDialog';
 import { listenModelSettings, modelHeaders } from './modelSettings';
-import { Check, LoaderCircle, RotateCcw, Send, Sparkles, Square, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, LoaderCircle, RotateCcw, Send, Sparkles, Square, Trash2 } from 'lucide-react';
 import AssistantAnswer from './AssistantAnswer';
 import { COMPARISON_LABELS, SPATIAL_CHAT_KEY, cancelSpatialAgent, readSpatialChat, requestSpatialAgent, type AgentStep, type SpatialAgentReply, type SpatialChatMessage, type SpatialComparison } from './spatialAgent';
+import { appendProgressStep, buildCompletedTimeline, completedProgressSteps, formatChineseDuration, formatElapsedDuration, summarizeAgentProgress } from './agentProgress';
 import { DiffractionChart } from './SpatialMeasurements';
 import type { SpatialExperiment } from './builderModel';
 import './spatialAgent.css';
 
-interface Row extends SpatialChatMessage {reply?:SpatialAgentReply;state?:'applied'|'stale'|'unmet'|'unchanged'|'restored';turnId?:string}
+interface Row extends SpatialChatMessage {reply?:SpatialAgentReply;state?:'applied'|'stale'|'unmet'|'unchanged'|'restored';turnId?:string;steps?:AgentStep[];durationMs?:number}
 interface Props {experiment:SpatialExperiment;editing:boolean;onApply:(next:SpatialExperiment,expected:SpatialExperiment)=>boolean}
 function ComparisonTable({comparison:c}:{comparison:SpatialComparison}){
   const wave=c.rows.some(r=>r.fourF||r.fourier);
@@ -20,21 +21,24 @@ function PlanAnswer({text}:{text:string}){
   return text.length>240&&paragraphs.length>1?<><AssistantAnswer text={preview}/><details className="sa-full-answer"><summary>展开方案说明</summary><AssistantAnswer text={text}/></details></>:<AssistantAnswer text={text}/>;
 }
 export default function SpatialAssistantPanel({experiment,editing,onApply}:Props){
-  const [rows,setRows]=useState<Row[]>(readSpatialChat),[text,setText]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState<string|null>(null),[steps,setSteps]=useState<AgentStep[]>([]),[configured,setConfigured]=useState<boolean|null>(null);
-  const controller=useRef<AbortController|null>(null),requestId=useRef(''),list=useRef<HTMLDivElement>(null),mounted=useRef(true),current=useRef({experiment,editing,onApply}),version=useRef(0),last=useRef(JSON.stringify(experiment)),stepsRef=useRef<AgentStep[]>([]);
+  const [rows,setRows]=useState<Row[]>(readSpatialChat),[text,setText]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState<string|null>(null),[steps,setSteps]=useState<AgentStep[]>([]),[streamingText,setStreamingText]=useState(''),[configured,setConfigured]=useState<boolean|null>(null);
+  const [startedAt,setStartedAt]=useState<number|null>(null),[clockNow,setClockNow]=useState(()=>Date.now());
+  const controller=useRef<AbortController|null>(null),requestId=useRef(''),list=useRef<HTMLDivElement>(null),mounted=useRef(true),current=useRef({experiment,editing,onApply}),version=useRef(0),last=useRef(JSON.stringify(experiment)),stepsRef=useRef<AgentStep[]>([]),keptStepsRef=useRef<AgentStep[]>([]);
+  useEffect(()=>{if(!busy||startedAt===null)return;setClockNow(Date.now());const id=window.setInterval(()=>setClockNow(Date.now()),1000);return()=>window.clearInterval(id);},[busy,startedAt]);
   const openModelSettings=useOpenModelSettings();
   current.current={experiment,editing,onApply};
   const key=JSON.stringify(experiment);if(last.current!==key){last.current=key;version.current++;}
   useEffect(()=>{mounted.current=true;const status=new AbortController();const read=()=>{void fetch('/api/spatial/agent/status',{headers:modelHeaders(),signal:status.signal}).then(r=>{if(!r.ok)throw new Error();return r.json();}).then((v:unknown)=>{if(mounted.current)setConfigured(!!v&&typeof v==='object'&&'configured'in v&&v.configured===true);}).catch(()=>{});};read();const stop=listenModelSettings(read);return()=>{mounted.current=false;stop();status.abort();controller.current?.abort();};},[]);
-  useEffect(()=>{try{const history=rows.map(({role,content,turnId})=>({role,content,...(turnId?{turnId}:{})})).slice(-12);while(history.reduce((n,m)=>n+m.content.length,0)>24000)history.splice(0,2);localStorage.setItem(SPATIAL_CHAT_KEY,JSON.stringify(history));}catch{/* Chat storage failure must never block apparatus editing. */}list.current?.scrollTo({top:list.current.scrollHeight,behavior:'smooth'});},[rows,busy,steps]);
+  useEffect(()=>{try{const history=rows.map(({role,content,turnId})=>({role,content,...(turnId?{turnId}:{})})).slice(-12);while(history.reduce((n,m)=>n+m.content.length,0)>24000)history.splice(0,2);localStorage.setItem(SPATIAL_CHAT_KEY,JSON.stringify(history));}catch{/* Chat storage failure must never block apparatus editing. */}list.current?.scrollTo({top:list.current.scrollHeight,behavior:'smooth'});},[rows,busy,steps,streamingText]);
   const submit=async(override?:string)=>{
     const message=(override??text).trim();if(!message||busy||current.current.editing)return;
     const snapshot=structuredClone(current.current.experiment),baseline=version.current,id=crypto.randomUUID(),abort=new AbortController();controller.current=abort;
     const history=rows.map(({role,content})=>({role,content})).slice(-10);while(history.reduce((n,m)=>n+m.content.length,0)>20000)history.splice(0,2);
     const timer=window.setTimeout(()=>abort.abort('timeout'),1980000);
-    requestId.current=id;stepsRef.current=[];setRows(old=>[...old,{role:'user',content:message,turnId:id}]);setText('');setError(null);setSteps([]);setBusy(true);
+    const turnStart=Date.now();
+    requestId.current=id;stepsRef.current=[];keptStepsRef.current=[];setRows(old=>[...old,{role:'user',content:message,turnId:id}]);setText('');setError(null);setSteps([]);setStreamingText('');setStartedAt(turnStart);setBusy(true);
     try{
-      const reply=await requestSpatialAgent(id,snapshot,message,history,abort.signal,step=>{stepsRef.current=[...stepsRef.current,step].slice(-40);if(mounted.current&&!abort.signal.aborted)setSteps(stepsRef.current);});
+      const reply=await requestSpatialAgent(id,snapshot,message,history,abort.signal,step=>{keptStepsRef.current.push(step);stepsRef.current=appendProgressStep(stepsRef.current,step);if(mounted.current&&!abort.signal.aborted)setSteps(stepsRef.current);},delta=>{if(mounted.current&&!abort.signal.aborted)setStreamingText(prev=>prev.length>14000?prev:(prev+delta).slice(0,14000));},()=>{if(mounted.current&&!abort.signal.aborted)setStreamingText('');});
       if(!mounted.current||abort.signal.aborted)return;
       let state:Row['state']='unchanged';
       if(reply.changed){
@@ -44,9 +48,11 @@ export default function SpatialAssistantPanel({experiment,editing,onApply}:Props
       }
       // Store actual application status with history so subsequent turns don't mistake a rejected plan for the current bench.
       const note=state==='applied'?'\n（方案已载入，尚未保存存档。）':state==='stale'?'\n（装置已变化，此方案未载入。）':state==='unmet'?'\n（未通过目标核对，装置未修改。）':'';
-      setRows(old=>[...old,{role:'assistant',content:reply.answer+note,reply,state,turnId:id}]);
-    }catch(e){if(mounted.current){const stoppedByUser=abort.signal.aborted&&abort.signal.reason!=='timeout';const failure=stoppedByUser?'已停止':abort.signal.reason==='timeout'?'模型长时间无响应，已停止。':e instanceof Error?e.message:'本轮设计未完成，装置未修改。';const done=stepsRef.current.filter(step=>!step.summary.startsWith('正在')&&!step.name.startsWith('phase_')).map(step=>step.summary).filter(Boolean).join('；');setRows(old=>[...old,{role:'assistant',content:(failure+(done?'\n已完成：'+done:'')).slice(0,12000),turnId:id}]);setError(failure);}}
-    finally{window.clearTimeout(timer);if(mounted.current)setBusy(false);if(controller.current===abort)controller.current=null;}
+      const durationMs=Math.max(0,Date.now()-turnStart);
+      const timeline=buildCompletedTimeline(keptStepsRef.current,reply.trace);
+      setRows(old=>[...old,{role:'assistant',content:reply.answer+note,reply,state,turnId:id,durationMs,...(timeline.length?{steps:timeline}:{})}]);
+    }catch(e){if(mounted.current){const stoppedByUser=abort.signal.aborted&&abort.signal.reason!=='timeout';const failure=stoppedByUser?'已停止':abort.signal.reason==='timeout'?'模型长时间无响应，已停止。':e instanceof Error?e.message:'本轮设计未完成，装置未修改。';const done=completedProgressSteps(stepsRef.current).map(step=>step.summary).filter(Boolean).join('；');setRows(old=>[...old,{role:'assistant',content:(failure+(done?'\n已完成：'+done:'')).slice(0,12000),turnId:id}]);setError(failure);}}
+    finally{window.clearTimeout(timer);if(mounted.current){setBusy(false);setStartedAt(null);setStreamingText('');}if(controller.current===abort)controller.current=null;}
   };
   const continueBuild=(note:string)=>void submit(('请从已完成的步骤继续，不要从头重做。\n'+note).slice(0,2000));
   const limitNote=(value:string)=>value.startsWith('模型长时间无响应')||value.startsWith('本轮已达时长上限')||value.startsWith('已停止');
@@ -56,18 +62,17 @@ export default function SpatialAssistantPanel({experiment,editing,onApply}:Props
     <header><span><Sparkles size={16}/></span><div><h2>AI 光路搭建</h2><p>说出实验目标，帮你设计并验证</p></div></header>
     <div className="sa-chat" ref={list} data-navigation-scroll="spatial-agent">
       {!rows.length&&<div className="sa-empty"><div><Sparkles size={26} strokeWidth={1.3}/></div><h3>你想搭建什么实验？</h3><p>描述要验证的现象、空间安排或目标数值，也可以让我修改当前装置。</p><span>设计 → 搭建 → 仿真核对</span></div>}
-      {rows.map((row,index)=><article key={index} className={`sa-message ${row.role}`}><div className="sa-role">{row.role==='user'?'你':'搭建助手'}</div>{row.role==='assistant'?<PlanAnswer text={row.reply?row.reply.answer:row.content}/>:<AssistantAnswer text={row.content}/>}{row.role==='assistant'&&limitNote(row.reply?.answer??row.content)&&<button type="button" className="sa-clear" disabled={busy} onClick={()=>continueBuild(row.reply?.answer??row.content)}>继续</button>}{row.role==='assistant'&&(row.reply?.answer??row.content).startsWith('已停止')&&row.turnId&&<button type="button" className="sa-clear" disabled={busy} onClick={()=>discardBuild(row.turnId!)}>丢弃</button>} {row.reply&&<>
+      {rows.map((row,index)=>{const summarySteps=row.steps?.length?row.steps:(row.reply?completedProgressSteps(row.reply.trace):[]);const showSummary=row.role==='assistant'&&(summarySteps.length>0||row.durationMs!==undefined);const headline=row.durationMs!==undefined?`已完成，${formatChineseDuration(row.durationMs)}`:`已完成 · ${summarySteps.length} 步过程`;return <article key={index} className={`sa-message ${row.role}`}><div className="sa-role">{row.role==='user'?'你':'搭建助手'}</div>{showSummary&&(summarySteps.length>0?<details className="sa-thinking-summary"><summary><span>{headline}</span><ChevronDown size={13}/></summary><ul>{summarySteps.map((s,i)=><li key={i} className={s.status==='error'?'sa-warning':''}>{s.status==='ok'?'✓':'○'} {s.summary}</li>)}</ul></details>:<div className="sa-thinking-summary"><span>{headline}</span></div>)}{row.role==='assistant'?<PlanAnswer text={row.reply?row.reply.answer:row.content}/>:<AssistantAnswer text={row.content}/>}{row.role==='assistant'&&limitNote(row.reply?.answer??row.content)&&<button type="button" className="sa-clear" disabled={busy} onClick={()=>continueBuild(row.reply?.answer??row.content)}>继续</button>}{row.role==='assistant'&&(row.reply?.answer??row.content).startsWith('已停止')&&row.turnId&&<button type="button" className="sa-clear" disabled={busy} onClick={()=>discardBuild(row.turnId!)}>丢弃</button>} {row.reply&&<>
         {row.state==='applied'&&<div className="sa-applied"><Check size={13}/>已载入装置<button disabled={busy||editing||JSON.stringify(experiment)!==JSON.stringify(row.reply.experiment)} onClick={()=>restore(index,row)}><RotateCcw size={12}/>撤回</button></div>}
         {row.state==='stale'&&<p className="sa-notice">你已修改装置，本轮方案未载入。重新发送可按新装置设计。</p>}
         {row.state==='unmet'&&<p className="sa-notice">目标尚未达成，装置未修改。</p>}
         {row.state==='restored'&&<p className="sa-notice">此次搭建已撤回。</p>}
         {!!row.reply.checks.length&&<details className="sa-evidence"><summary>数值比较 · {row.reply.checks.length} 项参考指标</summary>{row.reply.checks.map((c,i)=><p key={i}><span className={c.passed?'pass':'fail'}>{c.passed?'✓':'○'}</span>{c.criterion.label}<small>目标 {c.criterion.operator==='le'?'≤':c.criterion.operator==='ge'?'≥':'='} {c.criterion.value}{c.criterion.tolerance>0?`（允许差 ${c.criterion.tolerance}）`:''} · 计算 {c.actual===null?'无结果':Number(c.actual.toPrecision(5))}</small></p>)}{row.reply.evidence?.warnings.map((w,i)=><p key={'w'+i} className="sa-warning">{w}</p>)}<span className="sa-model-note">理想器件模型；到屏功率为光线采样估计。</span></details>}
-        {!!row.reply.trace.length&&<details className="sa-steps"><summary>查看搭建过程</summary>{row.reply.trace.map((s,i)=><p key={i} className={s.status==='error'?'sa-warning':''}>{s.status==='ok'?'✓':'○'} {s.summary}</p>)}</details>}
         {row.reply.comparisons.map(comparison=><ComparisonTable key={comparison.comparisonId} comparison={comparison}/>)}
         {!!row.reply.evidence?.diffraction?.length&&<details className="sa-evidence"><summary>查看衍射曲线</summary>{row.reply.evidence.diffraction.map(p=><DiffractionChart key={('gratingId' in p?p.gratingId:p.slitId)+p.screenId+p.sourceId} profile={p}/>)}</details>}
-      </>}</article>)}
-      {busy&&<div className="sa-progress" role="status"><LoaderCircle size={14}/><div><strong>{steps.at(-1)?.summary??'正在理解目标并设计光路…'}</strong><span>{steps.length?`已完成 ${steps.length} 步 · 方案核对后载入`:'首次设计可能需要一两分钟'}</span></div></div>}
-      {!busy&&error&&steps.length>0&&<details className="sa-steps"><summary>查看本轮执行记录</summary>{steps.map((s,i)=><p key={i} className={s.status==='error'?'sa-warning':''}>{s.status==='ok'?'✓':'○'} {s.summary}</p>)}</details>}
+      </>}</article>;})}
+      {busy&&(()=>{const pv=summarizeAgentProgress(steps,'正在理解目标并设计光路…');const elapsed=startedAt!==null?formatElapsedDuration(clockNow-startedAt):'';return <div className="sa-progress" role="status"><LoaderCircle size={14}/><div><strong>{pv.currentSummary}</strong><span>{pv.completed.length?`已完成 ${pv.completed.length} 步`:'方案核对后自动载入'}{elapsed?` · ${elapsed}`:''}</span>{pv.completed.length>0&&<details className="sa-live-steps"><summary>查看已执行步骤</summary>{pv.completed.map((s,i)=><p key={i} className={s.status==='error'?'sa-warning':''}>{s.status==='ok'?'✓':'○'} {s.summary}</p>)}</details>}{streamingText&&<div className="sa-streaming-answer"><AssistantAnswer text={streamingText}/></div>}</div></div>;})()}
+      {!busy&&error&&completedProgressSteps(steps).length>0&&<details className="sa-steps"><summary>查看本轮执行记录</summary>{completedProgressSteps(steps).map((s,i)=><p key={i} className={s.status==='error'?'sa-warning':''}>{s.status==='ok'?'✓':'○'} {s.summary}</p>)}</details>}
     </div>
     <footer>{error&&<p className="sa-error" role="alert">{error}{limitNote(error)&&<button type="button" className="sa-clear" onClick={()=>continueBuild(rows.at(-1)?.content??error)}>继续</button>}</p>}{configured===false&&<div className="sa-error">请先在「模型设置」中配置模型接口与密钥。<button type="button" className="sa-clear" onClick={openModelSettings}>模型设置</button></div>}<form onSubmit={e=>{e.preventDefault();void submit();}}><textarea aria-label="实验目标" value={text} maxLength={2000} placeholder="告诉我你想做的实验…" onChange={e=>setText(e.target.value)} disabled={busy} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void submit();}}}/><div><button type="button" className="sa-clear" aria-label="清空搭建助手对话" disabled={busy||!rows.length} onClick={()=>{setRows([]);setText('');setError(null);setSteps([]);}}><Trash2 size={13}/>清空对话</button>{busy?<button key="stop" type="button" className="sa-stop" onClick={event=>{event.preventDefault();void cancelSpatialAgent(requestId.current);}}><Square size={11}/>停止</button>:<button key="send" type="submit" className="sa-send" disabled={!text.trim()||editing||configured===false}><Send size={13}/>发送</button>}</div></form><span className="sa-footer-note">搭建结果可撤销 · 保存请用“保存装置”</span></footer>
   </section>;

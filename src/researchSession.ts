@@ -42,6 +42,7 @@ export interface ResearchReply {
 export interface ResearchTurn {
   id: string; prompt: string; createdAt: string; reply: ResearchReply | null; error: string | null;
   steps?: AgentStep[];
+  durationMs?: number;
 }
 export interface ResearchProject {
   id: string; title: string; titleMode: ResearchTitleMode; createdAt: string; updatedAt: string; draft: string;
@@ -224,7 +225,18 @@ export function parseResearchStorage(v: unknown, maxProjects = 30): ResearchStor
       turnIds.add(t.id);
       const reply = t.reply === null ? null : validateResearchReply(t.reply, t.id, record(t.reply) && t.reply.inputSnapshot !== null ? parseSpatial(t.reply.inputSnapshot) : null);
       const steps = readSteps(t.steps);
-      return { id: t.id, prompt: t.prompt, createdAt: t.createdAt, reply, error: t.error === null && !reply ? '上次探究未完整接收，可重新发送。' : t.error as string | null, ...(steps.length ? { steps } : {}) };
+      const durationMs = typeof t.durationMs === 'number' && Number.isFinite(t.durationMs) && t.durationMs >= 0 && t.durationMs <= 86_400_000
+        ? Math.round(t.durationMs)
+        : undefined;
+      return {
+        id: t.id,
+        prompt: t.prompt,
+        createdAt: t.createdAt,
+        reply,
+        error: t.error === null && !reply ? '上次探究未完整接收，可重新发送。' : t.error as string | null,
+        ...(steps.length ? { steps } : {}),
+        ...(durationMs !== undefined ? { durationMs } : {}),
+      };
     });
     turns.forEach((turn, index) => { if (turn.reply) validatePlanEvidence(turn.reply, turns.slice(0, index)); });
     return { id: p.id, ...restoreResearchTitle(p.title, p.titleMode, turns), createdAt: p.createdAt, updatedAt: p.updatedAt, draft: p.draft, objects, activeObjectId, turns };
@@ -281,7 +293,7 @@ export async function cancelResearchAgent(requestId: string): Promise<void> {
   await fetch('/api/research/agent/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId }), signal: AbortSignal.timeout(5000), keepalive: true }).catch(() => {});
 }
 
-export async function requestResearchAgent(id: string, input: SpatialExperiment | null, message: string, history: SpatialChatMessage[], signal: AbortSignal, onStep: (step: AgentStep) => void, objects?: ResearchObject[], activeObjectId?: string | null, titleNeeded = false, previousTurns: ResearchTurn[] = [], conversationContext: ConversationContext = { workspace: 'research' }): Promise<ResearchReply> {
+export async function requestResearchAgent(id: string, input: SpatialExperiment | null, message: string, history: SpatialChatMessage[], signal: AbortSignal, onStep: (step: AgentStep) => void, objects?: ResearchObject[], activeObjectId?: string | null, titleNeeded = false, previousTurns: ResearchTurn[] = [], conversationContext: ConversationContext = { workspace: 'research' }, onDelta?: (text: string) => void, onReset?: () => void): Promise<ResearchReply> {
   const expected = objects ? objectInputs(objects) : undefined;
   const response = await fetch('/api/research/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/json', ...modelHeaders() }, body: JSON.stringify({ requestId: id, experiment: input, message, history, titleNeeded, conversationContext, currentPlan: currentResearchPlan(previousTurns), modelExperiments: researchModelInputs(previousTurns), ...(expected ? { objects: expected, activeObjectId } : {}) }), signal });
   if (!response.ok) {
@@ -289,33 +301,24 @@ export async function requestResearchAgent(id: string, input: SpatialExperiment 
     throw new Error(typeof body?.detail === 'string' ? body.detail : '实验探究助手暂时无法连接，请重试。');
   }
   if (!response.body) throw new Error('探究连接中断，请重试。');
-  const reader = response.body.getReader(), decoder = new TextDecoder();
-  const stopReading = () => { void reader.cancel().catch(() => {}); };
-  signal.addEventListener('abort', stopReading, { once: true });
-  if (signal.aborted) stopReading();
-  let buffer = '', bytes = 0, reply: ResearchReply | null = null;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      signal.throwIfAborted();
-      if (value) { bytes += value.byteLength; if (bytes > 8_000_000) throw new Error('探究结果过大，请缩小计算范围。'); }
-      buffer += decoder.decode(value, { stream: !done });
-      const lines = buffer.split('\n'); buffer = lines.pop() ?? '';
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        const event: unknown = JSON.parse(line);
-        if (!record(event)) throw new Error('探究结果格式无效。');
-        if (event.type === 'progress') onStep(validateStep(event.step));
-        else if (event.type === 'reply') { if (reply) throw new Error('收到重复探究结果。'); reply = validateResearchReply(event.reply, id, input, expected, activeObjectId); }
-        else if (event.type === 'error') throw new Error(typeof event.message === 'string' ? event.message : '本轮探究未完成。');
-        else throw new Error('探究结果格式无效。');
-      }
-      if (done) break;
-    }
-    if (buffer.trim() || !reply) throw new Error('探究结果未完整接收，请重试。');
-    validatePlanEvidence(reply, previousTurns);
-    return reply;
-  } finally { signal.removeEventListener('abort', stopReading); void reader.cancel().catch(() => {}); reader.releaseLock(); }
+  const { consumeAgentNdjsonStream } = await import('./agentProgress');
+  const reply = await consumeAgentNdjsonStream(response.body, {
+    signal,
+    maxBytes: 8_000_000,
+    sizeError: '探究结果过大，请缩小计算范围。',
+    formatError: '探究结果格式无效。',
+    incompleteError: '探究结果未完整接收，请重试。',
+    duplicateError: '收到重复探究结果。',
+    fallbackError: '本轮探究未完成。',
+    throwOnAbort: true,
+    onStep,
+    onDelta,
+    onReset,
+    parseStep: validateStep,
+    parseReply: raw => validateResearchReply(raw, id, input, expected, activeObjectId),
+  });
+  validatePlanEvidence(reply, previousTurns);
+  return reply;
 }
 
 export function recommendedSpatial(original: SpatialExperiment, recommendation: Experiment): SpatialExperiment {

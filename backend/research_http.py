@@ -2,6 +2,7 @@
 import asyncio
 import json
 import time
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -10,12 +11,18 @@ from .turn_limits import BUDGET_MESSAGE
 
 
 class ResearchClient:
-    def __init__(self, cancelled=None, transport=None, diagnostics=None, *, streaming=True, deadline=None):
+    def __init__(self, cancelled=None, transport=None, diagnostics=None, *, streaming=True, deadline=None, progress=None, on_delta=None):
         self.cancelled = cancelled
         self.transport = transport
         self.diagnostics = diagnostics
         self.streaming = streaming
         self.deadline = deadline
+        self.progress = progress
+        self.on_delta = on_delta
+
+    def _emit_phase(self, name, summary):
+        if self.progress:
+            self.progress({'name': name, 'status': 'ok', 'summary': summary})
 
     def _closed_error(self):
         if self.deadline is not None and time.monotonic() >= self.deadline:
@@ -31,7 +38,9 @@ class ResearchClient:
             self.diagnostics.record('provider.request', messageCount=len(payload.get('messages', [])), inputCharacters=sum(len(str(m.get('content') or '')) + len(str(m.get('reasoning_content') or '')) for m in payload.get('messages', [])))
         async def request():
             self._closed_error()
-            async with httpx.AsyncClient(follow_redirects=False, transport=self.transport) as client:
+            hostname = (urlsplit(url).hostname or '').lower()
+            trust_env = hostname not in {'127.0.0.1', 'localhost', '::1'}
+            async with httpx.AsyncClient(follow_redirects=False, transport=self.transport, trust_env=trust_env) as client:
                 task = asyncio.create_task(self.receive(client, url, kwargs))
                 try:
                     while True:
@@ -66,6 +75,8 @@ class ResearchClient:
                 return response
             message = {'role': 'assistant', 'content': '', 'reasoning_content': ''}
             tools, finish, size, last_log, first = {}, None, 0, time.monotonic(), True
+            stream_phase, last_phase_emit, last_phase_chars = None, 0.0, 0
+            streamed_answer = False
             async for line in response.aiter_lines():
                 size += len(line)
                 if size > 64_000_000:
@@ -77,6 +88,9 @@ class ResearchClient:
                     if finish not in {'stop', 'tool_calls'}:
                         raise AgentError('AI回复未完整生成，请重试。')
                     if tools:
+                        if streamed_answer and self.on_delta:
+                            self.on_delta(None)
+                            streamed_answer = False
                         message['tool_calls'] = [tools[key] for key in sorted(tools)]
                     return httpx.Response(200, json={'choices': [{'finish_reason': finish, 'message': message}]})
                 try:
@@ -109,9 +123,39 @@ class ResearchClient:
                         finish = choice['finish_reason']
                     if len(message['content']) + len(message['reasoning_content']) + sum(len(t['function']['arguments']) for t in tools.values()) > 2_000_000:
                         raise AgentError('AI回复过长，本轮未完成。', 422)
-                    if self.diagnostics and (first or time.monotonic() - last_log >= 5):
+                    content_part = delta.get('content')
+                    if tools and streamed_answer and self.on_delta:
+                        self.on_delta(None)
+                        streamed_answer = False
+                    elif not tools and self.on_delta and isinstance(content_part, str) and content_part:
+                        if streamed_answer or content_part.strip():
+                            streamed_answer = True
+                            self.on_delta(content_part)
+                    now = time.monotonic()
+                    if self.progress:
+                        r_chars = len(message['reasoning_content'])
+                        c_chars = len(message['content'].strip())
+                        if tools:
+                            if stream_phase != 'tools':
+                                stream_phase = 'tools'
+                                self._emit_phase('phase_preparing', '正在准备调用实验工具…')
+                        elif delta.get('reasoning_content') is not None and r_chars > 0 and c_chars == 0:
+                            if stream_phase != 'thinking':
+                                stream_phase, last_phase_emit, last_phase_chars = 'thinking', now, r_chars
+                                self._emit_phase('phase_thinking', '正在深度推理…')
+                            elif now - last_phase_emit >= 2.0 and r_chars > last_phase_chars:
+                                last_phase_emit, last_phase_chars = now, r_chars
+                                self._emit_phase('phase_thinking', f'正在深度推理（已推演约 {r_chars} 字）…')
+                        elif c_chars > 0:
+                            if stream_phase != 'writing':
+                                stream_phase, last_phase_emit, last_phase_chars = 'writing', now, c_chars
+                                self._emit_phase('phase_writing', '正在组织回答…')
+                            elif now - last_phase_emit >= 2.5 and c_chars > last_phase_chars:
+                                last_phase_emit, last_phase_chars = now, c_chars
+                                self._emit_phase('phase_writing', f'正在整理回答（已生成约 {c_chars} 字）…')
+                    if self.diagnostics and (first or now - last_log >= 5):
                         self.diagnostics.record('provider.progress', reasoningCharacters=len(message['reasoning_content']), answerCharacters=len(message['content']), toolCount=len(tools))
-                        first, last_log = False, time.monotonic()
+                        first, last_log = False, now
                 except (ValueError, KeyError, IndexError, TypeError):
                     raise AgentError('AI回复格式异常，本轮未完成。') from None
             raise AgentError('AI连接提前结束，未收到完整回复。')

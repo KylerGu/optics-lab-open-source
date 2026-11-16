@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { ArrowUp, LoaderCircle, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 import './assistant.css';
 
-export default function AssistantFrame({title,prompt,onPrompt,busy,configured,checking,setupError,onCheck,onConfigure,onSend,onStop,onClear,canClear,editing,starters,children,inputError,conversationRevision}:{title:string;prompt:string;onPrompt:(value:string)=>void;busy:boolean;configured:boolean;checking:boolean;setupError?:string|null;onCheck:()=>void;onConfigure?:()=>void;onSend:()=>void;onStop:()=>void;onClear:()=>void;canClear:boolean;editing:boolean;starters:string[];children:ReactNode;inputError?:string|null;conversationRevision?:unknown}){
+export default function AssistantFrame({title,prompt,onPrompt,busy,configured,checking,setupError,onCheck,onConfigure,onSend,onStop,onClear,canClear,editing,starters,children,inputError,conversationRevision,streamingRevision}:{title:string;prompt:string;onPrompt:(value:string)=>void;busy:boolean;configured:boolean;checking:boolean;setupError?:string|null;onCheck:()=>void;onConfigure?:()=>void;onSend:()=>void;onStop:()=>void;onClear:()=>void;canClear:boolean;editing:boolean;starters:string[];children:ReactNode;inputError?:string|null;conversationRevision?:unknown;streamingRevision?:string}){
   const transcript=useRef<HTMLDivElement>(null);
   const textareaRef=useRef<HTMLTextAreaElement>(null);
   useEffect(()=>{void import('./researchReadingFonts');},[]);
@@ -14,7 +14,13 @@ export default function AssistantFrame({title,prompt,onPrompt,busy,configured,ch
   },[prompt,canClear]);
   // Scenes advance this only when conversation content changes, not when viewing a comparison.
   const scrollRevision=conversationRevision===undefined?children:conversationRevision;
-  useEffect(()=>{const el=transcript.current,last=el?.lastElementChild;if(el&&last)el.scrollTop+=last.getBoundingClientRect().top-el.getBoundingClientRect().top;},[scrollRevision,busy]);
+  useEffect(()=>{
+    const el=transcript.current;
+    if(!el)return;
+    if(streamingRevision){el.scrollTop=el.scrollHeight;return;}
+    const last=el.lastElementChild;
+    if(last)el.scrollTop+=last.getBoundingClientRect().top-el.getBoundingClientRect().top;
+  },[scrollRevision,busy,streamingRevision]);
   const emptyChat=!canClear;
   return <aside className={emptyChat?'assistant-sidebar agent-sidebar is-empty-chat':'assistant-sidebar agent-sidebar'} aria-label="AI光学助手">
     <div className="assistant-heading">

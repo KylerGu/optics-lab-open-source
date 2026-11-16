@@ -393,7 +393,21 @@ def completion(client, settings, messages, timeout, available_tools=None, *, req
         raise AgentError("AI服务未返回完整有效的结果，当前参数保持不变。") from None
 
 
-def run_agent(request: AgentRequest, settings: Settings, client=None):
+def _agent_pre_step_summary(name, args):
+    if name == "simulate_experiment":
+        return "正在运行当前场景计算…"
+    if name == "compare_parameter":
+        return "正在进行参数扫描比较…"
+    if name == "update_element":
+        return "正在修改场景参数…"
+    if name == "solve_gaussian_target":
+        return "正在求解目标光斑参数…"
+    if name == "apply_gaussian_target":
+        return "正在应用求解结果…"
+    return "正在执行场景操作…"
+
+
+def run_agent(request: AgentRequest, settings: Settings, client=None, *, progress=None, on_delta=None):
     if not settings.configured:
         raise AgentError("请检查模型接口地址、模型名称、API Key及思考强度配置。", 503)
     if sum(len(item.content) for item in request.history) > 24000:
@@ -401,6 +415,9 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
     intent = gaussian_action(request.message) if request.scene == 'gaussian' else None
     workspace = Workspace(request.experiment, request.scene, intent)
     trace = []
+    def emit_progress(step):
+        if progress:
+            progress(step)
     def reply(answer):
         return {"requestId": request.requestId, "model": settings.model, "inputSnapshot": request.experiment.model_dump(),
                 "experiment": workspace.experiment.model_dump(), "changed": workspace.experiment != request.experiment,
@@ -411,16 +428,23 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
     if command is not None:
         # These complete, explicit commands do not depend on a model's apply flag.
         try:
+            emit_progress({"name": "phase_scene", "status": "ok", "summary": "正在按指定目标求解与核对场景参数…"})
             if command.kind == 'target':
                 _, explanation = workspace.execute('solve_gaussian_target', {'targetRadiusMm': command.value_mm,
                                                                             'apply': True, 'choice': command.choice})
-                trace.append({'name': 'solve_gaussian_target', 'status': 'ok', 'summary': explanation})
+                step = {'name': 'solve_gaussian_target', 'status': 'ok', 'summary': explanation}
+                trace.append(step)
+                emit_progress(step)
                 return reply(verified_target_answer(workspace.gaussian_target, workspace.applied_gaussian_candidate_id))
             source, _ = gaussian_elements(request.experiment)
             _, explanation = workspace.execute('update_element', {'elementId': source.id, 'patch': {'waistMm': command.value_mm}})
-            trace.append({'name': 'update_element', 'status': 'ok', 'summary': explanation})
+            step = {'name': 'update_element', 'status': 'ok', 'summary': explanation}
+            trace.append(step)
+            emit_progress(step)
             evidence, explanation = workspace.execute('simulate_experiment', {})
-            trace.append({'name': 'simulate_experiment', 'status': 'ok', 'summary': explanation})
+            step = {'name': 'simulate_experiment', 'status': 'ok', 'summary': explanation}
+            trace.append(step)
+            emit_progress(step)
             beam = evidence['gaussian']
             return reply(f'已将束腰半径调整为 ${beam["waistMm"]:.6g}\\,\\mathrm{{mm}}$，其余参数保持不变。'
                          f'仿真核对后，观察处光斑半径为 ${beam["radiusMm"]:.6g}\\,\\mathrm{{mm}}$。')
@@ -434,7 +458,8 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
     owns_client = client is None
     client = client or httpx.Client(follow_redirects=False)
     try:
-        for _ in range(8):
+        for round_number in range(8):
+            emit_progress({"name": "phase_scene", "status": "ok", "summary": "正在分析当前场景与问题…" if round_number == 0 else f"正在结合计算结果继续推理（第 {round_number + 1} 轮）…"})
             message = completion(client, settings, messages, settings.provider_timeout, workspace.tools)
             calls = message.get("tool_calls") or []
             if not isinstance(calls, list) or len(calls) + len(trace) > 16:
@@ -447,9 +472,14 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
                     raise AgentError("目标调参未能完成求解与核对，原参数保持不变。请明确目标光斑半径后重试。", 422)
                 changed = workspace.experiment != request.experiment
                 if changed and workspace.evidence_key != workspace.key():
+                    if on_delta:
+                        on_delta(None)
                     try:
+                        emit_progress({"name": "phase_simulate_experiment", "status": "ok", "summary": "正在核对修改后的场景计算结果…"})
                         evidence, explanation = workspace.execute("simulate_experiment", {})
-                        trace.append({"name": "simulate_experiment", "status": "ok", "summary": explanation + "（方案应用前核对）"})
+                        step = {"name": "simulate_experiment", "status": "ok", "summary": explanation + "（方案应用前核对）"}
+                        trace.append(step)
+                        emit_progress(step)
                     except (ValidationError, ValueError, OverflowError, ZeroDivisionError):
                         raise AgentError("AI提出的装置无法通过光学计算，已保留原装置。请补充要求后重试。", 422) from None
                     messages.append(assistant_context(message, settings.thinking_enabled))
@@ -462,6 +492,9 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
                 elif request.scene == 'gaussian':
                     conflicts = check_gaussian_answer(answer, workspace.evidence, workspace.scans, request.message)
                     if conflicts:
+                        if on_delta:
+                            on_delta(None)
+                        emit_progress({"name": "phase_scene", "status": "ok", "summary": "正在根据计算结果校对回答数值…"})
                         # Only an actual conflict incurs one extra request. The rewrite
                         # cannot edit or recalculate; all evidence remains unchanged.
                         correction = messages + [
@@ -480,9 +513,13 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
                             pass
                         answer = corrected or gaussian_evidence_answer(workspace.evidence, workspace.scans)
                         if len(trace) < 17:
-                            trace.append({'name': 'check_gaussian_evidence', 'status': 'ok',
-                                          'summary': '根据计算纠正了解释中的矛盾' if corrected else '解释仍有矛盾，仅返回本轮已核对的计算事实'})
+                            step = {'name': 'check_gaussian_evidence', 'status': 'ok',
+                                    'summary': '根据计算纠正了解释中的矛盾' if corrected else '解释仍有矛盾，仅返回本轮已核对的计算事实'}
+                            trace.append(step)
+                            emit_progress(step)
                 return reply(answer)
+            if on_delta:
+                on_delta(None)
             # Keep reasoning in provider context to support thinking-mode tool
             # rounds. The public reply contains only the final answer and results.
             assistant_message = assistant_context(message, settings.thinking_enabled)
@@ -497,8 +534,12 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
                 except (KeyError, TypeError, ValueError):
                     raise AgentError("AI工具请求格式异常，当前参数保持不变。") from None
                 try:
-                    output, explanation = workspace.execute(name, json.loads(raw))
-                    trace.append({"name": name, "status": "ok", "summary": explanation})
+                    parsed_args = json.loads(raw)
+                    emit_progress({"name": f"phase_{name}", "status": "ok", "summary": _agent_pre_step_summary(name, parsed_args)})
+                    output, explanation = workspace.execute(name, parsed_args)
+                    step = {"name": name, "status": "ok", "summary": explanation}
+                    trace.append(step)
+                    emit_progress(step)
                     result = {"ok": True, "data": output}
                 except (ValidationError, ValueError, OverflowError, ZeroDivisionError, TypeError) as error:
                     explanation = "操作参数不符合当前元件或计算模型，请读取装置后修正。"
@@ -507,7 +548,9 @@ def run_agent(request: AgentRequest, settings: Settings, client=None):
                         if name in {'solve_gaussian_target', 'apply_gaussian_target'} or workspace.gaussian_target is not None:
                             if isinstance(error, ValueError) and not isinstance(error, ValidationError):
                                 explanation = str(error)
-                    trace.append({"name": name, "status": "error", "summary": explanation})
+                    step = {"name": name, "status": "error", "summary": explanation}
+                    trace.append(step)
+                    emit_progress(step)
                     result = {"ok": False, "error": explanation}
                 messages.append({"role": "tool", "tool_call_id": call_id, "content": json.dumps(result, ensure_ascii=False, allow_nan=False)})
             if request.scene == "gaussian" and workspace.scans:

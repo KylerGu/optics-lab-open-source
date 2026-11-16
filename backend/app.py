@@ -100,6 +100,8 @@ research_requests = {}
 research_requests_lock = Lock()
 spatial_requests = {}
 spatial_requests_lock = Lock()
+scene_requests = {}
+scene_requests_lock = Lock()
 STREAM_KEEPALIVE_SECONDS = 10
 UNCONFIGURED = "请先在「模型设置」中配置模型接口与密钥。"
 
@@ -124,6 +126,15 @@ def note_failure(events, error, timed_out, stopped):
     events.put({"type": "error", "message": message})
 
 
+def _delta_emitter(events):
+    def emit(chunk):
+        if chunk is None:
+            events.put({'type': 'answer_reset'})
+        elif chunk:
+            events.put({'type': 'delta', 'text': chunk})
+    return emit
+
+
 async def ndjson_stream(request, events, stopped, timed_out, deadline_at, started, route):
     last_sent = time.monotonic()
     try:
@@ -140,7 +151,7 @@ async def ndjson_stream(request, events, stopped, timed_out, deadline_at, starte
                 if time.monotonic() - last_sent >= STREAM_KEEPALIVE_SECONDS:
                     yield "\n"
                     last_sent = time.monotonic()
-                await asyncio.sleep(.08)
+                await asyncio.sleep(.03)
                 continue
             if event is None:
                 break
@@ -233,6 +244,15 @@ async def cancel_spatial(document: ResearchCancelRequest):
     return {'stopped': stopped is not None}
 
 
+@app.post('/api/scenes/agent/cancel')
+async def cancel_scene(document: ResearchCancelRequest):
+    with scene_requests_lock:
+        stopped = scene_requests.get(document.requestId)
+        if stopped is not None:
+            stopped.set()
+    return {'stopped': stopped is not None}
+
+
 @app.exception_handler(RequestValidationError)
 async def invalid_request(_request, _exception):
     return JSONResponse(status_code=422, content={"detail": "实验数据无效，请检查元件参数、单位与文件格式。"})
@@ -309,12 +329,13 @@ async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
             raise HTTPException(status_code=409, detail='这条搭建请求已经在运行。')
         spatial_requests[document.requestId] = stopped
     debug = DebugRun('builder', document, settings)
+    emit_delta = _delta_emitter(events)
     def report(step):
         debug.record('progress', step=step)
         events.put({'type': 'progress', 'step': step})
     def worker():
         try:
-            reply = run_spatial_agent(document, settings, progress=report, cancelled=stopped, debug=debug)
+            reply = run_spatial_agent(document, settings, progress=report, cancelled=stopped, debug=debug, on_delta=emit_delta)
             debug.record('reply', reply=reply)
             events.put({"type": "reply", "reply": reply})
         except AgentError as error:
@@ -363,12 +384,13 @@ async def research_agent_chat(document: ResearchAgentRequest, request: Request):
         research_requests[document.requestId] = stopped
     builder_settings = request_settings(request, research_build=True)
     debug = DebugRun('research', document, settings, builder_settings)
+    emit_delta = _delta_emitter(events)
     def report(step):
         debug.record('progress', step=step)
         events.put({'type': 'progress', 'step': step})
     def worker():
         try:
-            reply = run_research_agent(document, settings, progress=report, cancelled=stopped, builder_settings=builder_settings, debug=debug)
+            reply = run_research_agent(document, settings, progress=report, cancelled=stopped, builder_settings=builder_settings, debug=debug, on_delta=emit_delta)
             debug.record('reply', reply=reply)
             events.put({"type": "reply", "reply": reply})
         except AgentError as error:
@@ -455,14 +477,32 @@ async def scene_chat(document: SceneAgentRequest, request: Request):
         raise HTTPException(status_code=503, detail=UNCONFIGURED)
     if not agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail='助手正在处理其他请求，请稍后重试。')
+    events, stopped, timed_out = Queue(), TurnStop(), Event()
     started = time.monotonic()
     deadline_at = started + turn_limits.SCENE_TURN_SECONDS
-
-    def work(stopped):
-        client = ResearchClient(stopped, streaming=False, deadline=deadline_at)
+    with scene_requests_lock:
+        if document.requestId in scene_requests:
+            agent_slots.release()
+            raise HTTPException(status_code=409, detail='这条助教请求已经在运行。')
+        scene_requests[document.requestId] = stopped
+    emit_delta = _delta_emitter(events)
+    def report(step):
+        events.put({'type': 'progress', 'step': step})
+    def worker():
+        client = ResearchClient(stopped, streaming=True, deadline=deadline_at, progress=report, on_delta=emit_delta)
         try:
-            return run_scene_agent(document, settings, client=client)
+            reply = run_scene_agent(document, settings, client=client, progress=report, on_delta=emit_delta)
+            events.put({'type': 'reply', 'reply': reply})
+        except AgentError as error:
+            note_failure(events, error, timed_out, stopped)
+        except Exception:
+            events.put({'type': 'error', 'message': BUDGET_MESSAGE if timed_out.is_set() else '本轮回答未完成，场景保持不变。请重试。'})
         finally:
             client.close()
-
-    return await finish_json_turn(request, agent_slots, started, deadline_at, "scene", work)
+            with scene_requests_lock:
+                if scene_requests.get(document.requestId) is stopped:
+                    del scene_requests[document.requestId]
+            agent_slots.release()
+            events.put(None)
+    Thread(target=worker, daemon=True).start()
+    return StreamingResponse(ndjson_stream(request, events, stopped, timed_out, deadline_at, started, 'scene'), media_type='application/x-ndjson', headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})

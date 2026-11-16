@@ -1,4 +1,5 @@
 import { parseSpatial, validateSpatialResult, type SpatialExperiment, type SpatialResult } from './builderModel';
+import { consumeAgentNdjsonStream } from './agentProgress';
 import { modelHeaders } from './modelSettings';
 import { isPhysicalLens, physicalFocalLengths } from './physicalLensGeometry';
 import {resizeLens} from './lensPresets';
@@ -101,29 +102,22 @@ export function readSpatialChat():SpatialChatMessage[] {
 export async function cancelSpatialAgent(requestId:string):Promise<void> {
   await fetch('/api/spatial/agent/cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId}),signal:AbortSignal.timeout(5000),keepalive:true}).catch(()=>{});
 }
-export async function requestSpatialAgent(id:string,input:SpatialExperiment,message:string,history:SpatialChatMessage[],signal:AbortSignal,onStep:(step:AgentStep)=>void):Promise<SpatialAgentReply> {
+export async function requestSpatialAgent(id:string,input:SpatialExperiment,message:string,history:SpatialChatMessage[],signal:AbortSignal,onStep:(step:AgentStep)=>void,onDelta?:(text:string)=>void,onReset?:()=>void):Promise<SpatialAgentReply> {
   const response=await fetch('/api/spatial/agent/chat',{method:'POST',headers:{'Content-Type':'application/json',...modelHeaders()},body:JSON.stringify({requestId:id,experiment:input,message,history}),signal});
   if(!response.ok){const body=await response.json().catch(()=>null) as {detail?:unknown}|null;throw new Error(typeof body?.detail==='string'?body.detail:'光路设计暂时不可用，请重试。');}
   if(!response.body)throw new Error('AI连接中断，请重试。');
-  const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',bytes=0,reply:SpatialAgentReply|null=null;
-  try{
-    while(true){
-      const {done,value}=await reader.read();
-      if(value){bytes+=value.byteLength;if(bytes>8_000_000)throw new Error('AI方案数据过大。');}
-      buffer+=decoder.decode(value,{stream:!done});
-      const lines=buffer.split('\n');buffer=lines.pop()??'';
-      for(const line of lines){
-        if(!line.trim())continue;
-        const event:unknown=JSON.parse(line);
-        if(!record(event))throw new Error('AI返回数据无效。');
-        if(event.type==='progress')onStep(validateStep(event.step));
-        else if(event.type==='reply'){if(reply)throw new Error('AI返回了重复方案。');reply=validateSpatialAgentReply(event.reply,id,input);}
-        else if(event.type==='error')throw new Error(typeof event.message==='string'?event.message:'本轮设计未完成。');
-        else throw new Error('AI返回数据无效。');
-      }
-      if(done)break;
-    }
-    if(buffer.trim()||!reply)throw new Error('AI方案未完整接收，装置未修改。');
-    return reply;
-  }finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+  return consumeAgentNdjsonStream(response.body,{
+    signal,
+    maxBytes:8_000_000,
+    sizeError:'AI方案数据过大。',
+    formatError:'AI返回数据无效。',
+    incompleteError:'AI方案未完整接收，装置未修改。',
+    duplicateError:'AI返回了重复方案。',
+    fallbackError:'本轮设计未完成。',
+    onStep,
+    onDelta,
+    onReset,
+    parseStep:validateStep,
+    parseReply:raw=>validateSpatialAgentReply(raw,id,input),
+  });
 }

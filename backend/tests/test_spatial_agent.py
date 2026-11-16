@@ -215,7 +215,8 @@ class SpatialLoopTests(unittest.TestCase):
         self.assertTrue(result["applyAllowed"])
         self.assertEqual(tuple(result["experiment"]["elements"][1]["position"]), (400, 60, 0))
         self.assertEqual(original.model_dump(), before)
-        self.assertEqual(steps, result["trace"])
+        self.assertEqual([s for s in steps if not s["name"].startswith("phase_")], result["trace"])
+        self.assertIn("phase_design", [s["name"] for s in steps])
         self.assertEqual(sum(s["name"] == "calculate_apparatus" for s in steps), 2)
         self.assertNotIn("search_focus_design", [t["function"]["name"] for t in observed[0]["tools"]])
 

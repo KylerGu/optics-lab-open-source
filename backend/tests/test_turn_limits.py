@@ -139,6 +139,9 @@ class DripUpstream(SilentUpstream):
                             return
                     except socket.timeout:
                         pass
+                    except (BrokenPipeError, ConnectionError, OSError):
+                        self.closed.set()
+                        return
                     conn.settimeout(0.2)
         finally:
             try:
@@ -248,24 +251,48 @@ class TurnLimitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(slots_free(agent_slots))
 
     async def test_disconnect_aborts_scene_and_legacy_upstream(self):
-        for endpoint, document in ((agent_chat, agent_document()), (scene_chat, scene_document())):
-            with self.subTest(endpoint=endpoint.__name__):
-                server = self.server()
-                ready = threading.Event()
-                server.accepted = ready
-                settings = self.settings(server)
-                with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
-                        patch("backend.turn_limits.READ_SECONDS", 20), \
-                        patch("backend.turn_limits.CONNECT_SECONDS", 2), \
-                        patch("backend.turn_limits.WRITE_SECONDS", 2), \
-                        patch("backend.turn_limits.SCENE_TURN_SECONDS", 20):
-                    started = time.monotonic()
-                    with self.assertRaises(HTTPException) as caught:
-                        await endpoint(document, DropAfter(ready))
-                self.assertLess(time.monotonic() - started, 3)
-                self.assertNotEqual(caught.exception.status_code, 504)
-                self.assertTrue(server.closed.wait(2))
-                self.assertTrue(slots_free(agent_slots))
+        server = self.server()
+        ready = threading.Event()
+        server.accepted = ready
+        settings = self.settings(server)
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=settings), \
+                patch("backend.turn_limits.READ_SECONDS", 20), \
+                patch("backend.turn_limits.CONNECT_SECONDS", 2), \
+                patch("backend.turn_limits.WRITE_SECONDS", 2), \
+                patch("backend.turn_limits.SCENE_TURN_SECONDS", 20):
+            started = time.monotonic()
+            with self.assertRaises(HTTPException) as caught:
+                await agent_chat(agent_document(), DropAfter(ready))
+        self.assertLess(time.monotonic() - started, 3)
+        self.assertNotEqual(caught.exception.status_code, 504)
+        self.assertTrue(server.closed.wait(2))
+        self.assertTrue(slots_free(agent_slots))
+
+        scene_server = self.server()
+        scene_ready = threading.Event()
+        scene_server.accepted = scene_ready
+        scene_settings = self.settings(scene_server)
+        with patch.dict("os.environ", {"AI_ALLOW_SERVER_KEY": "1"}), patch("backend.app.get_settings", return_value=scene_settings), \
+                patch("backend.turn_limits.READ_SECONDS", 20), \
+                patch("backend.turn_limits.CONNECT_SECONDS", 2), \
+                patch("backend.turn_limits.WRITE_SECONDS", 2), \
+                patch("backend.turn_limits.SCENE_TURN_SECONDS", 20):
+            started = time.monotonic()
+            response = await scene_chat(scene_document(), DropAfter(scene_ready))
+            chunks = []
+            try:
+                async for chunk in response.body_iterator:
+                    chunks.append(chunk)
+            finally:
+                await response.body_iterator.aclose()
+            for _ in range(40):
+                if slots_free(agent_slots):
+                    break
+                await asyncio.sleep(0.05)
+        self.assertLess(time.monotonic() - started, 3)
+        self.assertTrue(scene_server.closed.wait(2))
+        self.assertTrue(slots_free(agent_slots))
+        self.assertFalse(any('"type": "reply"' in chunk for chunk in chunks))
 
     async def test_research_silent_upstream_times_out_and_releases_its_slot(self):
         server = self.server()

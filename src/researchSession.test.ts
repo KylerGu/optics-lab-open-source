@@ -468,3 +468,22 @@ test('switching conversations drops unused empty threads while keeping drafts, d
   );
   assert.deepEqual(stayOnBlank.projects.map(p => p.id), ['untouched', 'existing']);
 });
+
+test('completed turns preserve safe process timeline and durationMs across storage round-trip', () => {
+  const project = newResearchProject();
+  project.turns = [{
+    id: 'r',
+    prompt: '解释球差成因',
+    createdAt: project.createdAt,
+    reply: reply(),
+    error: null,
+    durationMs: 61_000,
+    steps: [
+      { name: 'phase_thinking', status: 'ok', summary: '深度推理（已推演约 420 字）' },
+      { name: 'phase_writing', status: 'ok', summary: '组织回答' },
+    ],
+  }];
+  const restored = parseResearchStorage({ schemaVersion: 2, selectedId: project.id, projects: [project] }).projects[0];
+  assert.equal(restored.turns[0].durationMs, 61_000);
+  assert.deepEqual(restored.turns[0].steps, project.turns[0].steps);
+});

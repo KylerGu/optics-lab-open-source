@@ -4,7 +4,7 @@ import { builderConversation, promoteBuilderConversation, sameApparatus, updateC
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useOpenModelSettings } from './ModelSettingsDialog';
 import { listenModelSettings, modelHeaders } from './modelSettings';
-import { ArrowUp, ArrowUpRight, BarChart3, Check, ChevronRight, CircleHelp, FileText, FlaskConical, FolderOpen, LoaderCircle, MessageSquare, MoreHorizontal, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Plus, RefreshCw, Sparkles, X } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, BarChart3, Check, ChevronDown, ChevronRight, CircleHelp, FileText, FlaskConical, FolderOpen, LoaderCircle, MessageSquare, MoreHorizontal, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Plus, RefreshCw, Sparkles, X } from 'lucide-react';
 import AssistantAnswer from './AssistantAnswer';
 import ResearchVisualActions from './ResearchVisualActions';
 import type { ResearchVisualGuide } from './researchVisual';
@@ -16,6 +16,7 @@ import type { SpatialExperiment } from './builderModel';
 import { MAX_RESEARCH_OBJECTS, SOURCE_LABELS, attachResearchObject, importedObjectChoice, readResearchObjectSources, refreshedResearchObject, type ObjectChoice, type ResearchObject } from './researchObjects';
 import { assistantErrorMessage } from './agent';
 import { type AgentStep } from './spatialAgent';
+import { appendProgressStep, buildCompletedTimeline, completedProgressSteps, formatChineseDuration, formatElapsedDuration, summarizeAgentProgress } from './agentProgress';
 import { RESEARCH_WORKSPACE_KEY, cancelResearchAgent, downloadResearch, isBlankResearchProject, newResearchProject, parseResearchStorage, readResearchStorage, requestResearchAgent, researchHistory, researchReport, retainResearchBuilds, selectResearchProject, type ResearchProject, type ResearchStorage, type ResearchTurn } from './researchSession';
 import './research-workspace.css';
 import { applyResearchTitle } from './researchTitle';
@@ -63,9 +64,20 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   const [configured, setConfigured] = useState<boolean | null>(null), [checking, setChecking] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null), [storageError, setStorageError] = useState(initial.warning);
   const [running, setRunning] = useState<Record<string, AgentStep[]>>({});
+  const [runningSince, setRunningSince] = useState<Record<string, number>>({});
+  const [streamingAnswers, setStreamingAnswers] = useState<Record<string, string>>({});
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  const busyCount = Object.keys(running).length;
+  useEffect(() => {
+    if (!busyCount) return;
+    setClockNow(Date.now());
+    const id = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [busyCount]);
   const busy = project.id in running, steps = running[project.id] ?? [];
-  const activity = steps.at(-1);
-  const pendingLabel = activity?.name === 'phase_explain' ? '正在分析与整理结果…' : activity?.name === 'phase_compute' ? '正在计算…' : activity?.name.startsWith('builder_') ? '正在搭建光路…' : '正在探究问题…';
+  const streamingText = streamingAnswers[project.id] ?? '';
+  const progressView = summarizeAgentProgress(steps, inBuilder ? '正在分析光路与问题…' : '正在探究问题…');
+  const elapsedText = busy && runningSince[project.id] ? formatElapsedDuration(clockNow - runningSince[project.id]) : '';
   const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [update, setUpdate] = useState<{ original: ResearchObject; next: ResearchObject } | null>(null);
@@ -170,7 +182,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   }, [store, initial.writable]);
   useEffect(() => {
     const el = conversation.current; if (el) el.scrollTop = el.scrollHeight;
-  }, [project.id, project.turns, busy, steps]);
+  }, [project.id, project.turns, busy, steps, streamingText]);
   const emptyResearch = !inBuilder && project.turns.length === 0;
   const emptyBuilder = inBuilder && project.turns.length === 0;
   useEffect(() => {
@@ -306,15 +318,50 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     const linkedBuilder=builderContext&&(current.id==='builder:'+builderConversationId(builderContext.tab)||builderContext.tab.researchContext?.key===JSON.stringify([current.id,current.activeObjectId]));
     const id = crypto.randomUUID(), controller = new AbortController(), input = current.objects.find(o => o.id === current.activeObjectId)?.experiment ?? null;
     const keptSteps: AgentStep[] = [];
+    const turnStartedAt = Date.now();
     requestIds.current.set(current.id, id);
-    active.current.set(current.id, controller); setRunning(r => ({ ...r, [current.id]: [] })); setError(null);
+    active.current.set(current.id, controller);
+    setRunning(r => ({ ...r, [current.id]: [] }));
+    setRunningSince(r => ({ ...r, [current.id]: turnStartedAt }));
+    setStreamingAnswers(s => ({ ...s, [current.id]: '' }));
+    setError(null);
     controller.signal.addEventListener('abort', () => { void cancelResearchAgent(id); }, { once: true });
     // Backend safety cap is 30 minutes. Stay a few minutes longer so the server can finish first.
     const timer = setTimeout(() => controller.abort('timeout'), 1980000);
     const turn: ResearchTurn = { id, prompt: message, createdAt: new Date().toISOString(), reply: null, error: null };
     changeProject(current.id, p => ({ ...p, draft: '', turns: [...p.turns, turn] }));
     try {
-      const reply = await requestResearchAgent(id, input, message, researchHistory(current.turns), controller.signal, step => { keptSteps.push(step); if (!controller.signal.aborted) setRunning(r => current.id in r ? { ...r, [current.id]: [...r[current.id], step] } : r); }, current.objects, current.activeObjectId, current.titleMode === 'pending', current.turns, {workspace:inBuilder?'builder':'research',projectId:current.id,tabId:linkedBuilder?builderContext?.tab.id:null,selectedElementId:linkedBuilder?builderContext?.selectedElementId:null});
+      const reply = await requestResearchAgent(
+        id,
+        input,
+        message,
+        researchHistory(current.turns),
+        controller.signal,
+        step => {
+          keptSteps.push(step);
+          if (!controller.signal.aborted) {
+            setRunning(r => current.id in r ? { ...r, [current.id]: appendProgressStep(r[current.id], step) } : r);
+          }
+        },
+        current.objects,
+        current.activeObjectId,
+        current.titleMode === 'pending',
+        current.turns,
+        { workspace: inBuilder ? 'builder' : 'research', projectId: current.id, tabId: linkedBuilder ? builderContext?.tab.id : null, selectedElementId: linkedBuilder ? builderContext?.selectedElementId : null },
+        delta => {
+          if (!controller.signal.aborted) {
+            setStreamingAnswers(s => {
+              const prev = s[current.id] ?? '';
+              return prev.length > 14000 ? s : { ...s, [current.id]: (prev + delta).slice(0, 14000) };
+            });
+          }
+        },
+        () => {
+          if (!controller.signal.aborted) {
+            setStreamingAnswers(s => s[current.id] ? { ...s, [current.id]: '' } : s);
+          }
+        },
+      );
       if (controller.signal.aborted) throw new Error('请求已停止。');
       let applied=false;
       const edit=reply.apparatusEdits?.at(-1);
@@ -338,18 +385,20 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
         if(context&&current.id==='builder:'+builderConversationId(context.tab)&&input&&builtExperiment&&reply.editsApplyAllowed!==false&&context.apply(builtExperiment,input)){buildApplied=true;context.bind(JSON.stringify([current.id,build.objectId]),builtExperiment);reply.answer+='\n\n（新装置已载入当前光路，尚未保存装置存档。）';}
         else reply.answer+='\n\n（当前光路已变化，新装置未载入；已作为候选装置保留。）';
       }
+      const durationMs = Math.max(0, Date.now() - turnStartedAt);
+      const timeline = buildCompletedTimeline(keptSteps, reply.trace);
       changeProject(current.id, p => {
         const retained=applyResearchTitle(retainResearchBuilds(p,reply,new Date().toISOString()),reply.researchTitle);
         if(build&&inBuilder&&current.id.startsWith('builder:')&&!buildApplied)retained.activeObjectId=p.activeObjectId;
         const next=edit&&applied?updateConversationObject(retained,edit.objectId,edit.reply.experiment):retained;
-        return {...next,turns:p.turns.map(t=>t.id===id?{...t,reply}:t)};
+        return {...next,turns:p.turns.map(t=>t.id===id?{...t,reply,durationMs,...(timeline.length?{steps:timeline}:{})}:t)};
       });
     } catch (reason) {
       if (controller.signal.reason === 'unmount' || controller.signal.reason === 'cancel' && active.current.get(current.id) !== controller) return;
       const failure = controller.signal.aborted ? controller.signal.reason === 'timeout' ? '模型长时间无响应，已停止。' : '已停止' : assistantErrorMessage(reason);
-      const steps = (failure.startsWith('已停止') ? keptSteps.filter(step => !step.summary.startsWith('正在') && !step.name.startsWith('phase_') && step.name !== 'builder_start') : keptSteps).slice(-40);
+      const steps = (failure.startsWith('已停止') ? completedProgressSteps(keptSteps) : keptSteps).slice(-40);
       changeProject(current.id, p => ({ ...p, draft: p.draft || message, turns: p.turns.map(t => t.id === id ? { ...t, error: failure, steps } : t) }));
-    } finally { clearTimeout(timer); requestIds.current.delete(current.id); if (active.current.get(current.id) === controller) { active.current.delete(current.id); setRunning(r => { const next = { ...r }; delete next[current.id]; return next; }); } }
+    } finally { clearTimeout(timer); requestIds.current.delete(current.id); if (active.current.get(current.id) === controller) { active.current.delete(current.id); setRunning(r => { const next = { ...r }; delete next[current.id]; return next; }); setRunningSince(r => { const next = { ...r }; delete next[current.id]; return next; }); setStreamingAnswers(s => { const next = { ...s }; delete next[current.id]; return next; }); } }
   }
   function continueResearch(turn: ResearchTurn) {
     const done = (turn.steps ?? turn.reply?.trace ?? []).map(step => step.summary).filter(Boolean).slice(-12).join('；');
@@ -499,7 +548,12 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       <div className="rw-conversation" ref={conversation} data-navigation-scroll="research-conversation" role="log" aria-label="探究对话" aria-live="polite">
         {inBuilder&&(binding?.missing||binding?.ambiguous)?null:!project.turns.length ? <div className="rw-empty-head"><Sparkles size={inBuilder ? 18 : 30}/><h1>用实验，看懂光学</h1></div> : project.turns.map(turn => {
           const turnRecords = records.filter(record => record.requestId === turn.id);
-          return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span className="sr-only">你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><span className="sr-only">光学实验探究助手</span><AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.reply.answer.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.error.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending"><LoaderCircle size={16}/><span>{pendingLabel}</span></div>}</article>;
+          const summarySteps = turn.steps?.length ? turn.steps : (turn.reply ? completedProgressSteps(turn.reply.trace) : []);
+          const showThinkingSummary = summarySteps.length > 0 || turn.durationMs !== undefined;
+          const summaryHeadline = turn.durationMs !== undefined
+            ? `已完成，${formatChineseDuration(turn.durationMs)}`
+            : `已完成 · ${summarySteps.length} 步过程`;
+          return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span className="sr-only">你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><span className="sr-only">光学实验探究助手</span>{showThinkingSummary && (summarySteps.length > 0 ? <details className="rw-thinking-summary"><summary><span>{summaryHeadline}</span><ChevronDown size={14}/></summary><ul>{summarySteps.map((step, index) => <li key={index} className={step.status === 'error' ? 'has-error' : ''}><span>{step.status === 'ok' ? '✓' : '○'}</span><span>{step.summary}</span></li>)}</ul></details> : <div className="rw-thinking-summary rw-thinking-summary-static"><span>{summaryHeadline}</span></div>)}<AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.reply.answer.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.error.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending" role="status"><div className="rw-pending-head"><LoaderCircle size={16}/><span>{progressView.currentSummary}</span>{(progressView.completed.length > 0 || elapsedText) && <small className="rw-pending-meta">{progressView.completed.length > 0 ? `已完成 ${progressView.completed.length} 步 · ` : ''}{elapsedText}</small>}</div>{progressView.completed.length > 0 && <details className="rw-live-steps"><summary>查看已执行步骤（{progressView.completed.length}）</summary><ul>{progressView.completed.map((step, index) => <li key={index} className={step.status === 'error' ? 'has-error' : ''}><span>{step.status === 'ok' ? '✓' : '○'}</span><span>{step.summary}</span></li>)}</ul></details>}{streamingText && <div className="rw-streaming-answer"><AssistantAnswer text={streamingText}/></div>}</div>}</article>;
         })}
       </div>
       <div className="rw-composer-area">
