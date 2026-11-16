@@ -5,9 +5,9 @@ import { formatNumber } from './formatNumber';
 import { SCENE_DEFINITIONS, numberText } from './sceneRuntime';
 
 export const RESEARCH_METRIC_METHODS = {
-  gaussianRadiusMm: '高斯半径由理想高斯光束传播公式与薄透镜变换计算，是 1/e² 光强半径，不是光线采样估计。',
-  footprintRadiusMm: '几何覆盖半径来自有限条几何光线的落点范围，受光线数量和采样方式影响，不等于高斯光斑半径。',
-  sampledPowerMw: '到屏功率是等权几何光线的功率合计，属于有限光线采样近似，不是精确高斯光强积分或实测功率。',
+  gaussianRadiusMm: '理想基模高斯光束（M² = 1，1/e² 光强半径）经近轴薄透镜传播，未计口径硬边衍射与球差。',
+  footprintRadiusMm: '几何光学近轴追迹，忽略波动衍射，仅统计光束边界光线在屏上的落点包络半径。',
+  sampledPowerMw: '几何光线均匀分束能量近似，未计干涉叠加与连续光强积分。',
 };
 
 export function comparisonRange(c: SpatialComparison): string {

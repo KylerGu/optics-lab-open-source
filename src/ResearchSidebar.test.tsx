@@ -30,10 +30,26 @@ test('plan presents each task once with a direct expansion and preserves evidenc
   assert.equal(JSON.stringify(plan), before);
 });
 
-test('record list uses only the title, while the complete record is retained for opening', () => {
+test('record list shows type badge, title, and concise numeric summary without raw metadata boilerplate', () => {
   const before = JSON.stringify(artifact);
   const html = renderToStaticMarkup(<ResearchRecordList records={groupResearchArtifacts([artifact])} onSelect={() => {}}/>);
   assert.match(html, /已有装置 · 参数比较/);
+  assert.match(html, /rw-record-badge">扫描/);
   assert.doesNotMatch(html, /2026|计算条件|查看完整参数与结果|扫描点|<small/);
+
+  const populated: ResearchArtifact = {
+    ...artifact,
+    data: {
+      ...artifact.data,
+      rows: [
+        { value: 200, screens: [{ elementId: 's', name: '探测屏', hits: 9, sampledPowerFraction: 1, sampledPowerMw: 1, centroid: null, footprintRadiusMm: 0.25, gaussianRadiusMm: 0.25356 }], warnings: [], error: null },
+        { value: 250, screens: [{ elementId: 's', name: '探测屏', hits: 9, sampledPowerFraction: 1, sampledPowerMw: 1, centroid: null, footprintRadiusMm: 0.04, gaussianRadiusMm: 0.033868 }], warnings: [], error: null },
+        { value: 450, screens: [{ elementId: 's', name: '探测屏', hits: 9, sampledPowerFraction: 1, sampledPowerMw: 1, centroid: null, footprintRadiusMm: 1, gaussianRadiusMm: 1 }], warnings: [], error: null },
+      ],
+    } as Extract<ResearchArtifact, { kind: 'comparison' }>['data'],
+  };
+  const summaryHtml = renderToStaticMarkup(<ResearchRecordList records={groupResearchArtifacts([populated])} onSelect={() => {}} selectedRecordId="research-result-request"/>);
+  assert.match(summaryHtml, /最小光斑 33\.9 μm/);
+  assert.match(summaryHtml, /is-selected/);
   assert.equal(JSON.stringify(artifact), before);
 });

@@ -12,6 +12,7 @@ import { calculatorValues, FORMULA_QUANTITIES, QUANTITY_INFO, solveForQuantity, 
 import { FORMULA_FAVORITES_CATEGORY, useFormulaFavorites } from './formulaFavorites';
 import FormulaNumberInput from './FormulaNumberInput';
 import { formatFormulaNumber } from './formulaNumbers';
+import type { FormulaPresetRequest } from './researchFormulaLinks';
 
 function FavoriteButton({ title, saved, onToggle }: { title: string; saved: boolean; onToggle: () => void }) {
   const label = `${saved ? '取消收藏' : '收藏'}${title}`;
@@ -139,10 +140,11 @@ export function FormulaSheet({ initialId, values, onClose, onSelect }: { initial
   </dialog>;
 }
 
-export default function FormulaLibrary({ onOpenGaussian, route, onNavigate, onBack }: { onOpenGaussian: () => void; route: PageRoute; onNavigate: (route: PageRoute, replace?: boolean) => void; onBack: (route: PageRoute) => void }) {
+export default function FormulaLibrary({ onOpenGaussian, route, onNavigate, onBack, preset }: { onOpenGaussian: () => void; route: PageRoute; onNavigate: (route: PageRoute, replace?: boolean) => void; onBack: (route: PageRoute) => void; preset?: FormulaPresetRequest | null }) {
   const { favorites, toggleFavorite, saveFailed } = useFormulaFavorites();
   const selected = route.formula ?? route.knowledge ?? null;
   const generic = OPTICS_FORMULAS.find(f=>f.id===selected);
+  const activePreset = preset && ((preset.formulaId && preset.formulaId === selected) || (preset.knowledgeId && preset.knowledgeId === selected)) ? preset : null;
   const topics = [...FORMULA_TOPICS, ...OPTICS_FORMULAS.map(f=>({...f,symbol:f.fields.map(p=>p.key).join(' ')}))];
   const requestedCategory = route.category ?? 'all';
   const categoryId = requestedCategory === FORMULA_FAVORITES_CATEGORY || topics.some(topic => inOpticsCategory(topic.categoryId, requestedCategory)) ? requestedCategory : 'all';
@@ -159,7 +161,7 @@ export default function FormulaLibrary({ onOpenGaussian, route, onNavigate, onBa
     <header className="fk-library-heading"><div><h1>公式库</h1><p className="ui-page-description">从公式理解原理，再到场景中验证。</p></div>{!selected && <label className="fk-search"><Search size={18} /><input aria-label="搜索公式" value={query} placeholder="搜索公式或物理量" onChange={e => setQuery(e.target.value)} /></label>}</header>
     {saveFailed && <p className="fk-save-warning" role="status">收藏暂时无法保存，刷新后可能丢失。</p>}
     <div className="fk-library-layout"><OpticsDirectory kind="formulas" selected={categoryId} onSelect={chooseCategory} count={count} />
-    <section className="fk-library-content" aria-label={selected ? '公式知识详情' : '分类公式列表'}>{selected ? <><div className="fk-library-breadcrumb"><button className="text-button" onClick={() => setSelected(null)}><ArrowLeft size={16} />返回公式列表</button><button className="outline-button" onClick={()=>generic ? onNavigate({area:'scene',sceneId:generic.sceneId}) : onOpenGaussian()}>打开相关场景<ArrowRight size={15} /></button></div><div className="fk-detail-card">{generic ? <OpticsKnowledgeCard key={selected} id={selected}/> : <FormulaKnowledgeCard key={selected} id={selected as FormulaId}/>}<FavoriteButton title={topics.find(topic => topic.id === selected)!.title} saved={favorites.includes(selected)} onToggle={() => toggleFavorite(selected)} /></div></> : <>
+    <section className="fk-library-content" aria-label={selected ? '公式知识详情' : '分类公式列表'}>{selected ? <><div className="fk-library-breadcrumb"><button className="text-button" onClick={() => setSelected(null)}><ArrowLeft size={16} />返回公式列表</button><button className="outline-button" onClick={()=>generic ? onNavigate({area:'scene',sceneId:generic.sceneId}) : onOpenGaussian()}>打开相关场景<ArrowRight size={15} /></button></div><div className="fk-detail-card">{generic ? <OpticsKnowledgeCard key={selected + (activePreset ? ':' + activePreset.id : '')} id={selected} state={activePreset?.state} result={activePreset?.result} values={activePreset?.opticsValues}/> : <FormulaKnowledgeCard key={selected + (activePreset ? ':' + activePreset.id : '')} id={selected as FormulaId} values={activePreset?.values ? { ...DEFAULT_FORMULA_VALUES, ...activePreset.values } : undefined} fromScene={!!activePreset?.values}/>}<FavoriteButton title={topics.find(topic => topic.id === selected)!.title} saved={favorites.includes(selected)} onToggle={() => toggleFavorite(selected)} /></div></> : <>
       <div className="fk-library-category"><span>{categoryTitle}</span><small>{shown.length} 张{categoryId === FORMULA_FAVORITES_CATEGORY ? '已收藏' : ''}公式卡片</small></div>
       <div className="fk-library-grid">{shown.map(topic => <article className="fk-library-item" key={topic.id} aria-label={`${topic.title}公式卡片`}>
         <a className="fk-card-link" href={routeHash(topicRoute(topic.id))} aria-label={`查看${topic.title}知识卡`} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); setSelected(topic.id); } }}>

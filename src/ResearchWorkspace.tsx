@@ -1,16 +1,18 @@
 import { builderConversationId } from './builderTabs';
 import { createPortal } from 'react-dom';
 import { builderConversation, promoteBuilderConversation, sameApparatus, updateConversationObject, type BuilderConversationContext } from './researchConversation';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { useOpenModelSettings } from './ModelSettingsDialog';
 import { listenModelSettings, modelHeaders } from './modelSettings';
 import { ArrowUp, ArrowUpRight, BarChart3, Check, ChevronDown, ChevronRight, CircleHelp, FileText, FlaskConical, FolderOpen, LoaderCircle, MessageSquare, MoreHorizontal, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Plus, RefreshCw, Sparkles, X } from 'lucide-react';
 import AssistantAnswer from './AssistantAnswer';
 import ResearchVisualActions from './ResearchVisualActions';
 import type { ResearchVisualGuide } from './researchVisual';
+import type { FormulaPresetRequest } from './researchFormulaLinks';
 import { useLocalDebug } from './useLocalDebug';
 import ResearchRecordResults from './ResearchRecordResults';
 import { collectResearchArtifacts, groupResearchArtifacts } from './researchResultRecords';
+import { shortRecordTitle, summarizeRecord } from './researchUnits';
 import ResearchObjectPicker, { ResearchObjectUpdate } from './ResearchObjectPicker';
 import type { SpatialExperiment } from './builderModel';
 import { MAX_RESEARCH_OBJECTS, SOURCE_LABELS, attachResearchObject, importedObjectChoice, readResearchObjectSources, refreshedResearchObject, type ObjectChoice, type ResearchObject } from './researchObjects';
@@ -27,7 +29,7 @@ import { findResearchArchive, unlinkResearchStorage } from './researchBuilderLin
 import { researchBuilderKey, researchKeyMatchesProject, type ResearchBuilderOrigin } from './researchBuilderIdentity';
 import { readSavedSpatial } from './spatialStorage';
 
-interface Props { builderContext?: BuilderConversationContext | null; inBuilder?: boolean; visible?: boolean; onOpenBuilder: (experiment?: SpatialExperiment, origin?: ResearchBuilderOrigin, guide?: ResearchVisualGuide) => void }
+interface Props { builderContext?: BuilderConversationContext | null; inBuilder?: boolean; visible?: boolean; onOpenBuilder: (experiment?: SpatialExperiment, origin?: ResearchBuilderOrigin, guide?: ResearchVisualGuide) => void; onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void }
 const STARTERS = [
   { title: '看懂一个现象', text: '为什么激光经过透镜后，光斑不是一直变小？请用一个简单的仿真实验帮我直观理解。', icon: CircleHelp },
   { title: '改变参数看看', text: '光束初始束腰越小，传播时扩展得越慢吗？请选择示范条件，比较两组结果，告诉我该观察哪里。', icon: BarChart3 },
@@ -35,7 +37,7 @@ const STARTERS = [
 ];
 
 
-export default function ResearchWorkspace({ onOpenBuilder, visible = true, builderContext = null, inBuilder = false }: Props) {
+export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, visible = true, builderContext = null, inBuilder = false }: Props) {
   const layout = useResearchLayout();
   const [initial] = useState(readResearchStorage);
   const [savedApparatus, setSavedApparatus] = useState(() => { try { return readSavedSpatial(); } catch { return []; } });
@@ -83,7 +85,16 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   const [update, setUpdate] = useState<{ original: ResearchObject; next: ResearchObject } | null>(null);
   const file = useRef<HTMLInputElement>(null), fileObjectId = useRef<string | null>(null);
   const [artifactId, setArtifactId] = useState<string | null>(null);
-  const resultDialog = useRef<HTMLDialogElement>(null), deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const [drawerWidth, setDrawerWidth] = useState<number>(() => {
+    try {
+      const saved = Number(localStorage.getItem('optics-research-drawer-width-v1'));
+      return Number.isFinite(saved) ? Math.max(380, Math.min(920, saved)) : 560;
+    } catch {
+      return 560;
+    }
+  });
+  const drawerDrag = useRef<{ pointerId: number; x: number; width: number } | null>(null);
   const active = useRef(new Map<string, AbortController>()), requestIds = useRef(new Map<string, string>()), conversation = useRef<HTMLDivElement>(null), textarea = useRef<HTMLTextAreaElement>(null);
   const artifacts = useMemo(() => collectResearchArtifacts(project), [project]);
   const records = useMemo(() => groupResearchArtifacts(artifacts), [artifacts]);
@@ -102,7 +113,18 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   const planDialog = useRef<HTMLDialogElement>(null);
   const plan = currentResearchPlan(project.turns);
   const hasPlanProgress = !![...project.turns].reverse().find(t => t.reply?.plan.length)?.reply?.planProgress;
-  useEffect(()=>{setError(null);setArtifactId(null);setUpdate(null);setPickerOpen(false);resultDialog.current?.close();},[project.id,builderContext?.tab.id]);
+  useEffect(()=>{setError(null);setArtifactId(null);setUpdate(null);setPickerOpen(false);},[project.id,builderContext?.tab.id]);
+  useEffect(() => {
+    try { localStorage.setItem('optics-research-drawer-width-v1', String(drawerWidth)); } catch { /* Optional UI preference. */ }
+  }, [drawerWidth]);
+  useEffect(() => {
+    if (!artifactId) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setArtifactId(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [artifactId]);
 
   function changeProject(id: string, change: (p: ResearchProject) => ResearchProject) {
     const previous=latest.current.projects.find(p=>p.id===id)??(latest.current.project.id===id?latest.current.project:undefined);
@@ -171,7 +193,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
   useEffect(() => {
     if (visible) { try { setSavedApparatus(readSavedSpatial()); } catch { /* Keep the last readable list. */ } }
     else {
-      resultDialog.current?.close(); deleteDialog.current?.close(); planDialog.current?.close();
+      deleteDialog.current?.close(); planDialog.current?.close();
       setPickerOpen(false); setUpdate(null);
     }
   }, [visible]);
@@ -295,7 +317,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
       setUpdate({ original: object, next: { ...object, label: choice.label, experiment: choice.experiment!, snapshotAt: new Date().toISOString() } });
     } catch (reason) { setError(reason instanceof SyntaxError ? '文件不是有效的装置 JSON，请重新选择。' : reason instanceof Error ? reason.message : '文件读取失败。'); }
   }
-  function viewArtifact(id: string) { setArtifactId(records.find(record => record.id === id)?.primaryId ?? id); resultDialog.current?.showModal(); }
+  function viewArtifact(id: string) { setArtifactId(records.find(record => record.id === id)?.primaryId ?? id); }
   async function send(override?: string) {
     let current = latest.current.project;
     const message = (override ?? current?.draft ?? '').trim();
@@ -553,7 +575,7 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
           const summaryHeadline = turn.durationMs !== undefined
             ? `已完成，${formatChineseDuration(turn.durationMs)}`
             : `已完成 · ${summarySteps.length} 步过程`;
-          return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span className="sr-only">你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><span className="sr-only">光学实验探究助手</span>{showThinkingSummary && (summarySteps.length > 0 ? <details className="rw-thinking-summary"><summary><span>{summaryHeadline}</span><ChevronDown size={14}/></summary><ul>{summarySteps.map((step, index) => <li key={index} className={step.status === 'error' ? 'has-error' : ''}><span>{step.status === 'ok' ? '✓' : '○'}</span><span>{step.summary}</span></li>)}</ul></details> : <div className="rw-thinking-summary rw-thinking-summary-static"><span>{summaryHeadline}</span></div>)}<AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.reply.answer.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => <button key={a.id} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/>{a.title}<ArrowUpRight size={14}/></button>)}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.error.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending" role="status"><div className="rw-pending-head"><LoaderCircle size={16}/><span>{progressView.currentSummary}</span>{(progressView.completed.length > 0 || elapsedText) && <small className="rw-pending-meta">{progressView.completed.length > 0 ? `已完成 ${progressView.completed.length} 步 · ` : ''}{elapsedText}</small>}</div>{progressView.completed.length > 0 && <details className="rw-live-steps"><summary>查看已执行步骤（{progressView.completed.length}）</summary><ul>{progressView.completed.map((step, index) => <li key={index} className={step.status === 'error' ? 'has-error' : ''}><span>{step.status === 'ok' ? '✓' : '○'}</span><span>{step.summary}</span></li>)}</ul></details>}{streamingText && <div className="rw-streaming-answer"><AssistantAnswer text={streamingText}/></div>}</div>}</article>;
+          return <article key={turn.id} className="rw-turn"><div className="rw-user-message"><span className="sr-only">你</span><p>{turn.prompt}</p></div>{turn.reply ? <div className="rw-agent-message"><span className="sr-only">光学实验探究助手</span>{showThinkingSummary && (summarySteps.length > 0 ? <details className="rw-thinking-summary"><summary><span>{summaryHeadline}</span><ChevronDown size={14}/></summary><ul>{summarySteps.map((step, index) => <li key={index} className={step.status === 'error' ? 'has-error' : ''}><span>{step.status === 'ok' ? '✓' : '○'}</span><span>{step.summary}</span></li>)}</ul></details> : <div className="rw-thinking-summary rw-thinking-summary-static"><span>{summaryHeadline}</span></div>)}<AssistantAnswer text={turn.reply.answer}/>{canContinue(turn.reply.answer)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.reply.answer.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<ResearchVisualActions reply={turn.reply} objects={project.objects} disabled={busy} onOpen={openObject}/>{turnRecords.length > 0 && <div className="rw-turn-artifacts">{turnRecords.map(a => { const { badge, summary } = summarizeRecord(a); const title = shortRecordTitle(a); return <button key={a.id} type="button" title={a.title} onClick={() => viewArtifact(a.id)}><BarChart3 size={15}/><span className="rw-turn-artifact-label"><em className="rw-turn-artifact-badge">{badge}</em><strong>{title}</strong>{summary && <small>{summary}</small>}</span><ArrowUpRight size={14}/></button>; })}</div>}</div> : turn.error ? <div className="rw-turn-error" role="alert"><p>{turn.error}</p>{!!turn.steps?.length&&<ul>{turn.steps.map((step,index)=><li key={index}>{step.status==='ok'?'✓':'○'} {step.summary}</li>)}</ul>}{canContinue(turn.error)&&<button className="rw-text-button" disabled={busy||!configured} onClick={()=>void send(continueResearch(turn))}>继续</button>}{turn.error.startsWith('已停止')&&<button className="rw-text-button" disabled={busy} onClick={()=>discardTurn(turn.id)}>丢弃</button>}<button className="rw-text-button" disabled={busy || !configured} onClick={() => void send(turn.prompt)}><RefreshCw size={14}/>重试这个问题</button></div> : <div className="rw-pending" role="status"><div className="rw-pending-head"><LoaderCircle size={16}/><span>{progressView.currentSummary}</span>{(progressView.completed.length > 0 || elapsedText) && <small className="rw-pending-meta">{progressView.completed.length > 0 ? `已完成 ${progressView.completed.length} 步 · ` : ''}{elapsedText}</small>}</div>{progressView.completed.length > 0 && <details className="rw-live-steps"><summary>查看已执行步骤（{progressView.completed.length}）</summary><ul>{progressView.completed.map((step, index) => <li key={index} className={step.status === 'error' ? 'has-error' : ''}><span>{step.status === 'ok' ? '✓' : '○'}</span><span>{step.summary}</span></li>)}</ul></details>}{streamingText && <div className="rw-streaming-answer"><AssistantAnswer text={streamingText}/></div>}</div>}</article>;
         })}
       </div>
       <div className="rw-composer-area">
@@ -569,12 +591,61 @@ export default function ResearchWorkspace({ onOpenBuilder, visible = true, build
     <aside id="research-inspector" hidden={layout.rightHidden} className="rw-inspector" aria-label="装置与结果" data-navigation-scroll="research-results">
       <div className="rw-inspector-heading"><button type="button" className="rw-panel-toggle" aria-label="收起装置与结果" title="收起装置与结果" aria-expanded aria-controls="research-inspector" onClick={() => layout.toggle('right')}><PanelRightClose size={18}/></button><FileText size={18}/><h2>装置与结果</h2></div>
       <section className="rw-inspector-section"><div className="rw-section-heading"><h3>实验装置 {project.objects.length > 0 && `· ${project.objects.length}`}</h3><button className="rw-icon-button" aria-label="添加探究对象" disabled={busy} onClick={chooseDevice}><Plus size={15}/></button></div>{project.objects.length ? <><div className="rw-attached-objects">{project.objects.map(object => <div key={object.id} className={`rw-attached-object ${object.id === project.activeObjectId ? 'is-current' : ''}`}><div className="rw-object-meta"><span>{SOURCE_LABELS[object.source]}</span><button className="rw-text-button" aria-pressed={object.id === project.activeObjectId} disabled={busy} onClick={() => changeProject(project.id, p => ({ ...p, activeObjectId: object.id }))}>{object.id === project.activeObjectId ? <><Check size={12}/>当前装置</> : '设为当前'}</button></div><button className="rw-device-link" title={object.experiment.name} disabled={busy} onClick={() => openObject(object)}><Paperclip size={15}/><span>{object.experiment.name}</span></button><div className="rw-object-actions"><button type="button" className="rw-text-button" title={object.experiment.name} aria-label={`打开 ${object.experiment.name}`} disabled={busy} onClick={() => openObject(object)}><ArrowUpRight size={14}/></button>{(object.source !== 'generated' || linkedArchive(object)) && <button className="rw-text-button" disabled={busy} onClick={() => refreshObject(object)}><RefreshCw size={12}/>{object.source === 'file' && !linkedArchive(object) ? '重新导入参数' : '更新参数'}</button>}<button className="rw-text-button" aria-label={`移除探究对象 ${object.experiment.name}`} disabled={busy} onClick={() => removeObject(object.id)}><X size={12}/>移除</button></div>{object.source === 'file' && <small className="rw-object-time">{object.label}</small>}</div>)}</div></> : null}<button className="rw-button" disabled={busy} onClick={chooseDevice}><Plus size={14}/>选择装置</button></section>
-      {records.length > 0 && <section className="rw-inspector-section"><div className="rw-section-heading"><h3>实验记录</h3><span className="rw-record-count">{records.length}</span></div><ResearchRecordList records={records} onSelect={viewArtifact}/></section>}
+      {records.length > 0 && <section className="rw-inspector-section"><div className="rw-section-heading"><h3>实验记录</h3><span className="rw-record-count">{records.length}</span></div><ResearchRecordList records={records} selectedRecordId={selectedRecord?.id ?? null} onSelect={viewArtifact}/></section>}
     </aside>
     {pickerOpen && <ResearchObjectPicker objects={project.objects} onChoose={attachObjects} onClose={() => setPickerOpen(false)}/>}
     {update && <ResearchObjectUpdate original={update.original} next={update.next} onClose={() => setUpdate(null)} onUpdate={() => { changeProject(project.id, p => ({ ...p, objects: p.objects.map(o => o.id === update.original.id ? update.next : o) })); setUpdate(null); setError(null); }}/>}
     <input ref={file} type="file" accept=".json,application/json" hidden aria-label="重新导入探究对象参数" onChange={e => { const input = e.target.files?.[0]; if (input) void updateFile(input); e.target.value = ''; }}/>
-    <dialog ref={resultDialog} className="rw-dialog rw-result-dialog" aria-label="探究计算结果"><header><span>实验记录</span><button className="rw-icon-button" aria-label="关闭探究结果" onClick={() => resultDialog.current?.close()}><X size={20}/></button></header>{selectedRecord && selectedArtifact && <ResearchRecordResults record={selectedRecord} selectedArtifactId={selectedArtifact.id} onSelectArtifact={setArtifactId} onOpenBuilder={input => { resultDialog.current?.close(); onOpenBuilder(input); }}/>}</dialog>
+    {selectedRecord && selectedArtifact && (
+      <aside className="rw-record-drawer" role="region" aria-label="探究计算结果" style={{ width: `${drawerWidth}px` }}>
+        <div
+          className="rw-drawer-resizer"
+          role="separator"
+          aria-label="调整实验记录抽屉宽度"
+          aria-orientation="vertical"
+          aria-valuemin={380}
+          aria-valuemax={920}
+          aria-valuenow={drawerWidth}
+          tabIndex={0}
+          title="向左拖动加宽抽屉，双击恢复默认宽度"
+          onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
+            if (event.button !== 0 || drawerDrag.current) return;
+            event.preventDefault();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drawerDrag.current = { pointerId: event.pointerId, x: event.clientX, width: drawerWidth };
+          }}
+          onPointerMove={(event: ReactPointerEvent<HTMLDivElement>) => {
+            const drag = drawerDrag.current;
+            if (!drag || drag.pointerId !== event.pointerId) return;
+            const maxW = typeof window !== 'undefined' ? Math.min(920, Math.max(420, window.innerWidth - 300)) : 920;
+            const next = Math.round(Math.max(380, Math.min(maxW, drag.width + (drag.x - event.clientX))));
+            setDrawerWidth(next);
+          }}
+          onPointerUp={(event: ReactPointerEvent<HTMLDivElement>) => {
+            if (drawerDrag.current?.pointerId !== event.pointerId) return;
+            drawerDrag.current = null;
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={(event: ReactPointerEvent<HTMLDivElement>) => {
+            if (drawerDrag.current?.pointerId !== event.pointerId) return;
+            drawerDrag.current = null;
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onDoubleClick={() => setDrawerWidth(560)}
+          onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
+            if (event.key === 'ArrowLeft') { event.preventDefault(); setDrawerWidth(w => Math.min(920, w + 24)); }
+            if (event.key === 'ArrowRight') { event.preventDefault(); setDrawerWidth(w => Math.max(380, w - 24)); }
+          }}
+        />
+        <header className="rw-record-drawer-head">
+          <span>实验记录</span>
+          <button className="rw-icon-button" aria-label="关闭探究结果" onClick={() => setArtifactId(null)}><X size={18}/></button>
+        </header>
+        <div className="rw-record-drawer-body">
+          <ResearchRecordResults record={selectedRecord} selectedArtifactId={selectedArtifact.id} onSelectArtifact={setArtifactId} onOpenBuilder={input => { setArtifactId(null); onOpenBuilder(input); }} onOpenFormula={onOpenFormula}/>
+        </div>
+      </aside>
+    )}
     <dialog ref={planDialog} className="rw-dialog rw-plan-dialog" aria-labelledby="research-plan-title"><header><h2 id="research-plan-title">探究计划</h2><button className="rw-icon-button" aria-label="关闭探究计划" onClick={() => planDialog.current?.close()}><X size={20}/></button></header><ResearchPlanList plan={plan} hasProgress={hasPlanProgress} artifacts={artifacts} onSelect={id => { planDialog.current?.close(); viewArtifact(id); }}/></dialog>
     <dialog ref={deleteDialog} className="rw-dialog rw-delete-dialog" aria-labelledby="research-delete-title" onClose={() => setDeleteId(null)}><header><h2 id="research-delete-title">删除这项探究？</h2><button className="rw-icon-button" aria-label="关闭删除确认" onClick={() => deleteDialog.current?.close()}><X size={19}/></button></header><p>将移除“{deleteTarget?.title ?? project.title}”的对话和计算记录。关联的光路装置仍保留。</p><div className="rw-dialog-actions"><button className="rw-button" onClick={() => { if (deleteTarget) exportProject(deleteTarget, 'md'); }}>先下载笔记</button><button className="rw-button" onClick={() => deleteDialog.current?.close()}>取消</button><button className="rw-button rw-danger" onClick={deleteProject}>删除探究</button></div></dialog>
     {menuProject && createPortal(<div ref={menuRef} id="rw-row-menu" className="rw-row-menu" role="menu" aria-label={`探究操作：${menuProject.title}`} style={{ top: menuPos.top, left: menuPos.left }} onKeyDown={event => {

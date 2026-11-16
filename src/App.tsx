@@ -29,6 +29,7 @@ import ModelSettingsDialog, { ModelSettingsButton, ModelSettingsContext } from '
 import { BookOpen, Box, Check, FlaskConical, Focus, X } from 'lucide-react';
 import type { BuilderConversationContext } from './researchConversation';
 import type { ResearchBuilderCopy } from './researchBuilderLink';
+import type { FormulaPresetRequest } from './researchFormulaLinks';
 import { usePageNavigation } from './navigation';
 import { parseExperiment, type Experiment } from './model';
 import './teaching.css';
@@ -45,6 +46,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [sceneCopy, setSceneCopy] = useState<{id:string;experiment:Experiment}|null>(null);
   const [researchCopy, setResearchCopy] = useState<ResearchBuilderCopy|null>(null);
+  const [formulaPreset, setFormulaPreset] = useState<FormulaPresetRequest|null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const openModelSettings = useCallback(() => setSettingsOpen(true), []);
@@ -52,6 +54,11 @@ export default function App() {
   const openGaussian = () => {navigate({area:'gaussian'});setAssistantOpen(false);};
   const openBuilder = () => {navigate({area:'builder'});setAssistantOpen(false);};
   const openResearch = () => {navigate({area:'research'});setAssistantOpen(false);};
+  const openFormulaPreset = useCallback((preset: Omit<FormulaPresetRequest, 'id'>) => {
+    setFormulaPreset({ ...preset, id: crypto.randomUUID() });
+    setAssistantOpen(false);
+    navigate({ area: 'formulas', ...(preset.formulaId ? { formula: preset.formulaId } : {}), ...(preset.knowledgeId ? { knowledge: preset.knowledgeId } : {}) });
+  }, [navigate]);
   const copyScene = (next: Experiment) => {
     try {setSceneCopy({id:crypto.randomUUID(),experiment:parseExperiment(next)});openBuilder();}
     catch (error) {setToast(error instanceof Error ? error.message : '装置参数无效。');}
@@ -94,9 +101,9 @@ export default function App() {
       : sceneRoute.area === 'scene' && sceneRoute.sceneId === 'resonators-0' ? <ResonatorScene assistantOpen={assistantOpen} onCloseAssistant={() => setAssistantOpen(false)} onDirectory={() => backTo({area:'scenes'})}/>
       : sceneRoute.area === 'scene' && sceneRoute.sceneId === 'beam-transformation-1' ? <GaussianExpanderScene assistantOpen={assistantOpen} onCloseAssistant={() => setAssistantOpen(false)} onDirectory={() => backTo({area:'scenes'})} onExplore={copyScene}/>
       : sceneRoute.area === 'scene' && sceneRoute.sceneId ? <OpticsScene key={sceneRoute.sceneId} sceneId={sceneRoute.sceneId} onCopy={next=>{setResearchCopy({id:crypto.randomUUID(),experiment:next});openBuilder();}} assistantOpen={assistantOpen} onCloseAssistant={()=>setAssistantOpen(false)} onDirectory={()=>backTo({area:'scenes'})}/> : <CourseCenter route={sceneRoute} onNavigate={navigate} onOpenGaussian={openGaussian} />}</div></SceneAssistantControls.Provider>}
-    {formulaRoute && <div style={{display:surface === 'formulas' ? 'contents' : 'none'}}><FormulaLibrary route={formulaRoute} onNavigate={navigate} onBack={backTo} onOpenGaussian={openGaussian} /></div>}
+    {formulaRoute && <div style={{display:surface === 'formulas' ? 'contents' : 'none'}}><FormulaLibrary route={formulaRoute} preset={formulaPreset} onNavigate={navigate} onBack={backTo} onOpenGaussian={openGaussian} /></div>}
     {(builderOpened || route.area === 'builder') && <div style={{display:route.area === 'builder'?'contents':'none'}}><BuilderWorkspace visible={route.area === 'builder'} onConversation={setBuilderConversation} sceneCopy={sceneCopy} onCopyConsumed={()=>setSceneCopy(null)} researchCopy={researchCopy} onResearchCopyConsumed={()=>setResearchCopy(null)} onResearch={openResearch} onScenes={openDirectory}/></div>}
-    <div style={{display: route.area === 'research' ? 'contents' : 'none'}}><ResearchWorkspace builderContext={builderConversation} inBuilder={route.area === 'builder'} visible={route.area === 'research'} onOpenBuilder={(input,origin,guide)=>{if(input)setResearchCopy({id:crypto.randomUUID(),experiment:input,...(origin?{origin}:{}),...(guide?{guide}:{})});openBuilder();}}/></div>
+    <div style={{display: route.area === 'research' ? 'contents' : 'none'}}><ResearchWorkspace builderContext={builderConversation} inBuilder={route.area === 'builder'} visible={route.area === 'research'} onOpenFormula={openFormulaPreset} onOpenBuilder={(input,origin,guide)=>{if(input)setResearchCopy({id:crypto.randomUUID(),experiment:input,...(origin?{origin}:{}),...(guide?{guide}:{})});openBuilder();}}/></div>
     {toast && <div className="toast" role="status"><Check size={17}/><span>{toast}</span><button aria-label="关闭通知" onClick={()=>setToast(null)}><X size={14}/></button></div>}
   </div><ModelSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} /></ModelSettingsContext.Provider>;
 }

@@ -24,8 +24,8 @@ test('one research turn has one result entry while retaining every underlying re
   assert.deepEqual(grouped[0].artifacts, artifacts);
   assert.equal(JSON.stringify(artifacts), before);
   const html = render(artifacts);
-  assert.match(html, /基准读数/);
-  assert.match(html, /采样功率 \/ mW：5/);
+  assert.doesNotMatch(html, /基准读数/);
+  assert.match(html, /<td>5<\/td>/);
   assert.doesNotMatch(html, /aria-label="查看探究结果"/);
 });
 
@@ -46,13 +46,13 @@ test('a standalone simulation remains visible and a changed snapshot cannot be p
   assert.match(render([simulation(), changed]), /<option[^>]*>o · 仿真读数/);
 });
 
-test('model notes keep relevant limits and warnings visible while folding unrelated technical descriptions', () => {
-  const html = renderToStaticMarkup(<ResearchModelNotes data-detail="explanation" notes={['本次指标的计算限制']} warnings={['截光警告', '截光警告']} fullNotes={['其他器件模型说明', '全部计算定义']}/>);
-  assert.ok(html.indexOf('本次指标的计算限制') < html.indexOf('<details'));
-  assert.ok(html.indexOf('截光警告') < html.indexOf('<details'));
+test('model notes keep physical assumptions and deduplicated warnings directly readable without extra folding', () => {
+  const html = renderToStaticMarkup(<ResearchModelNotes data-detail="explanation" notes={['本次指标的物理假设']} warnings={['截光警告', '截光警告']} fullNotes={['附加假设说明']}/>);
+  assert.match(html, /物理假设/);
+  assert.match(html, /本次指标的物理假设/);
+  assert.match(html, /附加假设说明/);
   assert.equal((html.match(/截光警告/g) ?? []).length, 1);
-  assert.ok(html.indexOf('其他器件模型说明') > html.indexOf('<details'));
-  assert.doesNotMatch(html, /<details[^>]*\bopen[= >]/);
+  assert.doesNotMatch(html, /<details|完整计算说明/);
 });
 
 test('method metadata preserves partial coverage and rejects unsupported claims of full validation', () => {

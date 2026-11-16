@@ -2,6 +2,7 @@ import { ArrowUpRight, BarChart3, Check, ChevronRight } from 'lucide-react';
 import type { ResearchArtifact } from './ResearchResults';
 import type { ResearchEvidenceRef, ResearchPlanStep } from './researchPlan';
 import type { ResearchResultRecord } from './researchResultRecords';
+import { summarizeRecord } from './researchUnits';
 
 export function ResearchPlanList({ plan, hasProgress, artifacts, onSelect }: {
   plan: ResearchPlanStep[]; hasProgress: boolean; artifacts: ResearchArtifact[]; onSelect: (id: string) => void;
@@ -22,8 +23,24 @@ export function ResearchPlanList({ plan, hasProgress, artifacts, onSelect }: {
   })}</ol>;
 }
 
-export function ResearchRecordList({ records, onSelect }: { records: ResearchResultRecord[]; onSelect: (id: string) => void }) {
-  return <div className="rw-records">{[...records].reverse().map(record => <button key={record.id} title={record.title} onClick={() => onSelect(record.id)}>
-    <BarChart3 size={17}/><span><strong>{record.title}</strong></span><ChevronRight size={15}/>
-  </button>)}</div>;
+export function ResearchRecordList({ records, onSelect, selectedRecordId }: {
+  records: ResearchResultRecord[];
+  onSelect: (id: string) => void;
+  selectedRecordId?: string | null;
+}) {
+  return <div className="rw-records">{[...records].reverse().map(record => {
+    const { badge, summary } = summarizeRecord(record);
+    const active = selectedRecordId === record.id;
+    return <button key={record.id} className={`rw-record-card${active ? ' is-selected' : ''}`} title={record.title} aria-current={active ? 'true' : undefined} onClick={() => onSelect(record.id)}>
+      <BarChart3 size={17}/>
+      <span className="rw-record-body">
+        <span className="rw-record-top">
+          <em className="rw-record-badge">{badge}</em>
+          <strong>{record.title}</strong>
+        </span>
+        {summary && <span className="rw-record-summary-line">{summary}</span>}
+      </span>
+      <ChevronRight size={15}/>
+    </button>;
+  })}</div>;
 }

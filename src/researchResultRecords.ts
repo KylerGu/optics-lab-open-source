@@ -3,6 +3,7 @@ import type { ResearchArtifact } from './ResearchResults';
 import type { ResearchEvidenceRef } from './researchPlan';
 import { COMPARISON_LABELS } from './spatialAgent';
 import { SCENE_DEFINITIONS } from './sceneRuntime';
+import { formatCompact } from './researchUnits';
 
 export interface ResearchResultRecord {
   id: string;
@@ -61,4 +62,15 @@ export function collectResearchArtifacts(project: ResearchProject): ResearchArti
     }
   }
   return artifacts;
+}
+
+export function artifactOptionLabel(artifact: ResearchArtifact, siblings: readonly ResearchArtifact[]): string {
+  const duplicateTitle = siblings.filter(other => other.title === artifact.title).length > 1;
+  if (artifact.kind === 'comparison' && artifact.data.rows.length > 0 && duplicateTitle) {
+    const start = formatCompact(artifact.data.rows[0].value, 4);
+    const end = formatCompact(artifact.data.rows.at(-1)!.value, 4);
+    const field = COMPARISON_LABELS[artifact.data.field] ?? artifact.data.field;
+    return `${field}：${start} → ${end}（${artifact.data.rows.length} 点）`;
+  }
+  return artifact.title;
 }

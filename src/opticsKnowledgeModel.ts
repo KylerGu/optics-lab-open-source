@@ -16,7 +16,7 @@ import { waveSuperposition, type WaveParameters } from './waveSuperposition';
 import type { SceneResult, SceneState } from './sceneRuntime';
 export interface OpticsFormula {id:string;title:string;categoryId:string;latex:string;question:string;meaning:string;conditions:string;application:string;diagram:string;sceneId:string;reference?:string;targets?:string[];inputs?:Record<string,string[]>;fields:{key:string;label:string;symbol?:string;unit:string;min:number;max:number;default:number;options?:{value:number;label:string}[]}[]}
 export const OPTICS_FORMULAS=formulas as OpticsFormula[];
-export function opticsValues(formula:OpticsFormula,state?:SceneState,result?:SceneResult):Record<string,number>{
+export function opticsValues(formula:OpticsFormula,state?:SceneState,result?:{metrics:SceneResult['metrics']}):Record<string,number>{
   const values=Object.fromEntries(formula.fields.map(f=>[f.key,f.default]));
   if(!state)return values;
   const p=state.parameters;
