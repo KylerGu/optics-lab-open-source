@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ResearchPlanList, ResearchRecordList } from './ResearchSidebar';
 import type { ResearchPlanStep } from './researchPlan';
 import type { ResearchArtifact } from './ResearchResults';
-import { fromLegacy } from './builderModel';
+import { fromLegacy, spatialTemplate, type SpatialResult } from './builderModel';
 import { makeTemplate } from './model';
 import { groupResearchArtifacts } from './researchResultRecords';
 
@@ -87,4 +87,70 @@ test('multi-turn records on the same apparatus show turn number and distinct sca
   assert.match(html, /<strong>Z位置 200→450 mm<\/strong>/);
   assert.match(html, /<strong>Z位置 166\.4→250 mm<\/strong>/);
   assert.doesNotMatch(html, /3 点/);
+});
+
+test('record cards summarize multi-screen, imaging, power-meter, and wave power results cleanly', () => {
+  const imagingInput = spatialTemplate('imaging');
+  const obj = imagingInput.elements.find(e => e.kind === 'object')!;
+  const lens = imagingInput.elements.find(e => e.kind === 'lens')!;
+  const scr = imagingInput.elements.find(e => e.kind === 'screen')!;
+  obj.name = '测试样品 F（可沿光轴移动）';
+
+  const makeSim = (requestId: string, result: Partial<SpatialResult>, snap = fromLegacy(makeTemplate('focus'))): ResearchArtifact => ({
+    id: `sim-${requestId}`,
+    kind: 'simulation',
+    title: `${snap.name} · 仿真读数`,
+    createdAt: '2026-10-01T00:00:00Z',
+    input: snap,
+    reference: { requestId, objectId: 'object', kind: 'simulation', recordId: 'simulation' },
+    data: { revision: 0, inputSnapshot: snap, model: 'test', segments: [], beams: [], screens: [], warnings: [], assumptions: [], chiefHitIds: [], ...result },
+  });
+
+  const multiScreen = makeSim('m1', {
+    screens: [
+      { elementId: 's1', name: '透射屏（可沿光轴移动）', hits: 10, sampledPowerFraction: 0.5, sampledPowerMw: 5, centroid: null, footprintRadiusMm: 1, gaussianRadiusMm: null },
+      { elementId: 's2', name: '反射屏', hits: 10, sampledPowerFraction: 0.5, sampledPowerMw: 5, centroid: null, footprintRadiusMm: 2, gaussianRadiusMm: null },
+    ],
+  });
+  const powerMeter = makeSim('pm1', {
+    screens: [
+      { elementId: 'pm', name: '功率计', hits: 10, sampledPowerFraction: 0.5, sampledPowerMw: 4.2, centroid: null, footprintRadiusMm: null, gaussianRadiusMm: null, detectorKind: 'power-meter', readingMw: 4.2, overRange: false },
+    ],
+  });
+  const imagingSim = makeSim('img1', {
+    imaging: [{
+      objectId: obj.id,
+      objectPaths: [],
+      segments: [],
+      stages: [{ lensId: lens.id, kind: 'real', distanceMm: 200, magnification: -1, heightMm: -10, position: [400, 60, 0], paths: [], visible: true }],
+      observations: [{ elementId: scr.id, kind: 'screen', focused: true, defocusMm: 0, magnification: -1, angularMagnification: null, fieldDiameterMm: null, adapterMagnification: 1, widthMm: 60, heightMm: 60, hits: [] }],
+      warnings: [],
+    }],
+  }, imagingInput);
+
+  const powerScan: ResearchArtifact = {
+    ...artifact,
+    id: 'pwr-scan',
+    reference: { requestId: 'ps1', objectId: 'object', kind: 'comparison', recordId: 'scan' },
+    data: {
+      comparisonId: 'scan',
+      inputSnapshot: fromLegacy(makeTemplate('focus')),
+      elementId: 'pol',
+      field: 'rollDeg',
+      rows: [
+        { value: 0, screens: [{ elementId: 'pm', name: '功率计', hits: 10, sampledPowerFraction: 1, sampledPowerMw: 5, centroid: null, footprintRadiusMm: null, gaussianRadiusMm: null, detectorKind: 'power-meter', readingMw: 5 }], warnings: [], error: null },
+        { value: 90, screens: [{ elementId: 'pm', name: '功率计', hits: 0, sampledPowerFraction: 0, sampledPowerMw: 0, centroid: null, footprintRadiusMm: null, gaussianRadiusMm: null, detectorKind: 'power-meter', readingMw: 0 }], warnings: [], error: null },
+      ],
+    },
+  };
+
+  const records = groupResearchArtifacts([multiScreen, powerMeter, imagingSim, powerScan]);
+  const html = renderToStaticMarkup(<ResearchRecordList records={records} onSelect={() => {}}/>);
+  assert.match(html, /多屏仿真 · 透射屏 等 2 屏/);
+  assert.match(html, /透射屏 1 mm · 反射屏 2 mm/);
+  assert.match(html, /功率计 4\.2 mW/);
+  assert.match(html, /单点仿真 · 测试样品 F/);
+  assert.match(html, /已对焦 · 倍率 -1×/);
+  assert.match(html, /功率计 0 mW～5 mW（峰值 轴向转角 0）/);
+  assert.doesNotMatch(html, /最小功率/);
 });

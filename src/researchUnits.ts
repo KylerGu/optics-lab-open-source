@@ -231,12 +231,58 @@ export function recordSidebarTitle(record: ResearchResultRecord, showObjectPrefi
   }
   if (primary.kind === 'simulation' && primary.data.screens.length > 0) {
     const screenName = cleanElementDisplayName(primary.data.screens[0].name);
-    const base = `单点仿真 · ${screenName}`;
+    const base = primary.data.screens.length > 1 ? `多屏仿真 · ${screenName} 等 ${primary.data.screens.length} 屏` : `单点仿真 · ${screenName}`;
+    if (!showObjectPrefix) return base;
+    const prefix = record.title.split(' · ')[0];
+    return prefix && prefix !== base ? `${prefix} · ${base}` : base;
+  }
+  if (primary.kind === 'simulation' && primary.data.imaging?.length) {
+    const imgObjId = primary.data.imaging[0].objectId;
+    const objName = cleanElementDisplayName(primary.input.elements.find(e => e.id === imgObjId)?.name ?? '物体成像');
+    const base = `单点仿真 · ${objName}`;
     if (!showObjectPrefix) return base;
     const prefix = record.title.split(' · ')[0];
     return prefix && prefix !== base ? `${prefix} · ${base}` : base;
   }
   return showObjectPrefix ? record.title : shortRecordTitle(record);
+}
+
+type ScreenSummaryEntry = Extract<ResearchArtifact, { kind: 'simulation' }>['data']['screens'][number];
+
+function compactDetectorReading(screen: ScreenSummaryEntry): string {
+  if (screen.detectorKind === 'power-meter') {
+    if (screen.overRange) return '超量程';
+    return formatReadoutWithUnit(screen.readingMw ?? screen.sampledPowerMw, 'mW');
+  }
+  if (screen.gaussianRadiusMm !== null) return formatReadoutWithUnit(screen.gaussianRadiusMm, 'mm');
+  if (screen.hits === 0) return '未到达';
+  if (screen.footprintRadiusMm !== null) return formatReadoutWithUnit(screen.footprintRadiusMm, 'mm');
+  return formatReadoutWithUnit(screen.sampledPowerMw, 'mW');
+}
+
+function summarizeImagingResult(
+  imaging: NonNullable<Extract<ResearchArtifact, { kind: 'simulation' }>['data']['imaging']>[number],
+): string {
+  const obs = imaging.observations.find(o => o.kind !== 'eye');
+  if (obs) {
+    const status = obs.focused ? '已对焦' : '未对焦';
+    const mag = obs.magnification !== null ? ` · 倍率 ${formatCompact(obs.magnification, 3)}×` : '';
+    const defocus = !obs.focused && obs.defocusMm !== null ? ` · 离焦 ${formatReadoutWithUnit(obs.defocusMm, 'mm')}` : '';
+    return `${status}${mag}${defocus}`;
+  }
+  const eye = imaging.observations.find(o => o.kind === 'eye');
+  if (eye) {
+    return eye.angularMagnification !== null
+      ? `目视观察 · 角放大率 ${formatCompact(eye.angularMagnification, 3)}×`
+      : '目视观察';
+  }
+  const finalStage = imaging.stages.at(-1);
+  if (!finalStage) return '物体成像仿真';
+  if (finalStage.kind === 'infinity') return '像在无穷远';
+  const orientation = finalStage.magnification !== null && finalStage.magnification < 0 ? '倒立' : '正立';
+  const kind = finalStage.kind === 'real' ? '实像' : '虚像';
+  const dist = finalStage.distanceMm !== null ? ` · 像距 ${formatCompact(finalStage.distanceMm, 4)} mm` : '';
+  return `${orientation}${kind}${dist}`;
 }
 
 export function summarizeRecord(record: ResearchResultRecord): { badge: string; summary: string } {
@@ -247,31 +293,93 @@ export function summarizeRecord(record: ResearchResultRecord): { badge: string; 
   if (primary.kind === 'comparison') {
     const { data } = primary;
     if (!data.rows.length) return { badge, summary: '' };
+    const fieldLabel = (COMPARISON_LABELS[data.field] ?? data.field).replace(/（[^）]*）/, '');
     const screens = [...new Map(data.rows.flatMap(r => r.error ? [] : r.screens).map(s => [s.elementId, s])).values()];
     const screen = screens[0];
-    if (!screen) return { badge, summary: `${data.rows.length} 点扫描` };
+    if (!screen) {
+      const wavePoints = data.rows.flatMap(r => {
+        const coh = r.error ? null : (r.fourF ?? r.fourier);
+        return coh ? [{ x: r.value, y: clampZero(coh.capturedPowerMw) }] : [];
+      });
+      if (wavePoints.length) {
+        const minW = wavePoints.reduce((a, b) => (b.y < a.y ? b : a));
+        const maxW = wavePoints.reduce((a, b) => (b.y > a.y ? b : a));
+        return {
+          badge,
+          summary: maxW.y > minW.y
+            ? `到屏功率 ${formatReadoutWithUnit(minW.y, 'mW')}～${formatReadoutWithUnit(maxW.y, 'mW')}`
+            : `到屏功率 ${formatReadoutWithUnit(maxW.y, 'mW')}`,
+        };
+      }
+      return { badge, summary: `${data.rows.length} 点扫描` };
+    }
     const useGaussian = screens.some(s => s.gaussianRadiusMm !== null);
     const useFootprint = !useGaussian && screens.some(s => s.footprintRadiusMm !== null);
-    const metric = useGaussian ? 'gaussianRadiusMm' : useFootprint ? 'footprintRadiusMm' : 'sampledPowerMw';
+    const usePowerMeter = !useGaussian && !useFootprint && screens.some(s => s.detectorKind === 'power-meter' && s.readingMw != null);
+    const metric: 'gaussianRadiusMm' | 'footprintRadiusMm' | 'readingMw' | 'sampledPowerMw' =
+      useGaussian ? 'gaussianRadiusMm' : useFootprint ? 'footprintRadiusMm' : usePowerMeter ? 'readingMw' : 'sampledPowerMw';
     const valid = data.rows.flatMap(r => {
-      const value = r.error ? null : r.screens.find(s => s.elementId === screen.elementId)?.[metric];
-      return typeof value === 'number' && Number.isFinite(value) ? [{ x: r.value, y: clampZero(value) }] : [];
+      const target = r.error ? undefined : r.screens.find(s => s.elementId === screen.elementId);
+      const raw = target?.[metric];
+      return typeof raw === 'number' && Number.isFinite(raw) ? [{ x: r.value, y: clampZero(raw) }] : [];
     });
     if (!valid.length) return { badge, summary: `${data.rows.length} 点扫描` };
+    const screenSuffix = screens.length > 1 ? ` · 等 ${screens.length} 屏` : '';
+    if (metric === 'readingMw' || metric === 'sampledPowerMw') {
+      const minP = valid.reduce((a, b) => (b.y < a.y ? b : a));
+      const maxP = valid.reduce((a, b) => (b.y > a.y ? b : a));
+      const prefix = metric === 'readingMw' ? '功率计' : '功率';
+      const body = maxP.y - minP.y > 1e-6
+        ? `${prefix} ${formatReadoutWithUnit(minP.y, 'mW')}～${formatReadoutWithUnit(maxP.y, 'mW')}（峰值 ${fieldLabel} ${formatCompact(maxP.x, 4)}）`
+        : `${prefix} ${formatReadoutWithUnit(maxP.y, 'mW')}`;
+      return { badge, summary: `${body}${screenSuffix}` };
+    }
     const min = valid.reduce((a, b) => (b.y < a.y ? b : a));
-    const fieldLabel = (COMPARISON_LABELS[data.field] ?? data.field).replace(/（[^）]*）/, '');
-    const prefix = useGaussian ? '最小光斑' : useFootprint ? '最小覆盖' : '最小功率';
+    const prefix = useGaussian ? '最小光斑' : '最小覆盖';
     return {
       badge,
-      summary: `${prefix} ${formatReadoutWithUnit(min.y, metric === 'sampledPowerMw' ? 'mW' : 'mm')} (${fieldLabel} ${formatCompact(min.x, 4)})`,
+      summary: `${prefix} ${formatReadoutWithUnit(min.y, 'mm')} (${fieldLabel} ${formatCompact(min.x, 4)})${screenSuffix}`,
     };
   }
 
   if (primary.kind === 'simulation') {
-    const screen = primary.data.screens[0];
-    if (!screen) return { badge, summary: '' };
+    const coherent = primary.data.fourF ?? primary.data.fourier;
+    if (coherent) {
+      return { badge, summary: `到屏功率 ${formatReadoutWithUnit(coherent.capturedPowerMw, 'mW')}` };
+    }
+    const imaging = primary.data.imaging?.[0];
+    if (imaging && !primary.data.screens.length) {
+      return { badge, summary: summarizeImagingResult(imaging) };
+    }
+    const screens = primary.data.screens;
+    if (!screens.length) return { badge, summary: '' };
+    if (screens.length > 1) {
+      const pair = screens
+        .slice(0, 2)
+        .map(s => `${cleanElementDisplayName(s.name)} ${compactDetectorReading(s)}`)
+        .join(' · ');
+      return {
+        badge,
+        summary: screens.length > 2 ? `${pair} 等 ${screens.length} 屏` : pair,
+      };
+    }
+    const screen = screens[0];
+    if (screen.detectorKind === 'power-meter') {
+      return {
+        badge,
+        summary: screen.overRange
+          ? '功率计 超量程'
+          : `功率计 ${formatReadoutWithUnit(screen.readingMw ?? screen.sampledPowerMw, 'mW')}`,
+      };
+    }
     if (screen.gaussianRadiusMm !== null) {
       return { badge, summary: `高斯半径 ${formatReadoutWithUnit(screen.gaussianRadiusMm, 'mm')}` };
+    }
+    if (screen.hits === 0) {
+      return { badge, summary: `${cleanElementDisplayName(screen.name)} 未到达` };
+    }
+    if (screen.footprintRadiusMm !== null) {
+      return { badge, summary: `覆盖半径 ${formatReadoutWithUnit(screen.footprintRadiusMm, 'mm')}` };
     }
     return { badge, summary: `采样功率 ${formatReadoutWithUnit(screen.sampledPowerMw, 'mW')}` };
   }
