@@ -1,6 +1,7 @@
 import {cameraLayout,moveCameraPart,type CameraDragPart} from './spatialCamera';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
-import { Aperture, ArrowDownToLine, BarChart3, Box, Check, ChevronDown, Copy, Focus, FolderOpen, Grid3X3, Layers, Lightbulb, Maximize2, MousePointer2, Move3D, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, Rotate3D, RotateCcw, Save, ScanLine, Search, SlidersHorizontal, Sparkles, Sun, Trash2, Undo2, Upload, X } from 'lucide-react';
+import { Aperture, ArrowDownToLine, BarChart3, Box, Check, ChevronDown, Copy, Focus, FolderOpen, Grid3X3, Layers, Lightbulb, Maximize2, Moon, MousePointer2, Move3D, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, Rotate3D, RotateCcw, Save, ScanLine, Search, SlidersHorizontal, Sparkles, Sun, Trash2, Undo2, Upload, X } from 'lucide-react';
+import SpatialBeamProfilerHud from './SpatialBeamProfilerHud';
 import type { Experiment } from './model';
 import { DRAFT_KEY } from './model';
 import type { BuilderConversationContext } from './researchConversation';
@@ -71,14 +72,17 @@ function OpticalSettings({distant=false,probeAvailable,highlightField,element:e,
     </>}
   </div>;
   const changePeriod=(d:number)=>onUpdate({gratingPeriodUm:d,gratingSlitUm:Math.max(.01,Math.min(50,d,e.gratingSlitUm*d/e.gratingPeriodUm)),gratingWidthMm:Math.max(e.gratingWidthMm,2*d*.001)});
-  const gaussian=e.beamModel==='gaussian',divergence=sourceDivergenceMrad(e);
+  const gaussian=e.beamModel==='gaussian';
+  const minDiv=gaussian?Math.max(.01,Number((e.wavelengthNm*.001/(Math.PI*20)).toFixed(2))):0;
+  const maxDiv=gaussian?Number((e.wavelengthNm*.001/(Math.PI*.01)).toFixed(2)):100;
+  const divergence=gaussian?Math.max(minDiv,Math.min(maxDiv,Number(sourceDivergenceMrad(e).toFixed(2)))):Number(e.divergenceMrad.toFixed(1));
   if(isPhysicalLens(e.kind))return <LensSettings element={e} onUpdate={onUpdate} onEditing={onEditing} onDrag={onDrag} onSave={onSaveLens} onChoose={onChooseLens} wavelengths={sourceWavelengths} saved={myLenses}/>;
   return <div className="sb-optical-fields">{e.kind==='laser'?<>
     <label className="sb-beam-model">光束类型<select aria-label="光束类型" value={e.beamModel} onChange={event=>onUpdate({beamModel:event.target.value as 'parallel'|'gaussian'})}><option value="parallel">几何光束</option><option value="gaussian">高斯光束</option></select></label>
     <NumberInput {...common} label="发射功率" value={e.powerMw} unit="mW" min={0} max={1000} step={1} onChange={powerMw=>onUpdate({powerMw})}/>
     <NumberInput {...common} label="波长" value={e.wavelengthNm} unit="nm" min={380} max={1100} step={1} onChange={wavelengthNm=>onUpdate({wavelengthNm})}/>
-    <NumberInput {...common} label={gaussian?'束腰半径':'光束半径'} value={e.beamRadiusMm} unit="mm" min={.01} max={20} step={.01} sliderMax={5} onChange={beamRadiusMm=>onUpdate({beamRadiusMm})}/>
-    <NumberInput {...common} label="发散半角" value={divergence} unit="mrad" min={gaussian?e.wavelengthNm*.001/(Math.PI*20):0} max={gaussian?e.wavelengthNm*.001/(Math.PI*.01):100} step={gaussian?.0001:.1} onChange={value=>onUpdate(gaussian?{beamRadiusMm:Math.min(20,Math.max(.01,e.wavelengthNm*.001/(Math.PI*value)))}:{divergenceMrad:value})}/>
+    <NumberInput {...common} label={gaussian?'束腰半径':'光束半径'} value={Number(e.beamRadiusMm.toFixed(2))} unit="mm" min={.01} max={20} step={.01} precision={2} sliderMax={5} onChange={beamRadiusMm=>onUpdate({beamRadiusMm})}/>
+    <NumberInput {...common} label="发散半角" value={divergence} unit="mrad" min={minDiv} max={maxDiv} step={gaussian?.01:.1} precision={gaussian?2:1} sliderMax={gaussian?Math.min(maxDiv,15):50} onChange={value=>onUpdate(gaussian?{beamRadiusMm:Math.min(20,Math.max(.01,e.wavelengthNm*.001/(Math.PI*Math.max(.01,value))))}:{divergenceMrad:Number(value.toFixed(1))})}/>
     {gaussian&&<><NumberInput {...common} label="束腰距光源" value={e.waistOffsetMm} unit="mm" min={-2000} max={2000} step={.1} onChange={waistOffsetMm=>onUpdate({waistOffsetMm})}/><p className="sb-parameter-hint">正值沿出射方向 · 束腰半径与发散角联动</p></>}
     <NumberInput {...common} label="光线数量" value={e.rayCount} unit="条" min={1} max={201} step={1} onChange={rayCount=>onUpdate({rayCount})}/>
     <label className="sb-beam-model">偏振状态<select aria-label="偏振状态" value={e.polarization} onChange={event=>onUpdate({polarization:event.target.value as 'linear'|'unpolarized'})}><option value="linear">线偏振</option><option value="unpolarized">未偏振</option></select></label>
@@ -147,7 +151,8 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   const rendered=renderedTabs[workspace.activeId]??false;
   const setRendered=(value:boolean)=>{const id=workspaceRef.current.activeId;setRenderedTabs(current=>({...current,[id]:value}));};
   const [view,setView]=useState<SpatialView>('perspective'),[reset,setReset]=useState(0),[tool,setTool]=useState<'translate'|'rotate'>('translate');
-  const [manualEditing,setEditing]=useState(false),[showGrid,setShowGrid]=useState(true),[showBeam,setShowBeam]=useState(true),[run,setRun]=useState(initial.experiment.elements.some(e=>e.kind==='laser'||e.kind==='object')),[resultsOpen,setResultsOpen]=useState(false),[assistantOpen,setAssistantOpen]=useState(false);
+  const [manualEditing,setEditing]=useState(false),[showGrid,setShowGrid]=useState(true),[showBeam,setShowBeam]=useState(true),[darkroom,setDarkroom]=useState<boolean>(()=>{try{const v=localStorage.getItem('optics-builder-darkroom-v1');return v===null?true:v==='true';}catch{return true;}}),[run,setRun]=useState(initial.experiment.elements.some(e=>e.kind==='laser'||e.kind==='object')),[resultsOpen,setResultsOpen]=useState(false),[assistantOpen,setAssistantOpen]=useState(false);
+  useEffect(()=>{try{localStorage.setItem('optics-builder-darkroom-v1',String(darkroom));}catch{}},[darkroom]);
   const [resultsWidth,setResultsWidth]=useState<number>(()=>{try{const w=Number(localStorage.getItem('optics-builder-results-width-v1'));return Number.isFinite(w)?Math.max(320,Math.min(860,w)):440;}catch{return 440;}});
   const resultsDrag=useRef<{pointerId:number;x:number;width:number}|null>(null);
   useEffect(()=>{try{localStorage.setItem('optics-builder-results-width-v1',String(resultsWidth));}catch{/* optional */}},[resultsWidth]);
@@ -436,14 +441,15 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
             </div>
           </div>;})()}
         <div className="sb-stage-canvas-area">
-        <div ref={viewport} className={`sb-viewport ${fullscreen?'sb-viewport-fullscreen':''}`}>
-          <SpatialBench visible={visible} experiment={benchExperiment} selectedId={selectedId} rendered={rendered} result={result} view={view} reset={reset} tool={tool} showGrid={showGrid} showBeam={showBeam} axes={axes} showAxes={axisHelp&&!rendered&&!!selected} snapEnabled={snapEnabled} onSelect={setSelectedId} onEditing={setEditing} onTransform={update} onFocus={focus}/>
+        <div ref={viewport} className={`sb-viewport ${fullscreen?'sb-viewport-fullscreen':''} ${darkroom?'is-darkroom':''}`}>
+          <SpatialBench visible={visible} experiment={benchExperiment} selectedId={selectedId} rendered={rendered} result={result} view={view} reset={reset} tool={tool} showGrid={showGrid} showBeam={showBeam} darkroom={darkroom} axes={axes} showAxes={axisHelp&&!rendered&&!!selected} snapEnabled={snapEnabled} onSelect={setSelectedId} onEditing={setEditing} onTransform={update} onFocus={focus}/>
           {run&&<div className="sb-canvas-status" aria-live="polite">{canvasStatus.visible&&<span className={`sb-compute-status ${simulation.status==='error'?'error':''}`}>{canvasStatus.visible}</span>}{canvasStatus.live==='光路已更新'&&<span className="sr-only">光路已更新</span>}</div>}
           {lightIssue&&<div className="sb-light-hint" role="status"><Sun size={14}/><span>{lightIssue}</span>{!showBeam?<button onClick={()=>setShowBeam(true)}>显示光线</button>:experiment.elements.filter(e=>e.kind==='laser').every(e=>e.powerMw===0)?<button onClick={()=>setSelectedId(experiment.elements.find(e=>e.kind==='laser')!.id)}>选择光源</button>:alignment?<button onClick={alignSelected}>对齐所选器件</button>:<button onClick={()=>setSelectedId(result?.screens.find(s=>s.hits===0)?.elementId??null)}>选择观察屏</button>}</div>}
           {!experiment.elements.length&&<div className="sb-empty"><div className="sb-empty-icon"><Focus size={37} strokeWidth={1}/></div><h1>从一束光开始</h1><div><button onClick={()=>add(CATALOG.find(item=>item.id==='laser-green')!)}><Plus size={14}/>添加光源</button><button onClick={()=>load('fold')}>体验立体折转<Move3D size={14}/></button></div></div>}
           {simulation.status==='error'&&<div className="sb-simulation-error" role="alert">{simulation.error}<button onClick={simulation.retry}>重试</button></div>}
           <div className="sb-view-controls">{([['perspective','透视'],['top','顶视'],['side','侧视']] as const).map(([value,label])=><button key={value} className={view===value?'active':''} aria-pressed={view===value} onClick={()=>setView(value)}>{label}</button>)}<span/><IconAction label={fullscreen?"退出全屏":"全屏显示"} onClick={()=>void toggleFullscreen()}><Maximize2 size={15}/></IconAction></div>
-          <div className="sb-display-controls"><button className={showGrid?'active':''} aria-pressed={showGrid} title="显示网格" aria-label="显示网格" onClick={()=>setShowGrid(v=>!v)}><Grid3X3 size={15}/></button><button className={showBeam?'active':''} aria-pressed={showBeam} title="显示光线" aria-label="显示光线" onClick={()=>setShowBeam(v=>!v)}><Sun size={16}/></button></div>
+          <SpatialBeamProfilerHud experiment={benchExperiment} result={result} selectedId={selectedId} onSelectDetector={setSelectedId}/>
+          <div className="sb-display-controls"><button className={darkroom?'active':''} aria-pressed={darkroom} title="暗室模式" aria-label="暗室模式" onClick={()=>setDarkroom(v=>!v)}><Moon size={15}/></button><button className={showGrid?'active':''} aria-pressed={showGrid} title="显示网格" aria-label="显示网格" onClick={()=>setShowGrid(v=>!v)}><Grid3X3 size={15}/></button><button className={showBeam?'active':''} aria-pressed={showBeam} title="显示光线" aria-label="显示光线" onClick={()=>setShowBeam(v=>!v)}><Sun size={16}/></button></div>
         </div>
         {resultsOpen&&<section className="sb-results sb-results-drawer" aria-label="仿真结果" style={{width:`${resultsWidth}px`}}>
           <div
