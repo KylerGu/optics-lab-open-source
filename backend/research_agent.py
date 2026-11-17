@@ -102,11 +102,11 @@ class ResearchAgentRequest(StrictModel):
 
 
 TOOLS = [
-    tool('offer_visual_action', '按需在讲解旁提供“定位器件/调整参数/前后对照”按钮，由学生点击后打开现有搭建画面，不自动操作。支持装置内已有器件定位与对应参数调节；普通问答无需调用。compare用于学生手动调参前后的同屏光斑对照，不代表已完成计算。', {
+    tool('offer_visual_action', '按需在讲解旁提供“定位器件/调整参数/前后对照”按钮，由学生点击后打开现有搭建画面，不自动操作。支持装置内已有器件定位与对应参数调节；普通问答无需调用。compare用于学生手动调参前后的同探测器实时对照，不代表已完成计算。', {
         'objectId': {'type': 'string'}, 'elementId': {'type': 'string'},
         'kind': {'type': 'string', 'enum': ['locate', 'adjust', 'compare']},
         'field': {'type': 'string', 'enum': list(VISUAL_FIELD_ENUM), 'description': 'locate不填写；adjust和compare必须填写该器件支持的参数字段（如x/y/z、yawDeg/pitchDeg/rollDeg、focalLengthMm、slitWidthMm、wavelengthNm等）。'},
-        'screenId': {'type': 'string', 'description': 'compare时必填，要观察的屏编号。'},
+        'screenId': {'type': 'string', 'description': 'compare时必填，要观察的探测器编号（观察屏、功率计或传感器）。'},
         'explanation': {'type': 'string', 'minLength': 1, 'maxLength': 240, 'description': '与本轮问题直接相关的简短说明：调整什么、观察什么；不写未计算的结论。'}}, ['elementId', 'kind', 'explanation']),
     tool("read_research", "按需读取探究资料。默认只读当前装置实际参数和已有读数；完整器材/模型目录选capabilities，计划、模型参数与记录引用选history。无需重复读取已有信息。", {
         'section': {'type': 'string', 'enum': ['current', 'capabilities', 'history']},

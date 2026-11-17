@@ -301,6 +301,11 @@
 .sb-inquiry-pair article.is-live .sb-comp-value {
   color: #1e4ea6;
 }
+.sb-comp-sub {
+  font-size: 12px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
 .sb-inquiry-delta {
   display: inline-flex;
   align-items: center;

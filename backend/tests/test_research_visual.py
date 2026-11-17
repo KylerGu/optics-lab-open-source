@@ -113,7 +113,13 @@ class ResearchVisualTests(unittest.TestCase):
         self.workspace.execute('offer_visual_action', dict(elementId='lens', kind='locate', explanation='新的透镜说明。'))
         self.assertEqual(len(self.workspace.visual_actions), 3)
 
-    def test_geometric_source_cannot_offer_gaussian_spot_comparison(self):
+    def test_compare_supports_geometric_power_meter_and_rejects_missing_source(self):
         self.workspace.workspaces['device'].original.elements[0].beamModel = 'parallel'
+        self.workspace.execute('offer_visual_action', self.action)
+        self.assertEqual(len(self.workspace.visual_actions), 1)
+
+        no_source = self.experiment.model_copy(deep=True)
+        no_source.elements = [e for e in no_source.elements if e.kind not in {'laser', 'object'}]
+        ws = ResearchWorkspace(objects=[ResearchObject(id='device', source='draft', experiment=no_source)], active_object_id='device')
         with self.assertRaises(ValueError):
-            self.workspace.execute('offer_visual_action', self.action)
+            ws.execute('offer_visual_action', self.action)

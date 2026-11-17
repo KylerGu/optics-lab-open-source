@@ -33,7 +33,7 @@ COMPARISON_GUIDANCE = """参数比较与趋势判据：compare_parameter每轮�
 
 MODELS_SCENE_GUIDANCE = """场景复用模型（run_model_experiment）：可直接复用独立双缝、波叠加、迈克耳孙、薄膜干涉以及显微镜instruments-0（study=0成像/1分辨率/2视场/3景深；比较NA对分辨率和景深影响须同波长同介质同NA分别算study=1和3）、望远镜instruments-1、相机instruments-2（相机/望远镜aperture均为直径mm，缩光圈即减小直径）。模型与三维光路独立，归一化条纹或局部光场不得冒充三维相干/mW功率/全局验证，参数缺省为示范默认条件。"""
 
-VISUAL_ACTION_GUIDANCE = """画面操作入口（offer_visual_action）：需要指出画面位置、用户问在哪里调或希望对照操作时可生成按钮（支持定位装置内已有器件，或调节位置/朝向/焦距/波长/光束半径/偏振角/狭缝宽度/透过率/曲率半径等对应参数）。locate仅定位，adjust打开参数面板，compare用于高斯光斑并排对照，均不自动修改页面；按钮尚未点击，没有记录前不得声称已高亮、播放或改动界面，且仍须写明关键真实读数与原因，不以“点按钮自己看”敷衍。问候、纯概念问答或只要数值时不附按钮。"""
+VISUAL_ACTION_GUIDANCE = """画面操作入口（offer_visual_action）：需要指出画面位置、用户问在哪里调或希望对照操作时可生成按钮（支持定位装置内已有器件，或调节位置/朝向/焦距/波长/光束半径/偏振角/狭缝宽度/透过率/曲率半径等对应参数）。locate仅定位，adjust打开参数面板，compare用于高斯光斑、几何光斑、功率计或成像对焦的并排实时对照，均不自动修改页面；按钮尚未点击，没有记录前不得声称已高亮、播放或改动界面，且仍须写明关键真实读数与原因，不以“点按钮自己看”敷衍。问候、纯概念问答或只要数值时不附按钮。"""
 
 PLAN_METHOD_GUIDANCE = """计划与方法工具：set_research_plan / update_research_step仅在用户要求制定计划或多轮探究需跨轮跟进时使用，步骤更新必须引用真实计算recordReference；assess_research_method仅在需要明确模型能力边界与原问题差距时使用，不是每次计算的前置手续；set_research_title仅在titleNeeded为真且已有非寒暄探究问题时提炼标题，不覆盖手动标题。"""
 

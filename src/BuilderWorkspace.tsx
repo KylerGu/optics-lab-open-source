@@ -5,7 +5,7 @@ import type { Experiment } from './model';
 import { DRAFT_KEY } from './model';
 import type { BuilderConversationContext } from './researchConversation';
 import InquiryComparison from './InquiryComparison';
-import { applyVisualFieldPatch, buildVisualHandoffPrompt, resolveComparisonGuide, sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, VISUAL_FIELD_SPECS, visualParameter, type ResearchVisualGuide, type VisualField } from './researchVisual';
+import { applyVisualFieldPatch, buildVisualHandoffPrompt, isVisualDetectorKind, resolveComparisonGuide, sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, VISUAL_FIELD_SPECS, visualParameter, type ResearchVisualGuide, type VisualField } from './researchVisual';
 import { cleanElementDisplayName } from './researchUnits';
 import type { FormulaPresetRequest } from './researchFormulaLinks';
 import './inquiry-visual.css';
@@ -324,7 +324,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
             }else{
               const cur=latest.current;
               const hasEl=cur.elements.some(e=>e.id===next.action.elementId&&e.kind===next.snapshot.elements.find(b=>b.id===next.action.elementId)?.kind);
-              const hasScreen=!next.action.screenId||cur.elements.some(s=>s.id===next.action.screenId&&s.kind==='screen');
+              const hasScreen=!next.action.screenId||cur.elements.some(s=>s.id===next.action.screenId&&isVisualDetectorKind(s.kind));
               if(!hasEl||!hasScreen)throw new Error('目标器件已在当前光路中移除。');
               setToast('当前光路有改动；可点「重置起点」回到本轮初始光路。');
             }

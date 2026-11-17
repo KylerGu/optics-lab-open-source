@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { makeSpatialElement, spatialTemplate } from './builderModel';
+import { makeSpatialElement, spatialTemplate, type SpatialResult } from './builderModel';
 import { buildVisualHandoffPrompt, resolveComparisonGuide, validateVisualActions, visualComparisonStatus, sameVisualSnapshot, type ResearchVisualAction } from './researchVisual';
-import { spotDeltaSummary } from './InquiryComparison';
+import { InquiryComparisonView, imagingDeltaSummary, powerDeltaSummary, spotDeltaSummary } from './InquiryComparison';
 import { cleanElementDisplayName } from './researchUnits';
 import ResearchVisualActions from './ResearchVisualActions';
 import type { ResearchReply } from './researchSession';
@@ -164,4 +164,145 @@ test('expanded visual coverage supports polarizer, slit, spherical lens, laser a
   removedGuided.elements = removedGuided.elements.filter(e => e.id !== pol.id);
   const removedPrompt = buildVisualHandoffPrompt({ action: polAction, snapshot: rich }, removedGuided, null);
   assert.match(removedPrompt ?? '', /移除了「偏振片」/);
+});
+
+test('universal InquiryComparison supports power-meter, imaging, and geometric modes alongside Gaussian', () => {
+  const pmTemplate = spatialTemplate('focus');
+  const pmLaser = pmTemplate.elements.find(e => e.kind === 'laser')!;
+  pmLaser.beamModel = 'parallel';
+  pmLaser.powerMw = 10;
+  pmLaser.polarization = 'linear';
+  pmLaser.polarizationDeg = 0;
+  const pol = makeSpatialElement('polarizer', [120, 60, 0]);
+  const pm = makeSpatialElement('power-meter', [250, 60, 0]);
+  pmTemplate.elements = [pmLaser, pol, pm];
+
+  const pmAdjust: ResearchVisualAction = {
+    objectId: 'a',
+    elementId: pol.id,
+    kind: 'adjust',
+    field: 'rollDeg',
+    screenId: null,
+    explanation: '转动偏振片观察功率变化。',
+  };
+  const resolvedPm = resolveComparisonGuide({ action: pmAdjust, snapshot: pmTemplate });
+  assert.equal(resolvedPm?.action.screenId, pm.id);
+
+  const rotatedPm = structuredClone(pmTemplate);
+  rotatedPm.elements.find(e => e.id === pol.id)!.rollDeg = 60;
+  const pmBefore: SpatialResult = {
+    revision: 0, inputSnapshot: pmTemplate, model: 'test', segments: [], beams: [],
+    screens: [{ elementId: pm.id, name: pm.name, hits: 20, sampledPowerFraction: 1, sampledPowerMw: 10, centroid: null, footprintRadiusMm: null, gaussianRadiusMm: null, detectorKind: 'power-meter', readingMw: 10, overRange: false }],
+    warnings: [], assumptions: [], chiefHitIds: [],
+  };
+  const pmAfter: SpatialResult = {
+    revision: 1, inputSnapshot: rotatedPm, model: 'test', segments: [], beams: [],
+    screens: [{ elementId: pm.id, name: pm.name, hits: 20, sampledPowerFraction: 0.25, sampledPowerMw: 2.5, centroid: null, footprintRadiusMm: null, gaussianRadiusMm: null, detectorKind: 'power-meter', readingMw: 2.5, overRange: false }],
+    warnings: [], assumptions: [], chiefHitIds: [],
+  };
+  const pmHtml = renderToStaticMarkup(
+    <InquiryComparisonView
+      guide={resolvedPm!}
+      experiment={rotatedPm}
+      beforeResult={pmBefore}
+      beforeLoading={false}
+      beforeError={null}
+      onBeforeRetry={() => {}}
+      result={pmAfter}
+      pending={false}
+      error={null}
+      retry={() => {}}
+    />,
+  );
+  assert.match(pmHtml, /光功率读数对照/);
+  assert.match(pmHtml, /10 mW/);
+  assert.match(pmHtml, /2\.5 mW/);
+  assert.match(pmHtml, /衰减 75%/);
+  assert.match(powerDeltaSummary(2.5, 5, false).text, /增强 2×/);
+
+  const imgTemplate = spatialTemplate('imaging');
+  const imgObj = imgTemplate.elements.find(e => e.kind === 'object')!;
+  const imgLens = imgTemplate.elements.find(e => e.kind === 'lens')!;
+  const imgScreen = imgTemplate.elements.find(e => e.kind === 'screen')!;
+  const imgAdjust: ResearchVisualAction = {
+    objectId: 'a',
+    elementId: imgScreen.id,
+    kind: 'adjust',
+    field: 'x',
+    screenId: null,
+    explanation: '移动观察屏对焦。',
+  };
+  const resolvedImg = resolveComparisonGuide({ action: imgAdjust, snapshot: imgTemplate });
+  assert.equal(resolvedImg?.action.screenId, imgScreen.id);
+
+  const focusedScreen = structuredClone(imgTemplate);
+  focusedScreen.elements.find(e => e.id === imgScreen.id)!.position[0] += 10;
+  const imgBeforeObs = { elementId: imgScreen.id, kind: 'screen' as const, focused: false, defocusMm: -10, magnification: -1, angularMagnification: null, fieldDiameterMm: null, adapterMagnification: 1, widthMm: 60, heightMm: 60, hits: [] };
+  const imgAfterObs = { elementId: imgScreen.id, kind: 'screen' as const, focused: true, defocusMm: 0, magnification: -1, angularMagnification: null, fieldDiameterMm: null, adapterMagnification: 1, widthMm: 60, heightMm: 60, hits: [] };
+  const imgBefore: SpatialResult = {
+    revision: 0, inputSnapshot: imgTemplate, model: 'test', segments: [], beams: [], screens: [], warnings: [], assumptions: [], chiefHitIds: [],
+    imaging: [{ objectId: imgObj.id, objectPaths: [], segments: [], stages: [{ lensId: imgLens.id, kind: 'real', distanceMm: 200, magnification: -1, heightMm: -10, position: [400, 60, 0], paths: [], visible: true }], observations: [imgBeforeObs], warnings: [] }],
+  };
+  const imgAfter: SpatialResult = {
+    revision: 1, inputSnapshot: focusedScreen, model: 'test', segments: [], beams: [], screens: [], warnings: [], assumptions: [], chiefHitIds: [],
+    imaging: [{ objectId: imgObj.id, objectPaths: [], segments: [], stages: [{ lensId: imgLens.id, kind: 'real', distanceMm: 200, magnification: -1, heightMm: -10, position: [400, 60, 0], paths: [], visible: true }], observations: [imgAfterObs], warnings: [] }],
+  };
+  const imgHtml = renderToStaticMarkup(
+    <InquiryComparisonView
+      guide={resolvedImg!}
+      experiment={focusedScreen}
+      beforeResult={imgBefore}
+      beforeLoading={false}
+      beforeError={null}
+      onBeforeRetry={() => {}}
+      result={imgAfter}
+      pending={false}
+      error={null}
+      retry={() => {}}
+    />,
+  );
+  assert.match(imgHtml, /成像对焦对照/);
+  assert.match(imgHtml, /未对焦/);
+  assert.match(imgHtml, /已对焦/);
+  assert.match(imgHtml, /已调至合焦/);
+  assert.equal(imagingDeltaSummary(imgBeforeObs, imgAfterObs, false).text, '已调至合焦');
+
+  const geoTemplate = spatialTemplate('focus');
+  geoTemplate.elements.find(e => e.kind === 'laser')!.beamModel = 'parallel';
+  const geoScreen = geoTemplate.elements.find(e => e.kind === 'screen')!;
+  const geoLens = geoTemplate.elements.find(e => e.kind === 'lens')!;
+  const geoGuide = resolveComparisonGuide({
+    action: { objectId: 'a', elementId: geoLens.id, kind: 'adjust', field: 'focalLengthMm', screenId: null, explanation: '改变透镜焦距。' },
+    snapshot: geoTemplate,
+  });
+  const geoAfterExp = structuredClone(geoTemplate);
+  geoAfterExp.elements.find(e => e.id === geoLens.id)!.focalLengthMm = 150;
+  const geoBefore: SpatialResult = {
+    revision: 0, inputSnapshot: geoTemplate, model: 'test', segments: [], beams: [],
+    screens: [{ elementId: geoScreen.id, name: geoScreen.name, hits: 20, sampledPowerFraction: 1, sampledPowerMw: 1, centroid: null, footprintRadiusMm: 2.0, gaussianRadiusMm: null }],
+    warnings: [], assumptions: [], chiefHitIds: [],
+  };
+  const geoAfter: SpatialResult = {
+    revision: 1, inputSnapshot: geoAfterExp, model: 'test', segments: [], beams: [],
+    screens: [{ elementId: geoScreen.id, name: geoScreen.name, hits: 20, sampledPowerFraction: 1, sampledPowerMw: 1, centroid: null, footprintRadiusMm: 1.0, gaussianRadiusMm: null }],
+    warnings: [], assumptions: [], chiefHitIds: [],
+  };
+  const geoHtml = renderToStaticMarkup(
+    <InquiryComparisonView
+      guide={geoGuide!}
+      experiment={geoAfterExp}
+      beforeResult={geoBefore}
+      beforeLoading={false}
+      beforeError={null}
+      onBeforeRetry={() => {}}
+      result={geoAfter}
+      pending={false}
+      error={null}
+      retry={() => {}}
+    />,
+  );
+  assert.match(geoHtml, /几何光斑覆盖对照/);
+  assert.match(geoHtml, /2 mm/);
+  assert.match(geoHtml, /1 mm/);
+  assert.match(geoHtml, /缩小 50%/);
 });

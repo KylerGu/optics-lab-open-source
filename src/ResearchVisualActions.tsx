@@ -2,7 +2,7 @@ import { ArrowUpRight } from 'lucide-react';
 import type { ResearchReply } from './researchSession';
 import type { ResearchObject } from './researchObjects';
 import type { ResearchVisualGuide } from './researchVisual';
-import { sameVisualSnapshot, visualActionLabel } from './researchVisual';
+import { isVisualDetectorKind, sameVisualSnapshot, visualActionLabel } from './researchVisual';
 
 export default function ResearchVisualActions({ reply, objects, disabled, onOpen }: {
   reply: ResearchReply;
@@ -21,7 +21,7 @@ export default function ResearchVisualActions({ reply, objects, disabled, onOpen
         const targetStillPresent =
           !!object &&
           object.experiment.elements.some(e => e.id === action.elementId) &&
-          (!action.screenId || object.experiment.elements.some(s => s.id === action.screenId && s.kind === 'screen'));
+          (!action.screenId || object.experiment.elements.some(s => s.id === action.screenId && isVisualDetectorKind(s.kind)));
         const canRestoreOriginal = !!snapshot && !!object;
         const { badge, elementName, fieldLabel } = snapshot
           ? visualActionLabel(action, snapshot)

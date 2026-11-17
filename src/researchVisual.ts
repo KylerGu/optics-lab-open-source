@@ -146,14 +146,23 @@ export function visualActionLabel(action: ResearchVisualAction, snapshot: Spatia
   return { badge, elementName, fieldLabel };
 }
 
-/** Resolve a live spot comparison guide for `compare`, or for `adjust` when a Gaussian beam and screen exist. */
+const VISUAL_DETECTOR_KINDS = new Set<SpatialElement['kind']>(['screen', 'power-meter', 'sensor']);
+
+export function isVisualDetectorKind(kind: SpatialElement['kind']): boolean {
+  return VISUAL_DETECTOR_KINDS.has(kind);
+}
+
+/** Resolve a live before/after comparison guide for `compare`, or for `adjust` whenever a source and detector exist. */
 export function resolveComparisonGuide(guide: ResearchVisualGuide): ResearchVisualGuide | null {
   if (guide.action.kind === 'compare' && guide.action.screenId) return guide;
   if (guide.action.kind !== 'adjust') return null;
-  const hasGaussian = guide.snapshot.elements.some(e => e.kind === 'laser' && e.beamModel === 'gaussian');
-  if (!hasGaussian) return null;
+  const hasSource = guide.snapshot.elements.some(e => e.kind === 'laser' || e.kind === 'object');
+  if (!hasSource) return null;
   const target = guide.snapshot.elements.find(e => e.id === guide.action.elementId);
-  const screenId = target?.kind === 'screen' ? target.id : guide.snapshot.elements.find(e => e.kind === 'screen')?.id ?? null;
+  const screenId =
+    target && isVisualDetectorKind(target.kind)
+      ? target.id
+      : guide.snapshot.elements.find(e => isVisualDetectorKind(e.kind))?.id ?? null;
   if (!screenId) return null;
   return { ...guide, action: { ...guide.action, screenId } };
 }
@@ -302,7 +311,7 @@ export function validateVisualActions(value: unknown, objects: { id: string; exp
     if (!element) throw new Error('画面操作引用了不存在的器件。');
     const fields = allowedVisualFields(element) as string[];
     if (v.kind === 'locate' ? v.field !== null : typeof v.field !== 'string' || !fields.includes(v.field)) throw new Error('画面操作参数不匹配。');
-    if (v.kind === 'compare' ? !experiment!.elements.some(e => e.id === v.screenId && e.kind === 'screen') || !experiment!.elements.some(e => e.kind === 'laser' && e.beamModel === 'gaussian') : v.screenId !== null) throw new Error('前后对照观察屏或光源无效。');
+    if (v.kind === 'compare' ? !experiment!.elements.some(e => e.id === v.screenId && isVisualDetectorKind(e.kind)) || !experiment!.elements.some(e => e.kind === 'laser' || e.kind === 'object') : v.screenId !== null) throw new Error('前后对照探测器或光源/样品无效。');
     return { objectId: v.objectId, elementId: v.elementId, kind: v.kind as ResearchVisualAction['kind'], field: v.field as VisualField | null, screenId: v.screenId as string | null, explanation: v.explanation };
   });
 }
@@ -334,7 +343,7 @@ export function applyVisualFieldPatch(element: SpatialElement, field: VisualFiel
 
 export function visualComparisonStatus(base: SpatialExperiment, current: SpatialExperiment, action: ResearchVisualAction) {
   const target = current.elements.find(e => e.id === action.elementId), original = base.elements.find(e => e.id === action.elementId);
-  if (!target || target.kind !== original?.kind || !current.elements.some(e => e.id === action.screenId && e.kind === 'screen')) return 'missing';
+  if (!target || target.kind !== original?.kind || !current.elements.some(e => e.id === action.screenId && isVisualDetectorKind(e.kind))) return 'missing';
   if (sameVisualSnapshot(base, current)) return 'unchanged';
   const expected = structuredClone(base), element = expected.elements.find(e => e.id === action.elementId)!;
   if (action.field) {

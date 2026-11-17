@@ -113,11 +113,11 @@ def visual_action(args, workspaces, active_id):
         raise ValueError('locate不填field；adjust/compare须填写该器件支持的参数字段。')
     screen_id = args.get('screenId')
     if kind == 'compare':
-        if not any(e.id == screen_id and e.kind == 'screen' for e in experiment.elements):
-            raise ValueError('请选择已有观察屏作为对照读数。')
-        if not any(e.kind == 'laser' and e.beamModel == 'gaussian' for e in experiment.elements):
-            raise ValueError('光斑对照目前需要高斯光源。')
+        if not any(e.id == screen_id and e.kind in {'screen', 'power-meter', 'sensor'} for e in experiment.elements):
+            raise ValueError('请选择已有观察屏、功率计或传感器作为对照读数。')
+        if not any(e.kind in {'laser', 'object'} for e in experiment.elements):
+            raise ValueError('前后对照需要装置中有光源或样品。')
     elif screen_id is not None:
-        raise ValueError('只有前后对照需要指定观察屏。')
+        raise ValueError('只有前后对照需要指定探测器。')
     return {'objectId': object_id, 'elementId': element.id, 'kind': kind,
             'field': field, 'screenId': screen_id, 'explanation': explanation.strip()}
