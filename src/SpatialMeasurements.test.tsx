@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {makeSpatialElement,spatialTemplate,type SpatialResult} from './builderModel';
 import {spatialResultNotes} from './spatialResultNotes';
-import SpatialMeasurements from './SpatialMeasurements';
+import SpatialMeasurements, { builderStatusReadout } from './SpatialMeasurements';
+import { resolveSpatialFormulas } from './researchFormulaLinks';
 
 const result=():SpatialResult=>({revision:1,inputSnapshot:spatialTemplate('focus'),model:'test',segments:[],beams:[],screens:[],warnings:[],assumptions:['完整模型说明只保留在原始结果'],chiefHitIds:[]});
 test('calculation notes describe only the apparatus present, with concise folded content',()=>{
@@ -64,4 +65,90 @@ test('screen cards show relevant physical metrics and omit algorithm/polarizatio
   withPol.inputSnapshot.elements.push(makeSpatialElement('polarizer',[200,60,0]));
   const polHtml=renderToStaticMarkup(<SpatialMeasurements result={withPol} onSelect={()=>{}}/>);
   assert.match(polHtml,/电场轨迹示意/);
+});
+
+test('builderStatusReadout summarizes multi-screen, coherent, and imaging results clearly',()=>{
+  const r=result();
+  assert.equal(builderStatusReadout(r,false),null);
+  assert.equal(builderStatusReadout(r,true),null);
+
+  r.screens=[
+    {elementId:'s1',name:'探测屏（可沿光轴移动）',hits:20,sampledPowerFraction:1,sampledPowerMw:1,centroid:[300,60,0],footprintRadiusMm:0,gaussianRadiusMm:0.033868},
+    {elementId:'s2',name:'反射屏（支路）',hits:20,sampledPowerFraction:0.5,sampledPowerMw:0.5,centroid:[200,60,150],footprintRadiusMm:0,gaussianRadiusMm:0.5},
+  ];
+  assert.equal(builderStatusReadout(r,true),'探测屏 33.9 μm 等 2 屏');
+
+  const coherent=result();
+  coherent.fourier={screenId:'screen',sourceId:'source',gratingId:'grating',parameters:{wavelengthNm:532,periodMm:.1,waistMm:1,modulation:1,focalLengthMm:100,observationUm:0},spatialFrequency:10,orderPositionUm:0,spotRadiusUm:20,pointIntensity:1,inputPowerMw:1,capturedPowerMw:0.42,points:[]};
+  assert.equal(builderStatusReadout(coherent,true),'0.42 mW');
+
+  const imagingTemplate=spatialTemplate('imaging');
+  const imagingObj=imagingTemplate.elements.find(e=>e.kind==='object')!;
+  const imagingLens=imagingTemplate.elements.find(e=>e.kind==='lens')!;
+  const imagingScreen=imagingTemplate.elements.find(e=>e.kind==='screen')!;
+  imagingObj.name='样品 F（可沿光轴移动）';
+  imagingLens.name='成像透镜（可沿光轴移动）';
+  imagingScreen.name='接收像屏（可沿光轴移动）';
+  const imaging={
+    ...result(),
+    inputSnapshot:imagingTemplate,
+    imaging:[{
+      objectId:imagingObj.id,
+      objectPaths:[],
+      segments:[],
+      stages:[{lensId:imagingLens.id,kind:'real' as const,distanceMm:200,magnification:-1,heightMm:-10,position:[400,60,0] as [number,number,number],paths:[],visible:true}],
+      observations:[{elementId:imagingScreen.id,kind:'screen' as const,focused:true,defocusMm:0,magnification:-1,angularMagnification:null,fieldDiameterMm:null,adapterMagnification:1,widthMm:60,heightMm:60,hits:[]}],
+      warnings:[],
+    }],
+  };
+  assert.equal(builderStatusReadout(imaging,true),'已对焦');
+  const imagingHtml=renderToStaticMarkup(<SpatialMeasurements result={imaging} onSelect={()=>{}} onOpenFormula={()=>{}}/>);
+  assert.doesNotMatch(imagingHtml,/可沿光轴移动/);
+  assert.match(imagingHtml,/样品 F/);
+  assert.match(imagingHtml,/薄透镜物像公式/);
+});
+
+test('SpatialMeasurements renders formula bridge CTA only when onOpenFormula and presets apply',()=>{
+  const r=result();
+  const withBridge=renderToStaticMarkup(<SpatialMeasurements result={r} onSelect={()=>{}} onOpenFormula={()=>{}}/>);
+  assert.match(withBridge,/sb-formula-bridge/);
+  assert.match(withBridge,/高斯光束传输半径/);
+  assert.match(withBridge,/代入公式库计算/);
+
+  const noCallback=renderToStaticMarkup(<SpatialMeasurements result={r} onSelect={()=>{}}/>);
+  assert.doesNotMatch(noCallback,/sb-formula-bridge/);
+});
+
+test('resolveSpatialFormulas builds valid presets across Gaussian focus, imaging, slit, and polarizer setups',()=>{
+  const focus=spatialTemplate('focus');
+  const gauss=resolveSpatialFormulas(focus.elements);
+  const radiusExpr=gauss.expressions.find(e=>e.preset?.formulaId==='radius');
+  assert.ok(radiusExpr?.preset?.values);
+  assert.ok((radiusExpr!.preset!.values!.waistMm??1)<0.1,'focused Gaussian preset uses image-space waist');
+
+  const imaging=spatialTemplate('imaging');
+  const lensFormula=resolveSpatialFormulas(imaging.elements);
+  assert.equal(lensFormula.expressions[0].preset?.knowledgeId,'thin-lens');
+  assert.ok((lensFormula.expressions[0].preset?.opticsValues?.f??0)>0);
+  assert.ok((lensFormula.expressions[0].preset?.opticsValues?.u??0)>0);
+
+  const laser=makeSpatialElement('laser',[0,60,0]);
+  laser.beamModel='parallel';
+  laser.powerMw=5;
+  laser.polarization='linear';
+  laser.polarizationDeg=15;
+  const pol=makeSpatialElement('polarizer',[100,60,0]);
+  pol.rollDeg=150;
+  const malus=resolveSpatialFormulas([laser,pol]);
+  assert.equal(malus.expressions[0].preset?.knowledgeId,'malus-power');
+  assert.equal(malus.expressions[0].preset?.opticsValues?.Pin,5);
+  assert.equal(malus.expressions[0].preset?.opticsValues?.theta,45);
+
+  const slit=makeSpatialElement('slit',[100,60,0]);
+  slit.slitWidthMm=0.05;
+  const screen=makeSpatialElement('screen',[600,60,0]);
+  const diff=resolveSpatialFormulas([laser,slit,screen]);
+  assert.equal(diff.expressions[0].preset?.knowledgeId,'single-slit-width');
+  assert.equal(diff.expressions[0].preset?.opticsValues?.a,0.05);
+  assert.equal(diff.expressions[0].preset?.opticsValues?.L,0.5);
 });

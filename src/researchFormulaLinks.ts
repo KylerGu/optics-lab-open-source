@@ -76,6 +76,20 @@ function resolveLensFocalMm(lens: SpatialElement, wavelengthNm: number): { effec
   return null;
 }
 
+export interface ResolveSpatialFormulasOptions {
+  metric?: string;
+  scanField?: string;
+  designRecommendation?: {
+    focalLengthMm: number;
+    positionMm: number;
+    radiusMm: number | null;
+  } | null;
+  tolerance?: {
+    positionErrorMm: number;
+    focalErrorPercent: number;
+  } | null;
+}
+
 export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: string): RecordFormulaInfo {
   if (artifact.kind === 'model') {
     const matched = OPTICS_FORMULAS.filter(f => f.sceneId === artifact.input.sceneId);
@@ -99,19 +113,50 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
     return { expressions, derivations, extraLinks: [] };
   }
 
-  const elements = artifact.input.elements;
+  return resolveSpatialFormulas(artifact.input.elements, {
+    metric,
+    scanField: artifact.kind === 'comparison' ? artifact.data.field : undefined,
+    designRecommendation: artifact.kind === 'design' ? artifact.data.recommendation : undefined,
+    tolerance: artifact.kind === 'study' ? artifact.data.tolerance : undefined,
+  });
+}
+
+export function resolveSpatialFormulas(
+  elements: SpatialElement[],
+  options: ResolveSpatialFormulasOptions = {},
+): RecordFormulaInfo {
+  const { metric, scanField, designRecommendation, tolerance } = options;
   const laser = elements.find(e => e.kind === 'laser');
-  const wavelengthNm = laser?.wavelengthNm ?? 532;
+  const obj = elements.find(e => e.kind === 'object');
+  const source = laser ?? obj;
+  const wavelengthNm = source?.wavelengthNm ?? 532;
   const lenses = elements.filter(
     e => e.kind === 'lens' || e.kind === 'cylindrical-lens' || isPhysicalLens(e.kind),
   );
   const firstLens = lenses[0];
   const firstFocal = firstLens ? resolveLensFocalMm(firstLens, wavelengthNm) : null;
-  const screen = elements.find(e => e.kind === 'screen');
+  const screen = elements.find(e => e.kind === 'screen' || e.kind === 'power-meter');
   const expressions: FormulaExpressionCard[] = [];
   const derivations: FormulaDerivationStep[] = [];
   const extraLinks: RecordFormulaLink[] = [];
-  const scanField = artifact.kind === 'comparison' ? artifact.data.field : undefined;
+
+  const buildThinLensPresetValues = (): Record<string, number> | undefined => {
+    if (!firstLens || !firstFocal) return undefined;
+    const values: Record<string, number> = {
+      f: Number(firstFocal.effective.toPrecision(5)),
+    };
+    if (obj && obj.objectMode === 'finite') {
+      const u = Math.hypot(
+        firstLens.position[0] - obj.position[0],
+        firstLens.position[1] - obj.position[1],
+        firstLens.position[2] - obj.position[2],
+      );
+      if (u >= 0.001 && u <= 100000) {
+        values.u = Number(u.toPrecision(5));
+      }
+    }
+    return values;
+  };
 
   if (metric === 'sampledPowerMw') {
     expressions.push({
@@ -198,10 +243,51 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
       distanceMm,
     };
 
+    let radiusPresetValues: Partial<FormulaValues> = baseValues;
+    let focusedStats: {
+      f: number;
+      w0FocusExact: number;
+      zWaistFromLens: number;
+      axis: { symbol: 'x' | 'y' | 'z'; index: 0 | 1 | 2 };
+      lensCoord: number;
+      waistCoord: number;
+    } | null = null;
+
+    if (firstLens && firstFocal) {
+      const f = firstFocal.effective;
+      const dLens = Math.hypot(
+        firstLens.position[0] - laser.position[0],
+        firstLens.position[1] - laser.position[1],
+        firstLens.position[2] - laser.position[2],
+      );
+      const denom = (1 - dLens / f) ** 2 + (zR / f) ** 2;
+      const w0FocusExact = denom > 0 ? laser.beamRadiusMm / Math.sqrt(denom) : 0;
+      const focalShift = (f * f * (dLens - f)) / ((dLens - f) ** 2 + zR * zR);
+      const zWaistFromLens = f + focalShift;
+      const axis = primaryAxisInfo(laser, firstLens, scanField);
+      const lensCoord = firstLens.position[axis.index];
+      const waistCoord = lensCoord + zWaistFromLens;
+      focusedStats = { f, w0FocusExact, zWaistFromLens, axis, lensCoord, waistCoord };
+
+      if (screen && w0FocusExact > 0) {
+        const dLensScreen = Math.hypot(
+          screen.position[0] - firstLens.position[0],
+          screen.position[1] - firstLens.position[1],
+          screen.position[2] - firstLens.position[2],
+        );
+        const dFromFocusWaist = Math.abs(dLensScreen - zWaistFromLens);
+        radiusPresetValues = {
+          wavelengthNm: laser.wavelengthNm,
+          waistMm: Number(w0FocusExact.toPrecision(5)),
+          distanceMm: Number(dFromFocusWaist.toPrecision(5)),
+        };
+      }
+    }
+
     expressions.push({
       title: '高斯光束传输半径',
       latex: String.raw`w(d)=w_0\sqrt{1+\left(\frac{d}{z_R}\right)^2}`,
-      preset: { formulaId: 'radius', values: baseValues },
+      preset: { formulaId: 'radius', values: radiusPresetValues },
       presetLabel: '代入计算',
     });
     expressions.push({
@@ -222,21 +308,8 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
       latex: String.raw`z_R = \frac{\pi \times ${formatCompact(laser.beamRadiusMm, 4)}^2}{${formatCompact(wavelengthMm, 4)}} \approx ${formatCompact(zR, 4)}\text{ mm}`,
     });
 
-    if (firstLens && firstFocal) {
-      const f = firstFocal.effective;
-      const dLens = Math.hypot(
-        firstLens.position[0] - laser.position[0],
-        firstLens.position[1] - laser.position[1],
-        firstLens.position[2] - laser.position[2],
-      );
-      const denom = (1 - dLens / f) ** 2 + (zR / f) ** 2;
-      const w0FocusExact = denom > 0 ? laser.beamRadiusMm / Math.sqrt(denom) : 0;
-      const focalShift = (f * f * (dLens - f)) / ((dLens - f) ** 2 + zR * zR);
-      const zWaistFromLens = f + focalShift;
-      const axis = primaryAxisInfo(laser, firstLens, scanField);
-      const lensCoord = firstLens.position[axis.index];
-      const waistCoord = lensCoord + zWaistFromLens;
-
+    if (focusedStats) {
+      const { f, w0FocusExact, zWaistFromLens, axis, lensCoord, waistCoord } = focusedStats;
       derivations.push({
         label: '透镜聚焦像方束腰',
         latex: String.raw`w_0' = \frac{w_0}{\sqrt{\left(1-\frac{d_{\text{镜}}}{f}\right)^2+\left(\frac{z_R}{f}\right)^2}} \approx ${formatLengthTex(w0FocusExact)}`,
@@ -251,14 +324,14 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
       });
     }
 
-    if (artifact.kind === 'design' && artifact.data.recommendation) {
-      const rec = artifact.data.recommendation;
+    if (designRecommendation) {
+      const rec = designRecommendation;
       derivations.push({
         label: '推荐方案焦距与最小束腰对比',
         latex: String.raw`\text{推荐 } f = ${formatCompact(rec.focalLengthMm, 4)}\text{ mm},\quad \text{透镜位置 } ${formatCompact(rec.positionMm, 4)}\text{ mm}${rec.radiusMm !== null ? String.raw`,\quad w_{\text{屏}} = ${formatLengthTex(rec.radiusMm)}` : ''}`,
       });
-    } else if (artifact.kind === 'study') {
-      const tol = artifact.data.tolerance;
+    } else if (tolerance) {
+      const tol = tolerance;
       derivations.push({
         label: '误差设置范围',
         latex: String.raw`\Delta z = \pm ${formatCompact(tol.positionErrorMm, 4)}\text{ mm},\qquad \frac{\Delta f}{f} = \pm ${formatCompact(tol.focalErrorPercent, 4)}\%`,
@@ -266,6 +339,9 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
     }
     return { expressions, derivations, extraLinks };
   }
+
+  const polarizer = elements.find(e => e.kind === 'polarizer');
+  const slit = elements.find(e => e.kind === 'slit');
 
   if (elements.some(e => e.kind === 'dispersion-prism' || e.kind === 'right-prism')) {
     expressions.push(
@@ -283,19 +359,75 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
       },
     );
   } else if (elements.some(e => e.kind === 'polarizer' || e.kind === 'quarter-wave-plate' || e.kind === 'half-wave-plate')) {
+    const malusValues: Record<string, number> = {};
+    if (laser) {
+      if (laser.powerMw >= 0 && laser.powerMw <= 20) {
+        malusValues.Pin = Number(laser.powerMw.toPrecision(4));
+      }
+      if (polarizer && laser.polarization === 'linear') {
+        const diff = Math.abs((((polarizer.rollDeg - laser.polarizationDeg) % 180) + 180) % 180);
+        malusValues.theta = Number((diff > 90 ? 180 - diff : diff).toPrecision(4));
+      }
+    }
     expressions.push({
       title: '马吕斯定律',
       latex: String.raw`I=I_0\cos^2\theta`,
-      preset: { knowledgeId: 'malus-power' },
+      preset: {
+        knowledgeId: 'malus-power',
+        ...(Object.keys(malusValues).length > 0 ? { opticsValues: malusValues } : {}),
+      },
       presetLabel: '代入计算',
     });
   } else if (elements.some(e => e.kind === 'slit' || e.kind === 'amplitude-grating' || e.kind === 'aperture')) {
+    const slitValues: Record<string, number> = {};
+    if (wavelengthNm >= 380 && wavelengthNm <= 780) {
+      slitValues.lambda = wavelengthNm;
+    }
+    if (slit && slit.slitWidthMm >= 0.02 && slit.slitWidthMm <= 0.08) {
+      slitValues.a = Number(slit.slitWidthMm.toPrecision(4));
+    }
+    if (slit && screen) {
+      const distM =
+        Math.hypot(
+          screen.position[0] - slit.position[0],
+          screen.position[1] - slit.position[1],
+          screen.position[2] - slit.position[2],
+        ) / 1000;
+      if (distM >= 0.3 && distM <= 0.8) {
+        slitValues.L = Number(distM.toPrecision(4));
+      }
+    }
     expressions.push({
       title: '夫琅禾费单缝衍射',
       latex: String.raw`I(\theta)=I_0\left(\frac{\sin\beta}{\beta}\right)^2,\qquad \beta=\frac{\pi a\sin\theta}{\lambda}`,
-      preset: { knowledgeId: 'single-slit-width' },
+      preset: {
+        knowledgeId: 'single-slit-width',
+        ...(Object.keys(slitValues).length > 0 ? { opticsValues: slitValues } : {}),
+      },
       presetLabel: '代入计算',
     });
+  } else if (obj && firstLens && firstFocal) {
+    expressions.push({
+      title: '薄透镜物像公式',
+      latex: String.raw`\frac{1}{f}=\frac{1}{u}+\frac{1}{v}`,
+      preset: { knowledgeId: 'thin-lens', opticsValues: buildThinLensPresetValues() },
+      presetLabel: '代入计算',
+    });
+    if (isPhysicalLens(firstLens.kind)) {
+      const n = glassIndex(firstLens, wavelengthNm);
+      extraLinks.push({
+        label: '厚透镜制造者公式',
+        preset: {
+          knowledgeId: 'lensmaker-thick',
+          opticsValues: {
+            n: Number(n.toFixed(4)),
+            R1: firstLens.frontRadiusMm,
+            R2: firstLens.backRadiusMm,
+            d: firstLens.centerThicknessMm,
+          },
+        },
+      });
+    }
   } else if (firstLens && isPhysicalLens(firstLens.kind) && firstFocal) {
     const n = glassIndex(firstLens, wavelengthNm);
     expressions.push({
@@ -320,7 +452,7 @@ export function resolveArtifactFormulas(artifact: ResearchArtifact, metric?: str
     expressions.push({
       title: '薄透镜物像公式',
       latex: String.raw`\frac{1}{v}-\frac{1}{u}=\frac{1}{f}`,
-      preset: { knowledgeId: 'thin-lens', opticsValues: { f: firstFocal.effective } },
+      preset: { knowledgeId: 'thin-lens', opticsValues: buildThinLensPresetValues() },
       presetLabel: '代入计算',
     });
   }

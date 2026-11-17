@@ -1,10 +1,45 @@
-import { ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ChevronRight } from 'lucide-react';
 import SpatialImagingResults from './SpatialImagingResults';
 import type { DiffractionProfile, SpatialResult } from './builderModel';
 import SpatialFourFOutput from './SpatialFourFOutput';
 import SpatialFourierOutput from './SpatialFourierOutput';
 import { cleanElementDisplayName, formatCompact, formatReadoutWithUnit } from './researchUnits';
-import {spatialResultNotes} from './spatialResultNotes';
+import { spatialResultNotes } from './spatialResultNotes';
+import { resolveSpatialFormulas, type FormulaPresetRequest } from './researchFormulaLinks';
+
+export function builderStatusReadout(result: SpatialResult | null, run: boolean): string | null {
+  if (!run || !result) return null;
+  const coherent = result.fourF ?? result.fourier;
+  if (coherent) {
+    return formatReadoutWithUnit(coherent.capturedPowerMw, 'mW');
+  }
+  const imaging = result.imaging?.[0];
+  if (imaging) {
+    const obs = imaging.observations.find(o => o.kind !== 'eye');
+    if (obs) return obs.focused ? '已对焦' : '未对焦';
+    if (imaging.observations.some(o => o.kind === 'eye')) return '目视成像';
+    const finalStage = imaging.stages.at(-1);
+    if (finalStage) {
+      return finalStage.kind === 'infinity'
+        ? '像在无穷远'
+        : `${finalStage.magnification! < 0 ? '倒立' : '正立'}${finalStage.kind === 'real' ? '实像' : '虚像'}`;
+    }
+  }
+  if (!result.screens.length) return null;
+  const s0 = result.screens[0];
+  const val0 = s0.detectorKind === 'power-meter'
+    ? (s0.overRange ? '超量程' : s0.readingMw != null ? formatReadoutWithUnit(s0.readingMw, 'mW') : null)
+    : s0.hits === 0
+      ? '未到达'
+      : s0.gaussianRadiusMm != null
+        ? formatReadoutWithUnit(s0.gaussianRadiusMm, 'mm')
+        : s0.footprintRadiusMm != null
+          ? formatReadoutWithUnit(s0.footprintRadiusMm, 'mm')
+          : null;
+  if (result.screens.length === 1) return val0;
+  const firstName = cleanElementDisplayName(s0.name);
+  return val0 ? `${firstName} ${val0} 等 ${result.screens.length} 屏` : `${result.screens.length} 个探测器`;
+}
 
 const POLARIZATION_KINDS = new Set(['polarizer', 'half-wave-plate', 'quarter-wave-plate', 'polarizing-splitter']);
 const ATTENUATING_KINDS = new Set(['splitter', 'polarizing-splitter', 'aperture', 'filter', 'slit']);
@@ -53,9 +88,19 @@ function GratingOrders({result}:{result:SpatialResult}){
     return <article className="sb-diffraction" key={entry.gratingId+entry.sourceId}><strong>{cleanElementDisplayName(grating?.name??'光栅')} · 衍射级次</strong><small>{cleanElementDisplayName(source?.name??'光源')} · λ = {source?.wavelengthNm} nm</small>{table(entry.orders.filter(o=>Math.abs(o.m)<=1))}{entry.orders.some(o=>Math.abs(o.m)>1)&&<details><summary>其余传播级次</summary>{table(entry.orders.filter(o=>Math.abs(o.m)>1))}</details>}<small>ηₘ：薄振幅光栅估算，角度相对法线</small></article>;
   })}</>;
 }
-export default function SpatialMeasurements({result,onSelect}:{result:SpatialResult;onSelect:(id:string)=>void}){
+export default function SpatialMeasurements({
+  result,
+  onSelect,
+  onOpenFormula,
+}: {
+  result: SpatialResult;
+  onSelect: (id: string) => void;
+  onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void;
+}) {
   const coherent=result.fourF??result.fourier,notes=spatialResultNotes(result);
   const mayAttenuate=result.screens.length>1||result.inputSnapshot.elements.some(e=>ATTENUATING_KINDS.has(e.kind));
+  const formulaInfo=onOpenFormula?resolveSpatialFormulas(result.inputSnapshot.elements):null;
+  const primaryFormula=formulaInfo?.expressions.find(e=>e.preset)??null;
   return <><SpatialImagingResults result={result}/><div className="sb-measurement-grid">{result.fourF&&<SpatialFourFOutput result={result.fourF} radius={(result.inputSnapshot.elements.find(e=>e.id===result.fourF!.screenId)?.diameterMm??40)/2}/>}{result.fourier&&<SpatialFourierOutput result={result.fourier} radius={(result.inputSnapshot.elements.find(e=>e.id===result.fourier!.screenId)?.diameterMm??40)/2}/>}<div className="sb-screen-results">{result.inputSnapshot.elements.some(e=>e.kind==='laser')&&result.screens.length?result.screens.map(s=>{
     const name=cleanElementDisplayName(s.name);
     const isCoherent=coherent?.screenId===s.elementId;
@@ -94,5 +139,14 @@ export default function SpatialMeasurements({result,onSelect}:{result:SpatialRes
   {!!result.diffraction?.length&&<div className="sb-diffraction-results">{result.diffraction.map(p=><DiffractionChart key={('gratingId' in p?p.gratingId:p.slitId)+p.screenId+p.sourceId} profile={p}/>)}</div>}
   {!!result.gratingOrders?.length&&<div className="sb-diffraction-results">{coherent?<details><summary>几何衍射级次</summary><GratingOrders result={result}/></details>:<GratingOrders result={result}/>}</div>}
   </div>
+  {onOpenFormula&&primaryFormula?.preset&&(
+    <div className="sb-formula-bridge">
+      <span>理论对照 · {primaryFormula.title}</span>
+      <button type="button" className="sb-formula-bridge-btn" onClick={()=>onOpenFormula(primaryFormula.preset!)}>
+        <span>代入公式库计算</span>
+        <ArrowUpRight size={13}/>
+      </button>
+    </div>
+  )}
   {notes.warnings.length>0&&<div className="sb-warnings" role="status">{notes.warnings.map(w=><p key={w}>{w}</p>)}</div>}<details className="sb-calculation-details"><summary>计算说明</summary>{notes.scope.map(a=><p key={a}>{a}</p>)}</details></>;
 }
