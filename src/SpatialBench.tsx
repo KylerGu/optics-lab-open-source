@@ -24,13 +24,15 @@ import { closestAxis, snapPose, type OpticalAxis } from './spatialAlignment';
 import { geometryFrame, prismVertices } from './spatialGeometry';
 import { isPhysicalLens, isSolidCylinder, physicalLensProfile, physicalLensSurfaces } from './physicalLensGeometry';
 import { createInfiniteGrid } from './spatialGrid';
+import { createGaussianBeamMaterial } from './spatialBeamShader';
+import { wavelengthToRgb } from './spatialBeamProfiler';
 import { cleanElementDisplayName } from './researchUnits';
 
 export type SpatialView = 'perspective'|'top'|'side';
 interface Props {
   visible?:boolean;
   experiment:SpatialExperiment; selectedId:string|null; rendered:boolean; result:SpatialResult|null;
-  view:SpatialView; reset:number; tool:'translate'|'rotate'; showGrid:boolean; showBeam:boolean;
+  view:SpatialView; reset:number; tool:'translate'|'rotate'; showGrid:boolean; showBeam:boolean; darkroom?:boolean;
   axes:OpticalAxis[];showAxes:boolean;snapEnabled:boolean;
   onSelect:(id:string|null)=>void; onEditing:(value:boolean)=>void;
   onTransform:(id:string,patch:Partial<SpatialElement>)=>void;
@@ -47,7 +49,13 @@ function orientation(e:SpatialElement) {
   const {n,u,v}=geometryFrame(e);
   return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(...n),new THREE.Vector3(...v).negate(),new THREE.Vector3(...u)));
 }
-function wavelengthColor(nm:number){return nm<470?'#4855ce':nm<500?'#008aa6':nm<570?'#00845d':nm<600?'#9b7900':'#d94235';}
+function wavelengthColor(nm:number){
+  let [r,g,b]=wavelengthToRgb(nm);
+  const peak=Math.max(r,g,b);
+  if(peak>0&&peak<180){const scale=180/peak;r=Math.min(255,Math.round(r*scale));g=Math.min(255,Math.round(g*scale));b=Math.min(255,Math.round(b*scale));}
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+function visualBeamRadius(rMm:number){return Math.min(28,0.22+1.35*Math.pow(Math.max(0.01,rMm),0.78));}
 function dispose(object:THREE.Object3D){
   object.traverse(child=>{
     const mesh=child as THREE.Mesh;mesh.geometry?.dispose();
@@ -273,7 +281,7 @@ export function createSpatialSupport(e:SpatialElement,floorY=0){
 export default function SpatialBench(props:Props){
   const host=useRef<HTMLDivElement>(null),state=useRef<State|null>(null),latest=useRef(props);latest.current=props;
   const directionWidget=useRef<SVGSVGElement>(null),axisLabels=useRef<HTMLDivElement>(null);
-  const componentLabels=useRef<HTMLDivElement>(null);
+  const componentLabels=useRef<HTMLDivElement>(null),hoveredId=useRef<string|null>(null);
   const objects=props.experiment.elements.filter(e=>e.kind==='object');
   const previewObject=objects.find(e=>e.id===props.selectedId)??objects[0];
   const microscopeCopy=props.experiment.presentation?.kind==='microscope'||props.experiment.name.startsWith('显微镜成像 · 器件副本');
@@ -330,15 +338,30 @@ export default function SpatialBench(props:Props){
       latest.current.onTransform(object.userData.elementId,patch);
     });
     const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let start=[0,0];
+    const pick=(clientX:number,clientY:number)=>{
+      const rect=renderer.domElement.getBoundingClientRect();
+      if(!rect.width||!rect.height)return null;
+      pointer.set((clientX-rect.left)/rect.width*2-1,-(clientY-rect.top)/rect.height*2+1);
+      raycaster.setFromCamera(pointer,camera);
+      const hit=raycaster.intersectObjects(devices.children,true).find(entry=>entry.object.name!=='selection');
+      let object:THREE.Object3D|null=hit?.object??null;
+      while(object&&!object.userData.elementId)object=object.parent;
+      return object?.userData.elementId??null;
+    };
     const down=(event:PointerEvent)=>{start=[event.clientX,event.clientY];gizmoUsed=false;};
+    const move=(event:PointerEvent)=>{
+      if(latest.current.rendered||event.buttons!==0||transform.dragging){hoveredId.current=null;renderer.domElement.style.cursor='';return;}
+      const id=pick(event.clientX,event.clientY);
+      hoveredId.current=id;
+      renderer.domElement.style.cursor=id?'pointer':'';
+    };
+    const leave=()=>{hoveredId.current=null;renderer.domElement.style.cursor='';};
     const up=(event:PointerEvent)=>{
       if(event.button!==0||gizmoUsed||Math.hypot(event.clientX-start[0],event.clientY-start[1])>4||transform.axis||transform.dragging)return;
-      const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);
-      const hit=raycaster.intersectObjects(devices.children,true).find(entry=>entry.object.name!=='selection');let object:THREE.Object3D|null=hit?.object??null;
-      while(object&&!object.userData.elementId)object=object.parent;latest.current.onSelect(object?.userData.elementId??null);
+      latest.current.onSelect(pick(event.clientX,event.clientY));
     };
     const cancel=()=>{cancelling=true;if(transform.dragging)transform.reset();transform.dragging=false;transform.axis=null;cancelling=false;latest.current.onEditing(false);orbit.enabled=true;};
-    renderer.domElement.addEventListener('pointerdown',down,true);renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',cancel);
+    renderer.domElement.addEventListener('pointerdown',down,true);renderer.domElement.addEventListener('pointermove',move);renderer.domElement.addEventListener('pointerleave',leave);renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',cancel);
     const directions=[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],projected=new THREE.Vector3(),inverseCamera=new THREE.Quaternion(),eye=new THREE.Vector3(),labelCenter=new THREE.Vector3(),labelTop=new THREE.Vector3();
     const widgetAxes=Array.from(directionWidget.current?.querySelectorAll<SVGGElement>('g[data-axis]')??[]),labels=Array.from(axisLabels.current?.children??[]) as HTMLElement[];
     renderer.setAnimationLoop(()=>{
@@ -353,9 +376,9 @@ export default function SpatialBench(props:Props){
           anchors.set(object.userData.elementId,{x,y,top:y-r,bottom:y+r,z:labelCenter.z});
         }
         const buttons=Array.from(componentLabels.current.children) as HTMLButtonElement[];
-        // Place the selected label first, then stack overlapping labels without altering optical coordinates.
-        buttons.sort((a,b)=>Number(b.dataset.element===latest.current.selectedId)-Number(a.dataset.element===latest.current.selectedId));
+        const activeHover=hoveredId.current;
         for(const label of buttons){
+          if(!activeHover||label.dataset.element!==activeHover){label.style.visibility='hidden';continue;}
           const anchor=anchors.get(label.dataset.element!);
           if(!anchor){label.style.visibility='hidden';continue;}
           const {x,y:anchorY}=anchor,below=label.dataset.below==='true';
@@ -390,7 +413,7 @@ export default function SpatialBench(props:Props){
         label.style.left=xPx+'px';label.style.top=yPx+'px';
       });
     });setReady(true);
-    return ()=>{focus.dispose();state.current=null;observer.disconnect();renderer.setAnimationLoop(null);renderer.domElement.removeEventListener('pointerdown',down,true);renderer.domElement.removeEventListener('pointerup',up);renderer.domElement.removeEventListener('pointercancel',cancel);transform.dispose();orbit.dispose();dispose(scene);environmentTarget.dispose();renderer.dispose();renderer.domElement.remove();};
+    return ()=>{focus.dispose();state.current=null;observer.disconnect();renderer.setAnimationLoop(null);renderer.domElement.removeEventListener('pointerdown',down,true);renderer.domElement.removeEventListener('pointermove',move);renderer.domElement.removeEventListener('pointerleave',leave);renderer.domElement.removeEventListener('pointerup',up);renderer.domElement.removeEventListener('pointercancel',cancel);transform.dispose();orbit.dispose();dispose(scene);environmentTarget.dispose();renderer.dispose();renderer.domElement.remove();};
   },[]);
   useEffect(()=>{if(!props.rendered||props.visible===false)state.current?.focus.cancel();},[props.rendered,props.visible]);
   useEffect(()=>{
@@ -402,12 +425,17 @@ export default function SpatialBench(props:Props){
     s.scene.environment=s.environment;s.scene.environmentIntensity=props.rendered?.75:.65;
     s.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     s.renderer.toneMappingExposure=props.rendered?1:1.1;
-    s.renderer.setClearColor(props.rendered?'#edf2f6':'#f6f8fb');
-    (s.scene.children.find(c=>c instanceof THREE.HemisphereLight) as THREE.HemisphereLight).intensity=props.rendered?.6:1.25;
+    const darkroom=props.darkroom??false;
+    s.renderer.setClearColor(darkroom?'#090d16':(props.rendered?'#edf2f6':'#f6f8fb'));
+    (s.scene.children.find(c=>c instanceof THREE.HemisphereLight) as THREE.HemisphereLight).intensity=darkroom?(props.rendered?.28:.42):(props.rendered?.6:1.25);
+    s.scene.environmentIntensity=darkroom?.55:(props.rendered?.75:.65);
     (s.scene.getObjectByName('key-light') as THREE.DirectionalLight).intensity=props.rendered?2.4:2.6;
     s.scene.getObjectByName('microscope-fill')!.visible=props.rendered;
-    s.scene.getObjectByName('instrument-rim')!.visible=props.rendered;
-    (s.floor.material as THREE.MeshStandardMaterial).color.set('#dfe7ee');
+    const rimLight=s.scene.getObjectByName('instrument-rim') as THREE.DirectionalLight;
+    rimLight.visible=props.rendered||darkroom;
+    rimLight.intensity=darkroom?1.85:1.1;
+    (s.floor.material as THREE.MeshStandardMaterial).color.set(darkroom?'#0f1623':'#dfe7ee');
+    (s.grid.material as THREE.ShaderMaterial).uniforms.darkroom.value=darkroom?1:0;
     s.rig.position.set(0,0,0);s.rig.quaternion.identity();
     for(const element of props.experiment.elements){if(layout&&element.kind==='eye')continue;s.devices.add(createSpatialOptic(element,props.rendered));}
     if(layout){s.rig.position.copy(layout.position);s.rig.quaternion.copy(layout.rotation);s.housing.add(createMicroscopeHousing(layout));}
@@ -520,20 +548,21 @@ export default function SpatialBench(props:Props){
       if(source?.beamModel==='gaussian'&&!segment.chief)continue;
       if(segment.powerMw<=0)continue;
       const start=world(segment.start),end=world(segment.end);
-      const branchPower=segment.powerMw*(source?.rayCount??1),brightness=Math.sqrt(branchPower/(branchPower+10));
+      const branchPower=segment.powerMw*(source?.rayCount??1),brightness=branchPower<=0?0:Math.min(1,Math.pow(Math.log1p(branchPower)/Math.log1p(1000),1.35));
       // Screen-space widths stay readable when zooming out and on high-DPI displays.
-      const material=new LineMaterial({color,linewidth:segment.chief?2.5:1.4,transparent:true,opacity:segment.chief?.8+.18*brightness:.36+.25*brightness,depthWrite:false});
+      const material=new LineMaterial({color,linewidth:source?.beamModel==='gaussian'?1.35:segment.chief?2.5:1.4,transparent:true,opacity:source?.beamModel==='gaussian'?.55+.2*brightness:segment.chief?.8+.18*brightness:.36+.25*brightness,depthWrite:false});
       material.resolution.copy(s.renderer.getSize(new THREE.Vector2()));
       s.rays.add(new Line2(new LineGeometry().setPositions([...start.toArray(),...end.toArray()]),material));
-      if(segment.chief&&directionMarks<6&&start.distanceTo(end)>70){
-        const direction=end.clone().sub(start).normalize(),length=Math.min(7,start.distanceTo(end)*.06);
-        const arrow=new THREE.ArrowHelper(direction,start.clone().lerp(end,.58),length,color,length,length*.65);
+      if(segment.chief&&source?.beamModel!=='gaussian'&&directionMarks<6&&start.distanceTo(end)>70){
+        const direction=end.clone().sub(start).normalize(),length=Math.min(2.6,start.distanceTo(end)*.03);
+        const arrow=new THREE.ArrowHelper(direction,start.clone().lerp(end,.58),length,color,length,length*.35);
         arrow.line.visible=false;s.rays.add(arrow);directionMarks++;
       }
-      if(segment.chief&&props.rendered&&start.distanceTo(end)>.001){
+      if(segment.chief&&source?.beamModel!=='gaussian'&&(props.rendered||props.darkroom)&&start.distanceTo(end)>.001){
         const curve=new THREE.LineCurve3(start,end);
-        s.rays.add(new THREE.Mesh(new THREE.TubeGeometry(curve,1,.6,8,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85*brightness})));
-        s.rays.add(new THREE.Mesh(new THREE.TubeGeometry(curve,1,2.4,8,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.07*brightness,depthWrite:false})));
+        const coreColor=new THREE.Color(color).lerp(new THREE.Color('#ffffff'),props.darkroom?.55*brightness:.35*brightness);
+        s.rays.add(new THREE.Mesh(new THREE.TubeGeometry(curve,1,.55,8,false),new THREE.MeshBasicMaterial({color:coreColor,transparent:true,opacity:(props.darkroom?.92:.85)*brightness,blending:THREE.AdditiveBlending,depthWrite:false})));
+        s.rays.add(new THREE.Mesh(new THREE.TubeGeometry(curve,1,2.6,8,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:(props.darkroom?.16:.08)*brightness,blending:THREE.AdditiveBlending,depthWrite:false})));
       }
       if(segment.hitId&&props.experiment.elements.find(e=>e.id===segment.hitId)?.kind==='screen'){
         const hitElement=props.experiment.elements.find(e=>e.id===segment.hitId)!;
@@ -543,16 +572,57 @@ export default function SpatialBench(props:Props){
     for(const beam of props.result.beams){
       const start=world(beam.start),end=world(beam.end),direction=end.clone().sub(start).normalize();
       const u=new THREE.Vector3().crossVectors(direction,Math.abs(direction.y)<.9?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1)).normalize(),v=new THREE.Vector3().crossVectors(direction,u);
-      const vertices:number[]=[],indices:number[]=[],sides=20;
+      const visRadii=beam.radiiMm.map(visualBeamRadius);
+      const vertices:number[]=[],radii:number[]=[],indices:number[]=[],sides=20;
       for(let row=0;row<beam.radiiMm.length;row++)for(let side=0;side<sides;side++){
-        const angle=side/sides*Math.PI*2,point=start.clone().lerp(end,row/(beam.radiiMm.length-1)).addScaledVector(u,Math.cos(angle)*beam.radiiMm[row]).addScaledVector(v,Math.sin(angle)*beam.radiiMm[row]);
+        const angle=side/sides*Math.PI*2,vr=visRadii[row],point=start.clone().lerp(end,row/(beam.radiiMm.length-1)).addScaledVector(u,Math.cos(angle)*vr).addScaledVector(v,Math.sin(angle)*vr);
         vertices.push(point.x,point.y,point.z);
+        radii.push(beam.radiiMm[row]);
         if(row<beam.radiiMm.length-1){const a=row*sides+side,b=row*sides+(side+1)%sides;indices.push(a,a+sides,b,b,a+sides,b+sides);}
       }
-      const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);
+      const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setAttribute('aRadius',new THREE.Float32BufferAttribute(radii,1));geometry.setIndex(indices);geometry.computeVertexNormals();
       const source=props.experiment.elements.find(e=>e.id===beam.sourceId),color=wavelengthColor(source?.wavelengthNm??532);
-      const brightness=Math.sqrt(beam.powerMw/(beam.powerMw+10));
-      s.rays.add(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color,transparent:true,opacity:(props.rendered?.2:.15)*brightness,side:THREE.DoubleSide,depthWrite:false})));
+      const brightness=beam.powerMw<=0?0:Math.min(1,Math.pow(Math.log1p(beam.powerMw)/Math.log1p(1000),1.35));
+      const minWaist=Math.min(...beam.radiiMm,0.25);
+      s.rays.add(new THREE.Mesh(geometry,createGaussianBeamMaterial(color,minWaist,{darkroom:props.darkroom,powerRatio:brightness})));
+      if(beam.radiiMm.length>=2){
+        const res=s.renderer.getSize(new THREE.Vector2());
+        const fiberCount=Math.max(4,Math.min(24,Math.round(4+Math.sqrt(source?.rayCount??9)*1.5)));
+        const outerCount=Math.max(4,Math.round(fiberCount*2/3)),innerCount=fiberCount-outerCount;
+        const outerMat=new LineMaterial({color,linewidth:1.1,transparent:true,opacity:(props.darkroom?.58:.45)*(.35+.65*brightness),blending:THREE.AdditiveBlending,depthWrite:false});
+        outerMat.resolution.copy(res);
+        const addRingFibers=(count:number,scale:number,angleOffset:number,mat:LineMaterial)=>{
+          for(let k=0;k<count;k++){
+            const angle=angleOffset+k/count*Math.PI*2,cosA=Math.cos(angle),sinA=Math.sin(angle),positions:number[]=[];
+            for(let row=0;row<beam.radiiMm.length;row++){
+              const vr=visRadii[row]*scale,pt=start.clone().lerp(end,row/(beam.radiiMm.length-1)).addScaledVector(u,cosA*vr).addScaledVector(v,sinA*vr);
+              positions.push(pt.x,pt.y,pt.z);
+            }
+            s.rays.add(new Line2(new LineGeometry().setPositions(positions),mat));
+          }
+        };
+        addRingFibers(outerCount,1,0,outerMat);
+        if(innerCount>0){
+          const innerColor=new THREE.Color(color).lerp(new THREE.Color('#ffffff'),.35);
+          const innerMat=new LineMaterial({color:innerColor,linewidth:1.0,transparent:true,opacity:(props.darkroom?.68:.5)*(.35+.65*brightness),blending:THREE.AdditiveBlending,depthWrite:false});
+          innerMat.resolution.copy(res);
+          addRingFibers(innerCount,.5,Math.PI/outerCount,innerMat);
+        }
+        let minIdx=0;
+        for(let row=1;row<beam.radiiMm.length;row++)if(beam.radiiMm[row]<beam.radiiMm[minIdx])minIdx=row;
+        if(minIdx>0&&minIdx<beam.radiiMm.length-1){
+          const waistPos=start.clone().lerp(end,minIdx/(beam.radiiMm.length-1));
+          const ringR=Math.max(visRadii[minIdx]+1.4,1.8);
+          const ringColor=new THREE.Color(color).lerp(new THREE.Color('#ffffff'),.45);
+          const makeWaistRing=(r:number,opacity:number)=>{
+            const pts:THREE.Vector3[]=[];
+            for(let j=0;j<48;j++){const a=j/48*Math.PI*2;pts.push(waistPos.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r));}
+            return new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:ringColor,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false}));
+          };
+          s.rays.add(makeWaistRing(ringR,props.darkroom?.9:.75));
+          s.rays.add(makeWaistRing(ringR*1.35,props.darkroom?.35:.25));
+        }
+      }
     }
     if(props.result.fourF||props.result.fourier){
       const wave=(props.result.fourF??props.result.fourier)!,screen=props.experiment.elements.find(e=>e.id===wave.screenId)!,grating=props.experiment.elements.find(e=>e.id===wave.gratingId)!,{n}=geometryFrame(screen),{u,v}=geometryFrame(grating),extent=wave.points.at(-1)!.xMm;
@@ -590,7 +660,7 @@ export default function SpatialBench(props:Props){
     const sphere=box.isEmpty()?null:box.getBoundingSphere(new THREE.Sphere());
     const centre=sphere?.center??new THREE.Vector3(0,90,0),tan=Math.tan(THREE.MathUtils.degToRad(s.camera.fov)/2)/s.camera.zoom;
     let distance=sphere?Math.max(220,sphere.radius*1.1/Math.sin(Math.atan(Math.min(tan,tan*s.camera.aspect)))):1000;
-    s.scene.fog=layout?new THREE.Fog('#f6f8fb',distance*1.5,distance*4):null;
+    s.scene.fog=layout?new THREE.Fog(props.darkroom?'#090d16':'#f6f8fb',distance*1.5,distance*4):null;
     const direction=props.view==='top'?new THREE.Vector3(0,1,.00001):props.view==='side'?new THREE.Vector3(0,0,1):layout?new THREE.Vector3(.8,.27,1).normalize():telescope?new THREE.Vector3(.4,.35,1).normalize():cameraBody?new THREE.Vector3(-.35,.35,1).normalize():props.rendered?new THREE.Vector3(.6,.38,1).normalize():new THREE.Vector3(.55,.32,1).normalize();
     if(sphere){
       // Fit the actual long apparatus rather than a large enclosing sphere.
