@@ -21,6 +21,7 @@ import {
   choosePowerDisplay,
   chooseUnitForMetric,
   clampZero,
+  cleanElementDisplayName,
   formatCompact,
   formatReadoutWithUnit,
   formatScaled,
@@ -502,7 +503,7 @@ function ComparisonResults({
     })}</tbody></table></div><p className="rw-result-note">傅里叶光强相对频谱中心；4f光强相对输入中心。— 表示该点未得到有效波动结果。</p></section>}
     {(screens.length > 1 || availableMetrics.length > 1) && (
       <div className="rw-chart-controls">
-        {screens.length > 1 && <label>观察屏<select value={screenId} disabled={!screens.length} onChange={event => setScreenId(event.target.value)}>{screens.map(s => <option key={s.elementId} value={s.elementId}>{s.name}</option>)}</select></label>}
+        {screens.length > 1 && <label>观察屏<select value={screenId} disabled={!screens.length} onChange={event => setScreenId(event.target.value)}>{screens.map(s => <option key={s.elementId} value={s.elementId}>{cleanElementDisplayName(s.name)}</option>)}</select></label>}
         {availableMetrics.length > 1 && (
           <label>比较指标<select value={metric} onChange={event => setSelectedMetric(event.target.value as ScanMetric)}>{availableMetrics.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}</select></label>
         )}
@@ -555,13 +556,13 @@ function SimulationResults({
   const powerDisplay = choosePowerDisplay(data.screens.map(s => s.sampledPowerMw));
 
   return <>
-    {data.screens.length > 1 && <div className="rw-chart-controls"><label>查看观察屏<select value={screenId} onChange={event => setScreenId(event.target.value)}>{data.screens.map(s => <option key={s.elementId} value={s.elementId}>{s.name}</option>)}</select></label></div>}
+    {data.screens.length > 1 && <div className="rw-chart-controls"><label>查看观察屏<select value={screenId} onChange={event => setScreenId(event.target.value)}>{data.screens.map(s => <option key={s.elementId} value={s.elementId}>{cleanElementDisplayName(s.name)}</option>)}</select></label></div>}
     {data.fourier?.screenId === screenId && <SpatialFourierOutput result={data.fourier} radius={screenRadius}/>}
     {data.fourF?.screenId === screenId && <SpatialFourFOutput result={data.fourF} radius={screenRadius}/>}
     <ResultHighlights items={wave ? [
-      { label: '到屏功率（波动计算）', value: formatReadoutWithUnit(wave.capturedPowerMw, 'mW'), note: selected?.name, primary: true },
+      { label: '到屏功率（波动计算）', value: formatReadoutWithUnit(wave.capturedPowerMw, 'mW'), note: selected ? cleanElementDisplayName(selected.name) : undefined, primary: true },
     ] : [
-      { label: '高斯半径', value: formattedRadius(selected?.gaussianRadiusMm ?? null), note: selected?.name ?? '暂无到屏读数', primary: selected?.gaussianRadiusMm !== null },
+      { label: '高斯半径', value: formattedRadius(selected?.gaussianRadiusMm ?? null), note: selected ? cleanElementDisplayName(selected.name) : '暂无到屏读数', primary: selected?.gaussianRadiusMm !== null },
       { label: '几何覆盖半径', value: formattedRadius(selected?.footprintRadiusMm ?? null), note: '采样光线的落点范围' },
       { label: '采样功率', value: selected ? formatReadoutWithUnit(selected.sampledPowerMw, 'mW') : '—', note: '有限光线采样近似' },
     ]}/>
@@ -571,7 +572,7 @@ function SimulationResults({
         <h3>观察屏读数</h3>
         <button className="rw-button" onClick={() => downloadResearch(data, '光学仿真结果', 'json')}><Download size={15}/>保存完整记录</button>
       </div>
-      <div className="rw-table-wrap"><table><thead><tr><th>观察屏</th><th>命中光线</th><th>高斯半径 / {lengthDisplay.unit}</th><th>几何覆盖半径 / {lengthDisplay.unit}</th><th>采样功率 / {powerDisplay.unit}</th></tr></thead><tbody>{data.screens.map(s => <tr key={s.elementId} className={s.elementId === screenId ? 'rw-result-selected' : undefined}><td>{s.name}</td><td>{s.hits} 条</td><td>{s.gaussianRadiusMm === null ? '—' : formatScaled(s.gaussianRadiusMm, lengthDisplay)}</td><td>{s.footprintRadiusMm === null ? '—' : formatScaled(s.footprintRadiusMm, lengthDisplay)}</td><td>{formatScaled(s.sampledPowerMw, powerDisplay)}</td></tr>)}</tbody></table></div>
+      <div className="rw-table-wrap"><table><thead><tr><th>观察屏</th><th>命中光线</th><th>高斯半径 / {lengthDisplay.unit}</th><th>几何覆盖半径 / {lengthDisplay.unit}</th><th>采样功率 / {powerDisplay.unit}</th></tr></thead><tbody>{data.screens.map(s => <tr key={s.elementId} className={s.elementId === screenId ? 'rw-result-selected' : undefined}><td>{cleanElementDisplayName(s.name)}</td><td>{s.hits} 条</td><td>{s.gaussianRadiusMm === null ? '—' : formatScaled(s.gaussianRadiusMm, lengthDisplay)}</td><td>{s.footprintRadiusMm === null ? '—' : formatScaled(s.footprintRadiusMm, lengthDisplay)}</td><td>{formatScaled(s.sampledPowerMw, powerDisplay)}</td></tr>)}</tbody></table></div>
       {!data.screens.length && <p className="rw-result-note">装置没有观察屏，尚无到屏读数。</p>}
       <ResearchModelNotes data-detail="explanation" title="物理假设" notes={measurementNotes(data)} warnings={data.warnings} fullNotes={data.assumptions}/>
     </ResultDetails>
@@ -690,7 +691,7 @@ function ObjectComparisonResults({
     { label: '比较对象', value: String(rows.length), note: '分别使用各自原有参数' },
     { label: '到屏读数', value: String(rows.reduce((total, r) => total + (r.evidence?.screens.length ?? 0), 0)), note: '保留各对象与观察屏的对应关系' },
     { label: '存在模型警告的对象', value: String(rows.filter(r => r.evidence?.warnings.length).length), note: '不自动判断装置优劣' },
-  ]}/><div className="rw-table-wrap"><table><thead><tr><th>探究对象</th><th>观察屏</th><th>高斯半径 / {lengthDisplay.unit}</th><th>几何覆盖半径 / {lengthDisplay.unit}</th><th>采样功率 / {powerDisplay.unit}</th><th>状态</th></tr></thead><tbody>{rows.flatMap(r => r.evidence?.screens.length ? r.evidence.screens.map(s => <tr key={r.objectId + '-' + s.elementId}><td>{r.inputSnapshot.name}<small className="rw-comparison-source">{r.sourceLabel}</small></td><td>{s.name}</td><td>{s.gaussianRadiusMm === null ? '—' : formatScaled(s.gaussianRadiusMm, lengthDisplay)}</td><td>{s.footprintRadiusMm === null ? '—' : formatScaled(s.footprintRadiusMm, lengthDisplay)}</td><td>{formatScaled(s.sampledPowerMw, powerDisplay)}</td><td>{r.evidence!.warnings.length ? '存在模型警告' : '✓'}</td></tr>) : [<tr key={r.objectId}><td>{r.inputSnapshot.name}<small className="rw-comparison-source">{r.sourceLabel}</small></td><td colSpan={5}>装置没有观察屏，暂无到屏读数</td></tr>])}</tbody></table></div><ResultDetails artifact={artifact} onOpenFormula={onOpenFormula}><div className="rw-result-actions"><button className="rw-button" onClick={() => downloadResearch(csv, '探究对象比较', 'csv')}><Download size={15}/>下载数据</button><button className="rw-button" onClick={() => downloadResearch(rows, '探究对象比较', 'json')}>保存完整记录</button></div><p className="rw-result-note rw-result-scope">比较前需核对光源、屏的位置和评价指标。不同模型的高斯半径与几何覆盖半径不能混作同一指标；各屏读数也不自动代表装置优劣。</p>{rows.map(r => <div key={r.objectId} data-detail="explanation"><ResearchModelNotes data-detail="explanation" title={r.inputSnapshot.name} notes={measurementNotes(r.evidence)} warnings={r.evidence?.warnings ?? []} fullNotes={r.evidence?.assumptions ?? []}/><button className="rw-button" onClick={() => onOpenBuilder(r.inputSnapshot)}>在光路搭建中查看参数<ArrowUpRight size={14}/></button></div>)}</ResultDetails></>;
+  ]}/><div className="rw-table-wrap"><table><thead><tr><th>探究对象</th><th>观察屏</th><th>高斯半径 / {lengthDisplay.unit}</th><th>几何覆盖半径 / {lengthDisplay.unit}</th><th>采样功率 / {powerDisplay.unit}</th><th>状态</th></tr></thead><tbody>{rows.flatMap(r => r.evidence?.screens.length ? r.evidence.screens.map(s => <tr key={r.objectId + '-' + s.elementId}><td>{r.inputSnapshot.name}<small className="rw-comparison-source">{r.sourceLabel}</small></td><td>{cleanElementDisplayName(s.name)}</td><td>{s.gaussianRadiusMm === null ? '—' : formatScaled(s.gaussianRadiusMm, lengthDisplay)}</td><td>{s.footprintRadiusMm === null ? '—' : formatScaled(s.footprintRadiusMm, lengthDisplay)}</td><td>{formatScaled(s.sampledPowerMw, powerDisplay)}</td><td>{r.evidence!.warnings.length ? '存在模型警告' : '✓'}</td></tr>) : [<tr key={r.objectId}><td>{r.inputSnapshot.name}<small className="rw-comparison-source">{r.sourceLabel}</small></td><td colSpan={5}>装置没有观察屏，暂无到屏读数</td></tr>])}</tbody></table></div><ResultDetails artifact={artifact} onOpenFormula={onOpenFormula}><div className="rw-result-actions"><button className="rw-button" onClick={() => downloadResearch(csv, '探究对象比较', 'csv')}><Download size={15}/>下载数据</button><button className="rw-button" onClick={() => downloadResearch(rows, '探究对象比较', 'json')}>保存完整记录</button></div><p className="rw-result-note rw-result-scope">比较前需核对光源、屏的位置和评价指标。不同模型的高斯半径与几何覆盖半径不能混作同一指标；各屏读数也不自动代表装置优劣。</p>{rows.map(r => <div key={r.objectId} data-detail="explanation"><ResearchModelNotes data-detail="explanation" title={r.inputSnapshot.name} notes={measurementNotes(r.evidence)} warnings={r.evidence?.warnings ?? []} fullNotes={r.evidence?.assumptions ?? []}/><button className="rw-button" onClick={() => onOpenBuilder(r.inputSnapshot)}>在光路搭建中查看参数<ArrowUpRight size={14}/></button></div>)}</ResultDetails></>;
 }
 
 function ModelResults({

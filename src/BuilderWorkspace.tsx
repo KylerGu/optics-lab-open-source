@@ -1,11 +1,12 @@
 import {cameraLayout,moveCameraPart,type CameraDragPart} from './spatialCamera';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Aperture, ArrowDownToLine, Box, Check, ChevronDown, Copy, Focus, FolderOpen, Grid3X3, Layers, Lightbulb, Maximize2, MousePointer2, Move3D, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, Rotate3D, RotateCcw, Save, ScanLine, Search, SlidersHorizontal, Sparkles, Sun, Trash2, Undo2, Upload, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { Aperture, ArrowDownToLine, BarChart3, Box, Check, ChevronDown, Copy, Focus, FolderOpen, Grid3X3, Layers, Lightbulb, Maximize2, MousePointer2, Move3D, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, Rotate3D, RotateCcw, Save, ScanLine, Search, SlidersHorizontal, Sparkles, Sun, Trash2, Undo2, Upload, X } from 'lucide-react';
 import type { Experiment } from './model';
 import { DRAFT_KEY } from './model';
 import type { BuilderConversationContext } from './researchConversation';
 import InquiryComparison from './InquiryComparison';
-import { sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, type ResearchVisualGuide, type VisualField } from './researchVisual';
+import { buildVisualHandoffPrompt, resolveComparisonGuide, sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, type ResearchVisualGuide, type VisualField } from './researchVisual';
+import { cleanElementDisplayName, formatReadoutWithUnit } from './researchUnits';
 import './inquiry-visual.css';
 import './microscope-render.css';
 import { spatialFourierParameters } from './spatialFourier';
@@ -41,8 +42,8 @@ function readInitial(){
   return {experiment:spatialTemplate('empty'),warning:null};
 }
 
-function OpticalSettings({distant=false,probeAvailable,highlightField,element:e,onUpdate,onEditing,onSaveLens,onChooseLens,sourceWavelengths,myLenses}:{distant?:boolean;probeAvailable:boolean;highlightField?:VisualField|null;onSaveLens:()=>void;onChooseLens:()=>void;sourceWavelengths:number[];myLenses:SavedLens[];element:SpatialElement;onUpdate:(patch:Partial<SpatialElement>)=>boolean;onEditing:(editing:boolean)=>void}){
-  const common={onEditing};
+function OpticalSettings({distant=false,probeAvailable,highlightField,element:e,onUpdate,onEditing,onDrag,onSaveLens,onChooseLens,sourceWavelengths,myLenses}:{distant?:boolean;probeAvailable:boolean;highlightField?:VisualField|null;onSaveLens:()=>void;onChooseLens:()=>void;sourceWavelengths:number[];myLenses:SavedLens[];element:SpatialElement;onUpdate:(patch:Partial<SpatialElement>)=>boolean;onEditing:(editing:boolean)=>void;onDrag?:(active:boolean,commit?:boolean)=>void}){
+  const common={onEditing,onDrag};
   if(e.kind==='object'&&e.objectMode==='distant')return <div className="sb-optical-fields">
     <NumberInput {...common} label="物体高度" value={e.objectHeightMm} unit="mm" min={.001} max={200} step={.1} onChange={objectHeightMm=>onUpdate({objectHeightMm})}/>
     <NumberInput {...common} label="物体宽度" value={e.objectWidthMm} unit="mm" min={.001} max={200} step={.1} onChange={objectWidthMm=>onUpdate({objectWidthMm})}/>
@@ -70,7 +71,7 @@ function OpticalSettings({distant=false,probeAvailable,highlightField,element:e,
   </div>;
   const changePeriod=(d:number)=>onUpdate({gratingPeriodUm:d,gratingSlitUm:Math.max(.01,Math.min(50,d,e.gratingSlitUm*d/e.gratingPeriodUm)),gratingWidthMm:Math.max(e.gratingWidthMm,2*d*.001)});
   const gaussian=e.beamModel==='gaussian',divergence=sourceDivergenceMrad(e);
-  if(isPhysicalLens(e.kind))return <LensSettings element={e} onUpdate={onUpdate} onEditing={onEditing} onSave={onSaveLens} onChoose={onChooseLens} wavelengths={sourceWavelengths} saved={myLenses}/>;
+  if(isPhysicalLens(e.kind))return <LensSettings element={e} onUpdate={onUpdate} onEditing={onEditing} onDrag={onDrag} onSave={onSaveLens} onChoose={onChooseLens} wavelengths={sourceWavelengths} saved={myLenses}/>;
   return <div className="sb-optical-fields">{e.kind==='laser'?<>
     <label className="sb-beam-model">光束类型<select aria-label="光束类型" value={e.beamModel} onChange={event=>onUpdate({beamModel:event.target.value as 'parallel'|'gaussian'})}><option value="parallel">几何光束</option><option value="gaussian">高斯光束</option></select></label>
     <NumberInput {...common} label="发射功率" value={e.powerMw} unit="mW" min={0} max={1000} step={1} onChange={powerMw=>onUpdate({powerMw})}/>
@@ -123,7 +124,7 @@ function LensIllustration({kind}:{kind:SpatialElement['kind']}){
   const path=points.map(([x,y],i)=>`${i?'L':'M'}${48+x*2.4},${36+y*2.4}`).join(' ')+' Z';
   return <svg width="96" height="72" viewBox="0 0 96 72" aria-hidden="true"><path d="M8 36H88" stroke="#c1cfdf" strokeDasharray="3 3"/><path d={path} fill="#d8edfa" stroke="#6691ca" strokeWidth="1.5"/></svg>;
 }
-export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,researchCopy=null,onResearchCopyConsumed,onResearch,onConversation,visible=true}:{sceneCopy:{id:string;experiment:Experiment}|null;onCopyConsumed:()=>void;onScenes:()=>void;researchCopy?:ResearchBuilderCopy|null;onResearchCopyConsumed?:()=>void;onResearch?:()=>void;onConversation?:(context:BuilderConversationContext)=>void;visible?:boolean}){
+export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,researchCopy=null,onResearchCopyConsumed,onResearch,onConversation,visible=true}:{sceneCopy:{id:string;experiment:Experiment}|null;onCopyConsumed:()=>void;onScenes:()=>void;researchCopy?:ResearchBuilderCopy|null;onResearchCopyConsumed?:()=>void;onResearch?:(handoffDraft?:string)=>void;onConversation?:(context:BuilderConversationContext)=>void;visible?:boolean}){
   const [initial]=useState(readInitial);
   const [tabsInitial]=useState(()=>{
     try{const saved=readSaved(),raw=localStorage.getItem(BUILDER_TABS),id=localStorage.getItem(BUILDER_ACTIVE_SAVED);return {state:raw?parseBuilderTabs(raw,saved):initialBuilderTabs(initial.experiment,saved.some(row=>row.id===id)?id:null,saved.find(row=>row.id===id)?.conversationId),warning:null};}
@@ -132,7 +133,8 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   const [workspace,setWorkspace]=useState(tabsInitial.state),workspaceRef=useRef(workspace);workspaceRef.current=workspace;
   const activeTab=workspace.tabs.find(tab=>tab.id===workspace.activeId)!,history=activeTab.history,activeSavedId=activeTab.savedId;
   const [focusDraft,setFocusDraft]=useState<SpatialExperiment|null>(null),focusBase=useRef<SpatialExperiment|null>(null);
-  const experiment=focusDraft??history.present,latest=useRef(experiment);latest.current=experiment;
+  const [sliderDraft,setSliderDraft]=useState<SpatialExperiment|null>(null),sliderDraftRef=useRef<SpatialExperiment|null>(null),sliderDraggingRef=useRef(false),[sliderActive,setSliderActive]=useState(false);
+  const experiment=sliderDraft??focusDraft??history.present,latest=useRef(experiment);latest.current=experiment;
   const changeWorkspace=(next:BuilderTabs)=>{workspaceRef.current=next;latest.current=next.tabs.find(tab=>tab.id===next.activeId)!.history.present;setWorkspace(next);};
   const setHistory=(update:(history:BuilderHistory)=>BuilderHistory)=>{const current=workspaceRef.current;changeWorkspace({...current,tabs:current.tabs.map(tab=>tab.id===current.activeId?{...tab,resetBaseline:tab.resetBaseline??tab.history.present,history:update(tab.history)}:tab)});};
   const [assistantHost,setAssistantHost]=useState<HTMLDivElement|null>(null);
@@ -145,7 +147,11 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   const setRendered=(value:boolean)=>{const id=workspaceRef.current.activeId;setRenderedTabs(current=>({...current,[id]:value}));};
   const [view,setView]=useState<SpatialView>('perspective'),[reset,setReset]=useState(0),[tool,setTool]=useState<'translate'|'rotate'>('translate');
   const [manualEditing,setEditing]=useState(false),[showGrid,setShowGrid]=useState(true),[showBeam,setShowBeam]=useState(true),[run,setRun]=useState(initial.experiment.elements.some(e=>e.kind==='laser'||e.kind==='object')),[resultsOpen,setResultsOpen]=useState(false),[assistantOpen,setAssistantOpen]=useState(false);
-  const editing=manualEditing||!!focusDraft;
+  const [resultsWidth,setResultsWidth]=useState<number>(()=>{try{const w=Number(localStorage.getItem('optics-builder-results-width-v1'));return Number.isFinite(w)?Math.max(320,Math.min(860,w)):440;}catch{return 440;}});
+  const resultsDrag=useRef<{pointerId:number;x:number;width:number}|null>(null);
+  useEffect(()=>{try{localStorage.setItem('optics-builder-results-width-v1',String(resultsWidth));}catch{/* optional */}},[resultsWidth]);
+  useEffect(()=>{if(!resultsOpen)return;const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape')setResultsOpen(false);};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);},[resultsOpen]);
+  const editing=manualEditing||!!focusDraft||sliderActive||!!sliderDraft;
   const [toast,setToast]=useState<string|null>(tabsInitial.warning??initial.warning);
   const [renamingTab,setRenamingTab]=useState<string|null>(null);
   const renameCancel=useRef(false);
@@ -160,7 +166,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
     return !!(spatialFourierParameters(candidate)||spatialFourFParameters(candidate));
   },[experiment]);
   const liveFocus=rendered&&!!(microscopeLayout(experiment)||telescopeLayout(experiment)||cameraLayout(experiment));
-  const simulation=useSpatialSimulation(experiment,visible&&run&&!manualEditing,liveFocus),result=manualEditing?null:simulation.result;
+  const simulation=useSpatialSimulation(experiment,visible&&run&&!manualEditing,liveFocus||sliderActive||!!sliderDraft),result=manualEditing?null:simulation.result;
   const [pendingVisible,setPendingVisible]=useState(false);
   useEffect(()=>{
     if(!run||manualEditing||simulation.status!=='pending'){setPendingVisible(false);return;}
@@ -181,7 +187,25 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
     try{const next=parseSpatial(input);latest.current=next;setHistory(current=>JSON.stringify(current.present)===JSON.stringify(next)?current:{past:[...current.past,current.present].slice(-60),present:next,future:[]});return true;}
     catch(error){setToast(error instanceof Error?error.message:'装置参数无效。');return false;}
   };
-  const update=(id:string,patch:Partial<SpatialElement>)=>commit({...latest.current,elements:latest.current.elements.map(e=>e.id===id?{...e,...patch}:e)});
+  const update=(id:string,patch:Partial<SpatialElement>)=>{
+    if(sliderDraggingRef.current){
+      try{
+        const base=sliderDraftRef.current??latest.current;
+        const next=parseSpatial({...base,elements:base.elements.map(e=>e.id===id?{...e,...patch}:e)});
+        sliderDraftRef.current=next;latest.current=next;setSliderDraft(next);
+        return true;
+      }catch{return false;}
+    }
+    return commit({...latest.current,elements:latest.current.elements.map(e=>e.id===id?{...e,...patch}:e)});
+  };
+  const onSliderDrag=(active:boolean,commitDraft=true)=>{
+    if(active){sliderDraggingRef.current=true;setSliderActive(true);return;}
+    sliderDraggingRef.current=false;setSliderActive(false);
+    const draft=sliderDraftRef.current;
+    sliderDraftRef.current=null;setSliderDraft(null);
+    if(commitDraft&&draft)commit(draft);
+    else latest.current=focusDraft??workspaceRef.current.tabs.find(t=>t.id===workspaceRef.current.activeId)!.history.present;
+  };
   const focus=(phase:FocusPhase,distance?:number,part?:CameraDragPart)=>{
     if(phase==='start'){focusBase.current=latest.current;setFocusDraft(latest.current);setRun(true);return;}
     if(phase==='cancel'){focusBase.current=null;setFocusDraft(null);return;}
@@ -197,6 +221,13 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   const restoreDefaults=()=>{
     if(!finishInput())return;
     const tab=workspaceRef.current.tabs.find(t=>t.id===workspaceRef.current.activeId)!;
+    if(guide){
+      if(commit({...guide.snapshot,name:tab.history.present.name})){
+        setSelectedId(guide.action.elementId);setRendered(false);setAssistantOpen(false);setRightPanelOpen(true);setTool('translate');setShowBeam(true);setRun(true);setReset(n=>n+1);
+        setToast('已恢复到本次引导初始光路（如需撤回可点「撤销」）。');
+      }
+      return;
+    }
     const baseline=tab.resetBaseline??tab.history.present,recovered=microscopeResetBaseline(baseline);
     if(commit({...recovered,name:tab.history.present.name})){
       if(recovered!==baseline){
@@ -226,7 +257,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   const [leftPanelOpen,setLeftPanelOpen]=useState(true),[rightPanelOpen,setRightPanelOpen]=useState(true);
   const hasRightPanel=assistantOpen||!!(selected&&!rendered);
   const panelLayout=useScenePanelWidth(panelContainer,hasRightPanel&&rightPanelOpen,leftPanelOpen&&!rendered,{leftKey:'optics-builder-left-width:v1',leftMin:250,leftDefault:276,resultKey:'optics-builder-right-width:v1',resultDefault:340,resultMin:240,onLeftClose:()=>setLeftPanelOpen(false),onRightClose:()=>setRightPanelOpen(false)});
-  const resetTabView=()=>{setGuide(null);setSelectedId(null);setEditing(false);setRun(latest.current.elements.some(e=>e.kind==='laser'||e.kind==='object'));setShowBeam(true);setResultsOpen(false);setAssistantOpen(false);setReset(n=>n+1);};
+  const resetTabView=()=>{sliderDraggingRef.current=false;sliderDraftRef.current=null;setSliderDraft(null);setSliderActive(false);setGuide(null);setSelectedId(null);setEditing(false);setRun(latest.current.elements.some(e=>e.kind==='laser'||e.kind==='object'));setShowBeam(true);setResultsOpen(false);setAssistantOpen(false);setReset(n=>n+1);};
   const openTab=(next:SpatialExperiment,savedId:string|null=null)=>{if(!finishInput())return false;try{const archive=savedId?readSaved().find(row=>row.id===savedId):undefined;let state=openBuilderTab(workspaceRef.current,next,savedId,archive?.conversationId,archive?.resetBaseline);const keys=archive?.researchKeys;if(keys?.length)state={...state,tabs:state.tabs.map(t=>t.id===state.activeId?{...t,researchKeys:[...new Set([...(t.researchKeys??[]),...keys])]}:t)};changeWorkspace(state);activeSaved.current=state.tabs.find(tab=>tab.id===state.activeId)!.savedId;resetTabView();return true;}catch(error){setToast(error instanceof Error?error.message:'无法打开装置。');return false;}};
   const openResearchObject=(copy:ResearchBuilderCopy)=>{
     if(!copy.origin)return openTab(copy.experiment);
@@ -234,7 +265,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
     try{
       const existing=readSaved(),opened=openResearchBuilderTab(workspaceRef.current,copy.experiment,copy.origin,existing);
       if(opened.saved!==existing)localStorage.setItem(BUILDER_SAVED,JSON.stringify(opened.saved));
-      setSaved(opened.saved);changeWorkspace(opened.workspace);activeSaved.current=opened.workspace.tabs.find(tab=>tab.id===opened.workspace.activeId)!.savedId;resetTabView();setAssistantOpen(true);return true;
+      setSaved(opened.saved);changeWorkspace(opened.workspace);activeSaved.current=opened.workspace.tabs.find(tab=>tab.id===opened.workspace.activeId)!.savedId;resetTabView();setAssistantOpen(!copy.guide);return true;
     }catch(error){setToast(error instanceof Error?error.message:'无法打开研究装置。');return false;}
   };
   const switchTab=(id:string)=>{if(id===workspaceRef.current.activeId)return true;if(!workspaceRef.current.tabs.some(tab=>tab.id===id)||!finishInput())return false;changeWorkspace({...workspaceRef.current,activeId:id});activeSaved.current=workspaceRef.current.tabs.find(tab=>tab.id===id)!.savedId;resetTabView();return true;};
@@ -286,8 +317,18 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
         const next=researchCopy.guide;
         try{
           validateVisualActions([next.action],[{id:next.action.objectId,experiment:next.snapshot}]);
-          if(!sameVisualSnapshot(latest.current,next.snapshot))throw new Error('搭建页装置已变化。请回探究区更新装置后重新提问，未应用旧讲解定位。');
-          setGuide(structuredClone(next));setSelectedId(next.action.elementId);setRendered(false);setTool('translate');setRun(true);setShowBeam(true);
+          if(!sameVisualSnapshot(latest.current,next.snapshot)){
+            if(next.resetToSnapshot){
+              if(commit({...next.snapshot,name:latest.current.name}))setToast('已按本轮探究原光路打开对照（可点「撤销」还原）。');
+            }else{
+              const cur=latest.current;
+              const hasEl=cur.elements.some(e=>e.id===next.action.elementId&&e.kind===next.snapshot.elements.find(b=>b.id===next.action.elementId)?.kind);
+              const hasScreen=!next.action.screenId||cur.elements.some(s=>s.id===next.action.screenId&&s.kind==='screen');
+              if(!hasEl||!hasScreen)throw new Error('目标器件已在当前光路中移除。');
+              setToast('当前光路有改动；可点「重置起点」回到本轮初始光路。');
+            }
+          }
+          setGuide(structuredClone(next));setSelectedId(next.action.elementId);setRendered(false);setAssistantOpen(false);setRightPanelOpen(true);setTool('translate');setRun(true);setShowBeam(true);
         }catch(error){setToast(error instanceof Error?error.message:'无法定位该讲解。');}
       }
       onResearchCopyConsumed?.();
@@ -297,7 +338,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
     onConversation?.({tab:activeTab,selectedElementId:experiment.elements.some(e=>e.id===selectedId)?selectedId:null,editing,host:assistantHost,
       locate:(next)=>{
         if(workspaceRef.current.activeId!==activeTab.id||!sameVisualSnapshot(latest.current,next.snapshot)){setToast('装置参数已变化，请按当前光路重新获取定位说明。');return;}
-        setGuide(structuredClone(next));setSelectedId(next.action.elementId);setRendered(false);setTool('translate');setRun(true);setShowBeam(true);
+        setGuide(structuredClone(next));setSelectedId(next.action.elementId);setRendered(false);setAssistantOpen(false);setRightPanelOpen(true);setTool('translate');setRun(true);setShowBeam(true);
       },
       apply:(next,expected)=>{
         (document.activeElement as HTMLElement|null)?.blur();
@@ -360,11 +401,11 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
     <div ref={panelContainer} id="sb-device-workspace" role="tabpanel" aria-labelledby={'sb-tab-'+workspace.activeId} className={`sb-body sb-resizable-body ${panelLayout.resizing?"sb-panel-resizing":""} ${selected&&!rendered&&!assistantOpen?'has-inspector':''} ${assistantOpen?'has-builder-assistant':''}`}>
       <aside hidden={!leftPanelOpen||rendered} style={{width:panelLayout.width}} className="sb-library" aria-label="当前装置">
         <div className="sb-library-heading"><button className="sb-add-device" onClick={()=>{setReplacingLens(null);catalogDialog.current?.showModal();}}><Plus size={14}/>添加器材</button><button type="button" className="sb-panel-edge" aria-label="收起左栏" title="收起左栏" onClick={()=>setLeftPanelOpen(false)}><PanelLeftClose size={18}/></button></div>
-        <div className="sb-device-list" aria-label="当前装置" data-navigation-scroll="builder-devices">{experiment.elements.map((e,index)=>{const Icon=ICONS[e.kind];return <button key={e.id} disabled={editing} onClick={()=>setSelectedId(e.id)} aria-pressed={selectedId===e.id} className={selectedId===e.id?'active':''}><span>{String(index+1).padStart(2,'0')}</span><Icon size={16}/><strong>{e.name}</strong></button>;})}</div>
+        <div className="sb-device-list" aria-label="当前装置" data-navigation-scroll="builder-devices">{experiment.elements.map((e,index)=>{const Icon=ICONS[e.kind];return <button key={e.id} disabled={editing} onClick={()=>setSelectedId(e.id)} aria-pressed={selectedId===e.id} className={selectedId===e.id?'active':''}><span>{String(index+1).padStart(2,'0')}</span><Icon size={16}/><strong>{cleanElementDisplayName(e.name)}</strong></button>;})}</div>
         {selected?<section className="sb-optical-panel" aria-label="光学参数" key={selected.id}>
-          <div className="sb-optical-heading"><h2>光学参数</h2><span>{selected.kind==='laser'?'光源':selected.name}</span></div>
-          <div className="sb-selected-title"><span>{(() => {const Icon=ICONS[selected.kind];return <Icon size={20}/>;})()}</span><input key={selected.name} aria-label="器件名称" maxLength={40} defaultValue={selected.name} onBlur={event=>{if(event.target.value.trim())update(selected.id,{name:event.target.value.trim()});else event.target.value=selected.name;}} onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/></div>
-          <OpticalSettings distant={experiment.elements.some(e=>e.kind==='object'&&e.objectMode==='distant')} probeAvailable={probeAvailable} key={selected.id+":"+lensRevision} element={selected} highlightField={guide?.action.elementId===selected.id?guide.action.field:null} onUpdate={patch=>update(selected.id,patch)} onEditing={setEditing} sourceWavelengths={experiment.elements.filter(e=>e.kind==='laser').map(e=>e.wavelengthNm)} myLenses={myLenses} onChooseLens={()=>{setReplacingLens(selected.id);setCategory('lens');setLensGroup('all');setQuery('');catalogDialog.current?.showModal();}} onSaveLens={()=>{(document.activeElement as HTMLElement|null)?.blur();if(document.querySelector('.spatial-builder input[data-invalid="true"]')){setToast('请先修正无效参数。');return;}try{setMyLenses(saveMyLens(latest.current.elements.find(e=>e.id===selected.id)!));setToast('已保存到我的镜片。');}catch(error){setToast(error instanceof Error?error.message:'镜片保存失败。');}}}/>
+          <div className="sb-optical-heading"><h2>光学参数</h2><span>{selected.kind==='laser'?'光源':cleanElementDisplayName(selected.name)}</span></div>
+          <div className="sb-selected-title"><span>{(() => {const Icon=ICONS[selected.kind];return <Icon size={20}/>;})()}</span><input key={selected.name} aria-label="器件名称" maxLength={40} defaultValue={cleanElementDisplayName(selected.name)} onBlur={event=>{const nextName=event.target.value.trim();if(!nextName){event.target.value=cleanElementDisplayName(selected.name);return;}if(nextName!==cleanElementDisplayName(selected.name))update(selected.id,{name:nextName});}} onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/></div>
+          <OpticalSettings distant={experiment.elements.some(e=>e.kind==='object'&&e.objectMode==='distant')} probeAvailable={probeAvailable} key={selected.id+":"+lensRevision} element={selected} highlightField={guide?.action.elementId===selected.id?guide.action.field:null} onUpdate={patch=>update(selected.id,patch)} onEditing={setEditing} onDrag={onSliderDrag} sourceWavelengths={experiment.elements.filter(e=>e.kind==='laser').map(e=>e.wavelengthNm)} myLenses={myLenses} onChooseLens={()=>{setReplacingLens(selected.id);setCategory('lens');setLensGroup('all');setQuery('');catalogDialog.current?.showModal();}} onSaveLens={()=>{(document.activeElement as HTMLElement|null)?.blur();if(document.querySelector('.spatial-builder input[data-invalid="true"]')){setToast('请先修正无效参数。');return;}try{setMyLenses(saveMyLens(latest.current.elements.find(e=>e.id===selected.id)!));setToast('已保存到我的镜片。');}catch(error){setToast(error instanceof Error?error.message:'镜片保存失败。');}}}/>
           {selected.kind==='power-meter'&&<div className="sb-meter-reading" aria-label="功率计读数"><span>当前读数</span><strong>{result?.screens.find(s=>s.elementId===selected.id)?.overRange?'超量程':result?.screens.find(s=>s.elementId===selected.id)?.readingMw!==undefined?`${(result.screens.find(s=>s.elementId===selected.id)?.readingMw??0).toFixed(4)} mW`:'运行仿真后显示'}</strong><small>几何采样 · 有限探测面</small></div>}
           <div className="sb-inspector-bottom"><button onClick={()=>{const clone={...selected,id:crypto.randomUUID(),name:selected.name.slice(0,35)+' 副本',position:[selected.position[0],selected.position[1],Math.min(1000,selected.position[2]+50)] as [number,number,number]};if(commit({...experiment,elements:[...experiment.elements,clone]}))setSelectedId(clone.id);}}><Copy size={14}/>复制器件</button><button onClick={remove}><Trash2 size={14}/>删除</button></div>
         </section>:experiment.elements.length>0&&<div className="sb-selection-hint"><p>选中器件后调整参数</p></div>}
@@ -375,7 +416,28 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
           <div className="sb-mode-switch"><button aria-pressed={!rendered} className={!rendered?'active':''} onClick={()=>setRendered(false)}><Box size={14}/>搭建</button><button aria-pressed={rendered} className={rendered?'active':''} onClick={()=>{setRendered(true);setSelectedId(null);setRun(true);setAssistantOpen(false);}}><Sparkles size={14}/>光路渲染</button></div>
           <div className="sb-tool-group"><select aria-label="载入光路示例" value="" onChange={event=>{if(event.target.value)load(event.target.value as 'focus'|'fold'|'split'|'imaging');}}><option value="" disabled>光路示例</option><option value="imaging">物体成像</option><option value="focus">单透镜聚焦</option><option value="fold">立体折转</option><option value="split">双路分光</option></select><button className={`sb-ai-toggle ${assistantOpen?'active':''}`} title="描述实验目标，让 AI 帮你设计和搭建光路" aria-expanded={assistantOpen} aria-controls="sb-ai-assistant" onClick={()=>{setAssistantOpen(v=>!v);setRightPanelOpen(true);setRendered(false);}}><Sparkles size={19}/><span>AI 助手</span></button><button className="sb-run" disabled={!experiment.elements.some(e=>e.kind==='laser'||e.kind==='object')||editing} onClick={calculate}><Lightbulb size={15}/><span>运行仿真</span></button>{hasRightPanel&&!rightPanelOpen&&!rendered&&<><span className="sb-separator"/><IconAction label="展开右栏" onClick={()=>setRightPanelOpen(true)}><PanelRightOpen size={18}/></IconAction></>}</div>
         </div>
-        {guide&&<div className="sb-inquiry-guide" aria-label="探究讲解定位"><div><strong>{guide.action.kind==='compare'?'边调边看':guide.action.kind==='adjust'?'参数定位':'器件定位'} · {guide.snapshot.elements.find(e=>e.id===guide.action.elementId)?.name}{guide.action.field&&' · '+VISUAL_FIELDS[guide.action.field]}</strong><p>{guide.action.explanation}</p></div><div><button disabled={!experiment.elements.some(e=>e.id===guide.action.elementId&&e.kind===guide.snapshot.elements.find(b=>b.id===guide.action.elementId)?.kind)||editing} onClick={()=>{setSelectedId(guide.action.elementId);setRendered(false);setAssistantOpen(false);}}>定位器件</button>{onResearch&&<button onClick={onResearch}>返回探究</button>}<button onClick={()=>setGuide(null)} aria-label="关闭讲解定位">关闭</button></div></div>}
+        <div className="sb-stage-main">
+        {guide&&(()=>{const guidedEl=experiment.elements.find(e=>e.id===guide.action.elementId),gField=guide.action.field,changed=!sameVisualSnapshot(guide.snapshot,experiment);
+          const guidedName=cleanElementDisplayName(guidedEl?.name??guide.snapshot.elements.find(e=>e.id===guide.action.elementId)?.name??'');
+          const buildHandoff=()=>changed?buildVisualHandoffPrompt(guide,experiment,result):undefined;
+          return <div className="sb-inquiry-guide" aria-label="探究讲解定位">
+            <div className="sb-inquiry-guide-main">
+              <div className="sb-inquiry-guide-head">
+                <em className="sb-guide-badge">{guide.action.kind==='compare'?'边调边看':guide.action.kind==='adjust'?'参数定位':'器件定位'}</em>
+                <strong>{guidedName}{gField&&' · '+VISUAL_FIELDS[gField]}</strong>
+              </div>
+              <p>{guide.action.explanation}</p>
+            </div>
+            {guidedEl&&gField&&<div className="sb-guide-control">{gField==='focalLengthMm'
+              ?<NumberInput key={`guide-${guidedEl.id}-f`} highlighted label="焦距" value={guidedEl.focalLengthMm} unit="mm" min={-2000} max={2000} sliderMin={-500} sliderMax={500} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={focalLengthMm=>update(guidedEl.id,{focalLengthMm})}/>
+              :(()=>{const idx=['x','y','z'].indexOf(gField);return <NumberInput key={`guide-${guidedEl.id}-${gField}`} highlighted label={VISUAL_FIELDS[gField]} value={guidedEl.position[idx]} unit="mm" min={-1000} max={1000} sliderMin={idx===1?0:-500} sliderMax={idx===1?500:800} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={val=>{const position=[...guidedEl.position] as [number,number,number];position[idx]=val;return update(guidedEl.id,{position});}}/>;})()
+            }</div>}
+            <div className="sb-inquiry-guide-actions">
+              {changed&&<button type="button" className="sb-guide-close" onClick={()=>{if(!finishInput())return;if(commit({...guide.snapshot,name:latest.current.name})){setSelectedId(guide.action.elementId);setToast('已重置到引导起点。');}}}>重置起点</button>}
+              {onResearch&&<button type="button" className={changed?'sb-guide-return is-changed':'sb-guide-return'} onClick={()=>onResearch(buildHandoff())}>{changed?'带变化回探究 ↗':'返回探究'}</button>}
+              <button type="button" className="sb-guide-close" onClick={()=>setGuide(null)} aria-label="关闭讲解定位">关闭</button>
+            </div>
+          </div>;})()}
         <div ref={viewport} className={`sb-viewport ${fullscreen?'sb-viewport-fullscreen':''}`}>
           <SpatialBench visible={visible} experiment={benchExperiment} selectedId={selectedId} rendered={rendered} result={result} view={view} reset={reset} tool={tool} showGrid={showGrid} showBeam={showBeam} axes={axes} showAxes={axisHelp&&!rendered&&!!selected} snapEnabled={snapEnabled} onSelect={setSelectedId} onEditing={setEditing} onTransform={update} onFocus={focus}/>
           {run&&<div className="sb-canvas-status" aria-live="polite">{canvasStatus.visible&&<span className={`sb-compute-status ${simulation.status==='error'?'error':''}`}>{canvasStatus.visible}</span>}{canvasStatus.live==='光路已更新'&&<span className="sr-only">光路已更新</span>}</div>}
@@ -385,18 +447,39 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
           <div className="sb-view-controls">{([['perspective','透视'],['top','顶视'],['side','侧视']] as const).map(([value,label])=><button key={value} className={view===value?'active':''} aria-pressed={view===value} onClick={()=>setView(value)}>{label}</button>)}<span/><IconAction label={fullscreen?"退出全屏":"全屏显示"} onClick={()=>void toggleFullscreen()}><Maximize2 size={15}/></IconAction></div>
           <div className="sb-display-controls"><button className={showGrid?'active':''} aria-pressed={showGrid} title="显示网格" aria-label="显示网格" onClick={()=>setShowGrid(v=>!v)}><Grid3X3 size={15}/></button><button className={showBeam?'active':''} aria-pressed={showBeam} title="显示光线" aria-label="显示光线" onClick={()=>setShowBeam(v=>!v)}><Sun size={16}/></button></div>
         </div>
-        {guide?.action.kind==='compare'&&<InquiryComparison guide={guide} experiment={experiment} result={result} pending={editing||simulation.status==='pending'||simulation.status==='idle'} error={simulation.error} retry={simulation.retry}/>}
-        <div className="sb-statusbar"><div className={`sb-mouse-help${pointerHintPinned?' is-open':''}`}><button type="button" className="sb-mouse-help-button" aria-label={pointerHint}><MousePointer2 size={14}/></button><p className="sb-mouse-help-tip" role="tooltip">{pointerHint}</p></div><button onClick={()=>setResultsOpen(v=>!v)} aria-expanded={resultsOpen}>{experiment.elements.length} 个器件<span>·</span>{screenCount} 个探测器{run&&<><span>·</span>查看仿真</>}<ChevronDown size={13}/></button></div>
-        {resultsOpen&&<section className="sb-results" aria-label="仿真结果"><div className="sb-results-heading"><h2>仿真结果</h2><div>{result&&<button onClick={()=>download(result,experiment.name+'-仿真结果')}><ArrowDownToLine size={14}/>导出</button>}<IconAction label="关闭仿真结果" onClick={()=>setResultsOpen(false)}><X size={16}/></IconAction></div></div>
-          {!run?<p>搭建完成后，点击“运行仿真”查看当前装置的光线与观察屏结果。</p>:!result?<p>{editing?'调整器件后重新计算。':simulation.error??(simulation.status==='idle'?'请先添加光源。':'正在追踪当前光路…')}</p>:<><SpatialMeasurements result={result} onSelect={id=>{setSelectedId(id);setRendered(false);}}/></>}
+        {(()=>{const comparisonGuide=guide?resolveComparisonGuide(guide):null;return comparisonGuide?<InquiryComparison guide={comparisonGuide} experiment={experiment} result={result} pending={manualEditing||simulation.status==='pending'||simulation.status==='idle'} error={simulation.error} retry={simulation.retry}/>:null;})()}
+        {resultsOpen&&<section className="sb-results sb-results-drawer" aria-label="仿真结果" style={{width:`${resultsWidth}px`}}>
+          <div
+            className="sb-results-resizer"
+            role="separator"
+            aria-label="调整仿真结果抽屉宽度"
+            aria-orientation="vertical"
+            aria-valuemin={320}
+            aria-valuemax={860}
+            aria-valuenow={resultsWidth}
+            tabIndex={0}
+            title="拖动调整宽度，双击恢复默认"
+            onPointerDown={(event:ReactPointerEvent<HTMLDivElement>)=>{event.preventDefault();resultsDrag.current={pointerId:event.pointerId,x:event.clientX,width:resultsWidth};event.currentTarget.setPointerCapture(event.pointerId);}}
+            onPointerMove={(event:ReactPointerEvent<HTMLDivElement>)=>{const drag=resultsDrag.current;if(!drag||drag.pointerId!==event.pointerId)return;setResultsWidth(Math.max(320,Math.min(860,drag.width+(drag.x-event.clientX))));}}
+            onPointerUp={(event:ReactPointerEvent<HTMLDivElement>)=>{if(resultsDrag.current?.pointerId!==event.pointerId)return;resultsDrag.current=null;if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}
+            onPointerCancel={(event:ReactPointerEvent<HTMLDivElement>)=>{if(resultsDrag.current?.pointerId!==event.pointerId)return;resultsDrag.current=null;if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}
+            onDoubleClick={()=>setResultsWidth(440)}
+            onKeyDown={(event:ReactKeyboardEvent<HTMLDivElement>)=>{if(event.key==='ArrowLeft'){event.preventDefault();setResultsWidth(w=>Math.min(860,w+24));}if(event.key==='ArrowRight'){event.preventDefault();setResultsWidth(w=>Math.max(320,w-24));}}}
+          />
+          <div className="sb-results-heading"><h2>仿真结果</h2><div>{result&&<button onClick={()=>download(result,experiment.name+'-仿真结果')}><ArrowDownToLine size={14}/>导出</button>}<IconAction label="关闭仿真结果" onClick={()=>setResultsOpen(false)}><X size={16}/></IconAction></div></div>
+          <div className="sb-results-body">
+            {!run?<p>搭建完成后，点击“运行仿真”查看当前装置的光线与观察屏结果。</p>:!result?<p>{editing?'调整器件后重新计算。':simulation.error??(simulation.status==='idle'?'请先添加光源。':'正在追踪当前光路…')}</p>:<><SpatialMeasurements result={result} onSelect={id=>{setSelectedId(id);setRendered(false);}}/></>}
+          </div>
         </section>}
+        </div>
+        {(()=>{const s0=result?.screens[0];const readout=!run||!s0?null:s0.detectorKind==='power-meter'?(s0.overRange?'超量程':s0.readingMw!=null?formatReadoutWithUnit(s0.readingMw,'mW'):null):s0.hits===0?'未到达':s0.gaussianRadiusMm!=null?formatReadoutWithUnit(s0.gaussianRadiusMm,'mm'):s0.footprintRadiusMm!=null?formatReadoutWithUnit(s0.footprintRadiusMm,'mm'):null;return <div className="sb-statusbar"><div className="sb-status-left"><div className={`sb-mouse-help${pointerHintPinned?' is-open':''}`}><button type="button" className="sb-mouse-help-button" aria-label={pointerHint}><MousePointer2 size={14}/></button><p className="sb-mouse-help-tip" role="tooltip">{pointerHint}</p></div><span className="sb-status-counts">{experiment.elements.length} 个器件<span>·</span>{screenCount} 个探测器</span></div><button type="button" className={`sb-results-trigger${resultsOpen?' is-open':''}`} onClick={()=>setResultsOpen(v=>!v)} aria-expanded={resultsOpen}><BarChart3 size={15}/><span>{resultsOpen?'收起仿真':'查看仿真'}</span>{readout&&<em className="sb-results-pill-val">{readout}</em>}<ChevronDown size={14}/></button></div>;})()}
       </section>
       {hasRightPanel&&rightPanelOpen&&<div className="sb-panel-resizer" {...panelLayout.results.separator} aria-label="调整右侧面板宽度"/>}
       <div className="sb-right-panel" hidden={!hasRightPanel||!rightPanelOpen} style={{width:panelLayout.results.width}}>
-      {selected&&!rendered&&!assistantOpen&&<aside className="sb-inspector" aria-label="空间调整"><div className="sb-inspector-heading"><button type="button" className="sb-panel-edge" aria-label="收起右栏" title="收起右栏" onClick={()=>setRightPanelOpen(false)}><PanelRightClose size={18}/></button><h2>空间调整</h2></div><p className="sb-pose-name">{selected.name}</p>
+      {selected&&!rendered&&!assistantOpen&&<aside className="sb-inspector" aria-label="空间调整"><div className="sb-inspector-heading"><button type="button" className="sb-panel-edge" aria-label="收起右栏" title="收起右栏" onClick={()=>setRightPanelOpen(false)}><PanelRightClose size={18}/></button><h2>空间调整</h2></div><p className="sb-pose-name">{cleanElementDisplayName(selected.name)}</p>
         <div className="sb-alignment-tools"><button className="sb-align" disabled={!alignment||editing} onClick={alignSelected}><Focus size={15}/>一键对齐光轴</button><div><label><input type="checkbox" checked={axisHelp} onChange={event=>setAxisHelp(event.target.checked)}/>光轴基准线</label><label title="拖动到光轴 6 mm 内自动吸附，旋转到对齐方向 2° 内自动匹配"><input type="checkbox" checked={snapEnabled} onChange={event=>setSnapEnabled(event.target.checked)}/>拖动吸附</label></div></div>
-        <fieldset><legend>空间位置</legend><div className="sb-position-fields">{(['X · 前后','Y · 高度','Z · 左右'] as const).map((label,index)=><NumberInput key={selected.id+label} highlighted={guide?.action.elementId===selected.id&&guide.action.field===['x','y','z'][index]} label={label} value={selected.position[index]} unit="mm" min={-1000} max={1000} sliderMin={index===1?0:-500} sliderMax={index===1?500:800} step={1} onEditing={setEditing} onChange={value=>{const position=[...selected.position] as [number,number,number];position[index]=value;return update(selected.id,{position});}}/>)}</div></fieldset>
-        <fieldset><legend>器件朝向</legend><div className="sb-angle-fields"><NumberInput key={selected.id+'yaw'} label="水平转角" value={selected.yawDeg} unit="°" min={-180} max={180} step={1} onEditing={setEditing} onChange={yawDeg=>update(selected.id,{yawDeg})}/><NumberInput key={selected.id+'pitch'} label="俯仰角" value={selected.pitchDeg} unit="°" min={-90} max={90} step={1} onEditing={setEditing} onChange={pitchDeg=>update(selected.id,{pitchDeg})}/></div>{(selected.kind.endsWith('prism')||['slit','amplitude-grating','plano-convex-cylinder-lens','plano-concave-cylinder-lens','cylindrical-lens','polarizer','half-wave-plate','quarter-wave-plate'].includes(selected.kind))&&<NumberInput key={selected.id+'roll'} label={selected.kind==='amplitude-grating'?'条纹方向角 φ':'轴向转角'} value={selected.rollDeg} unit="°" min={-180} max={180} step={.1} onEditing={setEditing} onChange={rollDeg=>update(selected.id,{rollDeg})}/>}</fieldset>
+        <fieldset><legend>空间位置</legend><div className="sb-position-fields">{(['X · 前后','Y · 高度','Z · 左右'] as const).map((label,index)=><NumberInput key={selected.id+label} highlighted={guide?.action.elementId===selected.id&&guide.action.field===['x','y','z'][index]} label={label} value={selected.position[index]} unit="mm" min={-1000} max={1000} sliderMin={index===1?0:-500} sliderMax={index===1?500:800} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={value=>{const position=[...selected.position] as [number,number,number];position[index]=value;return update(selected.id,{position});}}/>)}</div></fieldset>
+        <fieldset><legend>器件朝向</legend><div className="sb-angle-fields"><NumberInput key={selected.id+'yaw'} label="水平转角" value={selected.yawDeg} unit="°" min={-180} max={180} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={yawDeg=>update(selected.id,{yawDeg})}/><NumberInput key={selected.id+'pitch'} label="俯仰角" value={selected.pitchDeg} unit="°" min={-90} max={90} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={pitchDeg=>update(selected.id,{pitchDeg})}/></div>{(selected.kind.endsWith('prism')||['slit','amplitude-grating','plano-convex-cylinder-lens','plano-concave-cylinder-lens','cylindrical-lens','polarizer','half-wave-plate','quarter-wave-plate'].includes(selected.kind))&&<NumberInput key={selected.id+'roll'} label={selected.kind==='amplitude-grating'?'条纹方向角 φ':'轴向转角'} value={selected.rollDeg} unit="°" min={-180} max={180} step={.1} onEditing={setEditing} onDrag={onSliderDrag} onChange={rollDeg=>update(selected.id,{rollDeg})}/>}</fieldset>
       </aside>}
       {assistantOpen&&<aside id="sb-ai-assistant" className="sb-assistant"><IconAction label="关闭AI助手" onClick={()=>setAssistantOpen(false)}><X size={17}/></IconAction><div ref={setAssistantHost} className="sb-conversation-host"/></aside>}
       </div>

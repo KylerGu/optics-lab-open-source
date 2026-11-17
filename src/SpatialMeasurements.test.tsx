@@ -36,3 +36,32 @@ test('4f power notes keep wave integration distinct from geometric and standalon
   assert.ok(notes.scope[0].includes('屏面积积分'));assert.ok(notes.scope.some(text=>text.includes('f / 2f / f')));
   assert.ok(!notes.scope.join('').includes('曲线与几何功率分开'));
 });
+
+test('screen cards show relevant physical metrics and omit algorithm/polarization clutter unless applicable',()=>{
+  const r=result();
+  const screenEl=r.inputSnapshot.elements.find(e=>e.kind==='screen')!;
+  r.screens=[{
+    elementId:screenEl.id,name:'探测屏（可沿光轴移动）',hits:21,sampledPowerFraction:1,sampledPowerMw:1,
+    centroid:[250,60,0],footprintRadiusMm:0,gaussianRadiusMm:0.033868,
+    sampledRadiusUMm:0,sampledRadiusVMm:0,
+    polarizationStokes:{s1:-0.766,s2:-0.643,s3:0},
+  }];
+  const html=renderToStaticMarkup(<SpatialMeasurements result={r} onSelect={()=>{}}/>);
+  assert.match(html,/33\.9 μm/);
+  assert.doesNotMatch(html,/可沿光轴移动|命中光线|21 条|电场轨迹示意|S1 \/ S2|采样半径|光斑分布与偏振明细/);
+  assert.match(html,/较入射光束.*聚焦压缩/);
+  assert.match(html,/选中定位/);
+
+  const withSplitter=structuredClone(r);
+  withSplitter.inputSnapshot.elements.push(makeSpatialElement('splitter',[200,60,0]));
+  withSplitter.screens[0].sampledPowerFraction=0.5;
+  withSplitter.screens[0].sampledPowerMw=0.5;
+  const splitHtml=renderToStaticMarkup(<SpatialMeasurements result={withSplitter} onSelect={()=>{}}/>);
+  assert.match(splitHtml,/到达功率.*0\.5 mW/);
+  assert.match(splitHtml,/通过占比.*50%/);
+
+  const withPol=structuredClone(r);
+  withPol.inputSnapshot.elements.push(makeSpatialElement('polarizer',[200,60,0]));
+  const polHtml=renderToStaticMarkup(<SpatialMeasurements result={withPol} onSelect={()=>{}}/>);
+  assert.match(polHtml,/电场轨迹示意/);
+});

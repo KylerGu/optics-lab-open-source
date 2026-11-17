@@ -5,12 +5,12 @@ import {isSphericalLens} from './sphericalLensGeometry';
 import NumberInput from './BuilderNumberInput';
 import LensCrossSection,{lensFaceLabels} from './LensCrossSection';
 import {designLensFocal,lensSpecification,resizeLens,type SavedLens} from './lensPresets';
-interface Props{element:SpatialElement;onUpdate:(patch:Partial<SpatialElement>)=>boolean;onEditing:(editing:boolean)=>void;onSave:()=>void;onChoose:()=>void;wavelengths:number[];saved:SavedLens[]}
-export default function LensSettings({element:e,onUpdate,onEditing,onSave,onChoose,wavelengths,saved}:Props){
+interface Props{element:SpatialElement;onUpdate:(patch:Partial<SpatialElement>)=>boolean;onEditing:(editing:boolean)=>void;onDrag?:(active:boolean,commit?:boolean)=>void;onSave:()=>void;onChoose:()=>void;wavelengths:number[];saved:SavedLens[]}
+export default function LensSettings({element:e,onUpdate,onEditing,onDrag,onSave,onChoose,wavelengths,saved}:Props){
   const spec=lensSpecification(e,saved),[custom,setCustom]=useState(!spec),[wave,setWave]=useState(587.56),[target,setTarget]=useState('100'),[error,setError]=useState('');
   const waves=[...new Set([587.56,...wavelengths])],currentWave=waves.includes(wave)?wave:587.56;
   const cylinder=isSolidCylinder(e.kind),aspheric=isAsphericLens(e.kind),twoCurves=isSphericalLens(e.kind)&&!e.kind.startsWith('plano'),labels=lensFaceLabels(e),focal=physicalFocalLengths(e,currentWave),[front,back]=physicalLensSurfaces(e,physicalLensSpan(e)),editing=custom||!spec;
-  const update=(patch:Partial<SpatialElement>)=>{setError('');return onUpdate(resizeLens(e,patch));},common={onEditing};
+  const update=(patch:Partial<SpatialElement>)=>{setError('');return onUpdate(resizeLens(e,patch));},common={onEditing,onDrag};
   const calculate=()=>{try{const patch=designLensFocal(e,Number(target),currentWave);if(update(patch))setError('');else setError('当前镜片参数无法应用，请检查输入。');}catch(err){setError(err instanceof Error?err.message:'无法计算曲率。');}};
   return <div className="sb-lens-settings"><div className="sb-lens-origin"><span>{editing?'自定义镜片':spec?.label}</span><div><button onClick={onChoose}>更换规格</button>{!editing&&<button onClick={()=>setCustom(true)}>自定义</button>}</div></div><LensCrossSection element={e}/>
     <section className="sb-lens-readings" aria-label="镜片计算结果"><div className="sb-lens-reading-heading"><h3>计算结果</h3><select aria-label="焦距计算波长" value={waves.includes(wave)?wave:587.56} onChange={event=>setWave(Number(event.target.value))}>{waves.map(w=><option key={w} value={w}>{w} nm{w===587.56?' · 参考':' · 光源'}</option>)}</select></div><dl><div><dt title="近轴有效焦距，正值会聚、负值发散">焦距</dt><dd>{focal.effective?.toFixed(2)??'∞'} <small>mm</small></dd></div><div><dt title="按截面前面到后面传播，从后表面中心量起">后焦距</dt><dd>{focal.back?.toFixed(2)??'∞'} <small>mm</small></dd></div><div><dt>边缘厚度</dt><dd>{(back-front).toFixed(2)} <small>mm</small></dd></div><div><dt>{cylinder?'弯曲方向':'作用'}</dt><dd>{focal.effective===null?'无近轴焦度':focal.effective>0?'会聚':'发散'}</dd></div></dl></section>

@@ -11,7 +11,7 @@ from backend.agent import AgentError
 from backend.app import app
 from backend.settings import Settings
 from backend.spatial import SpatialExperiment, trace
-from backend.spatial_agent import SpatialAgentRequest, SpatialWorkspace, run_spatial_agent
+from backend.spatial_agent import SpatialAgentRequest, SpatialWorkspace, clean_element_name, run_spatial_agent
 
 
 def apparatus(elements=None):
@@ -285,6 +285,13 @@ class SpatialLoopTests(unittest.TestCase):
         with TestClient(app) as client:
             response = client.post("/api/spatial/agent/chat", json={"requestId": "t", "experiment": apparatus().model_dump(), "message": "搭建", "scene": "gaussian"})
         self.assertEqual(response.status_code, 422)
+
+    def test_redundant_mobility_suffixes_are_stripped_from_agent_element_names(self):
+        self.assertEqual(clean_element_name("探测屏（可沿光轴移动）"), "探测屏")
+        self.assertEqual(clean_element_name("会聚透镜 f=100mm（可移动）"), "会聚透镜 f=100mm")
+        ws = SpatialWorkspace(apparatus())
+        ws.execute("add_apparatus", {"element": {"id": "scr2", "kind": "screen", "name": "观察屏（可延光轴移动）", "position": [400, 60, 0]}})
+        self.assertEqual(ws.element("scr2").name, "观察屏")
 
 
 if __name__ == "__main__":

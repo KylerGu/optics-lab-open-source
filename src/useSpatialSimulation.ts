@@ -4,19 +4,23 @@ import { validateSpatialResult, type SpatialExperiment, type SpatialResult } fro
 export function useSpatialSimulation(experiment:SpatialExperiment,enabled:boolean,live=false) {
   const key=JSON.stringify(experiment), sequence=useRef(0);
   const desired=useRef(key);desired.current=key;
-  const [retryCount,setRetryCount]=useState(0);
+  const [retryCount,setRetryCount]=useState(0),lastRetry=useRef(0);
   const [state,setState]=useState<{key:string;status:'idle'|'pending'|'ready'|'error';result:SpatialResult|null;error:string|null}>({key,status:'idle',result:null,error:null});
   useEffect(()=>{
     if(live||!enabled||!experiment.elements.some(e=>e.kind==='laser'||e.kind==='object'))return;
+    const retried=lastRetry.current!==retryCount;
+    lastRetry.current=retryCount;
+    if(!retried&&state.key===key&&state.status==='ready')return;
+    const parsed=JSON.parse(key) as SpatialExperiment;
     const revision=++sequence.current,controller=new AbortController();
     let timeout:ReturnType<typeof setTimeout>|undefined;
-    setState({key,status:'pending',result:null,error:null});
+    setState(previous=>({key,status:'pending',result:sameApparatus(previous.result,parsed)?previous.result:null,error:null}));
     const debounce=setTimeout(async()=>{
       timeout=setTimeout(()=>controller.abort('timeout'),10000);
       try{
-        const response=await fetch('/api/spatial/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision,experiment:JSON.parse(key)}),signal:controller.signal});
+        const response=await fetch('/api/spatial/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision,experiment:parsed}),signal:controller.signal});
         if(!response.ok){let message='无法连接仿真服务，请确认后台已启动。';try{const body=await response.json();if(typeof body.detail==='string')message=body.detail;}catch{/* non-JSON proxy response */}throw new Error(message);}
-        const result=validateSpatialResult(await response.json(),revision,JSON.parse(key));
+        const result=validateSpatialResult(await response.json(),revision,parsed);
         if(!controller.signal.aborted&&revision===sequence.current)setState({key,status:'ready',result,error:null});
       }catch(error){if(controller.signal.aborted&&controller.signal.reason!=='timeout')return;setState({key,status:'error',result:null,error:controller.signal.reason==='timeout'?'计算超时，请重试。':error instanceof Error?error.message:'计算失败。'});}
       finally{if(timeout)clearTimeout(timeout);}

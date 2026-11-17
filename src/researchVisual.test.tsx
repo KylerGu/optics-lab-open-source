@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { spatialTemplate } from './builderModel';
-import { validateVisualActions, visualComparisonStatus, sameVisualSnapshot, type ResearchVisualAction } from './researchVisual';
+import { buildVisualHandoffPrompt, resolveComparisonGuide, validateVisualActions, visualComparisonStatus, sameVisualSnapshot, type ResearchVisualAction } from './researchVisual';
+import { spotDeltaSummary } from './InquiryComparison';
+import { cleanElementDisplayName } from './researchUnits';
 import ResearchVisualActions from './ResearchVisualActions';
 import type { ResearchReply } from './researchSession';
 import { newResearchProject, parseResearchStorage } from './researchSession';
@@ -37,7 +39,14 @@ test('guided links are absent for ordinary replies and disabled for replaced or 
   assert.match(render([]),/disabled/);
   const changed=structuredClone(base);changed.elements[0].position[0]+=1;
   assert.equal(sameVisualSnapshot(base,changed),false);
-  assert.match(render([{...object,experiment:changed}]),/装置已更新或移除/);
+  const updatedHtml=render([{...object,experiment:changed}]);
+  assert.match(updatedHtml,/按本轮原装置打开验证/);
+  assert.match(updatedHtml,/用当前光路继续/);
+  assert.doesNotMatch(updatedHtml,/disabled/);
+  const removedScreen={...changed,elements:changed.elements.filter(e=>e.kind!=='screen')};
+  const removedScreenHtml=render([{...object,experiment:removedScreen}]);
+  assert.match(removedScreenHtml,/按本轮原装置打开验证/);
+  assert.doesNotMatch(removedScreenHtml,/用当前光路继续/);
 });
 test('visual links survive storage reload with the original object snapshot',()=>{
   const p=newResearchProject(), object: ResearchObject={id:'a',experiment:base,source:'draft',sourceId:'draft',label:'示范',snapshotAt:p.createdAt};
@@ -59,4 +68,40 @@ test('old duplicate buttons merge despite different descriptions while distinct 
   assert.match(html,/助手补充说明/);
   assert.match(html,/X · 前后/);
   assert.match(html,/Y · 高度/);
+
+  assert.equal(spotDeltaSummary(0.033868, 0.033868, true).text, '拖动滑杆开始对比');
+  assert.match(spotDeltaSummary(0.033868, 1.0, false).text, /扩大 29\.5×/);
+  assert.match(spotDeltaSummary(0.5, 0.2, false).text, /缩小 60%/);
+});
+
+test('cleanElementDisplayName strips redundant mobility hints while preserving physical specs', () => {
+  assert.equal(cleanElementDisplayName('探测屏（可沿光轴移动）'), '探测屏');
+  assert.equal(cleanElementDisplayName('探测屏 (可延光轴移动)'), '探测屏');
+  assert.equal(cleanElementDisplayName('会聚透镜 f=100mm（可移动）'), '会聚透镜 f=100mm');
+  assert.equal(cleanElementDisplayName('会聚透镜 f=100mm'), '会聚透镜 f=100mm');
+
+  const verbose = structuredClone(base);
+  verbose.elements.find(e => e.id === screen.id)!.name = '探测屏（可沿光轴移动）';
+  const obj: ResearchObject = { id: 'a', experiment: verbose, source: 'draft', sourceId: 'draft', label: '示范', snapshotAt: new Date().toISOString() };
+  const reply: ResearchReply = { requestId: 'r', inputSnapshot: verbose, answer: '移动屏', trace: [], plan: [], evidence: null, comparisons: [], designs: [], studies: [], visualActions: [action], objectSnapshots: [obj] };
+  const html = renderToStaticMarkup(<ResearchVisualActions reply={reply} objects={[obj]} disabled={false} onOpen={() => {}}/>);
+  assert.match(html, /<strong>探测屏 · X · 前后<\/strong>/);
+  assert.doesNotMatch(html, /可沿光轴移动/);
+});
+
+test('resolveComparisonGuide enables live comparison for adjust on Gaussian screen and buildVisualHandoffPrompt reports multi-field diffs', () => {
+  const adjustGuide = { action: { ...action, kind: 'adjust' as const, screenId: null }, snapshot: base };
+  const resolved = resolveComparisonGuide(adjustGuide);
+  assert.equal(resolved?.action.screenId, screen.id);
+
+  const singleEdit = structuredClone(base);
+  singleEdit.elements.find(e => e.id === screen.id)!.position[0] = 350;
+  const singleText = buildVisualHandoffPrompt(adjustGuide, singleEdit, null);
+  assert.match(singleText ?? '', /把「.*」的X · 前后从 380 mm 调到了 350 mm/);
+
+  const multiEdit = structuredClone(singleEdit);
+  multiEdit.elements.find(e => e.id === screen.id)!.position[1] = 45;
+  const multiText = buildVisualHandoffPrompt(adjustGuide, multiEdit, null);
+  assert.match(multiText ?? '', /X · 前后 380→350 mm/);
+  assert.match(multiText ?? '', /Y · 高度 60→45 mm/);
 });

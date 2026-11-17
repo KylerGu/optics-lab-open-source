@@ -23,6 +23,19 @@ export function clampZero(value: number, epsilon = 1e-7): number {
   return Math.abs(value) < epsilon ? 0 : value;
 }
 
+const REDUNDANT_MOBILITY_NOTE =
+  /[（(]\s*(?:可|支持|允许)?\s*(?:沿|延|沿着)?\s*(?:光轴|X轴?|Y轴?|Z轴?|轴线|前后|左右|上下)?\s*(?:自由)?(?:移动|调节|调整|拖动|滑动|改变)(?:位置)?\s*[)）]/gi;
+
+/** Strip redundant UI mobility annotations (e.g. "（可沿光轴移动）") from element display names. */
+export function cleanElementDisplayName(name: string): string {
+  const cleaned = name
+    .replace(REDUNDANT_MOBILITY_NOTE, '')
+    .replace(/\s*[·・\-]\s*可(?:沿|延)光轴(?:移动|调节)\s*$/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return cleaned || name.trim();
+}
+
 /** Format a numeric readout cleanly without excessive trailing digits. */
 export function formatCompact(value: number, sigFigs = 3): string {
   if (!Number.isFinite(value)) return '—';
@@ -151,16 +164,79 @@ export function niceXTicks(xs: readonly number[], maxTicks = 5): number[] {
   return picks;
 }
 
+function splitLabelUnit(raw: string): { label: string; unit: string } {
+  const matched = raw.match(/^(.+?)（([^）]+)）$/);
+  return matched ? { label: matched[1], unit: matched[2] } : { label: raw, unit: '' };
+}
+
+function formatValueRange(values: readonly number[], unit: string): string {
+  const finite = values.filter(v => Number.isFinite(v));
+  if (!finite.length) return '';
+  const lo = Math.min(...finite);
+  const hi = Math.max(...finite);
+  const unitSuffix = unit ? (unit === '°' ? '°' : ` ${unit}`) : '';
+  return lo === hi
+    ? `${formatCompact(lo, 4)}${unitSuffix}`
+    : `${formatCompact(lo, 4)}→${formatCompact(hi, 4)}${unitSuffix}`;
+}
+
+export function recordRangeText(record: ResearchResultRecord): string {
+  const primary = record.artifacts.find(a => a.id === record.primaryId) ?? record.artifacts[0];
+  if (!primary) return '';
+  if (primary.kind === 'comparison' && primary.data.rows.length > 0) {
+    const { unit } = splitLabelUnit(COMPARISON_LABELS[primary.data.field] ?? primary.data.field);
+    return formatValueRange(primary.data.rows.map(r => r.value), unit);
+  }
+  if (primary.kind === 'model' && primary.data.scans[0]?.rows.length) {
+    const scan = primary.data.scans[0];
+    const param = SCENE_DEFINITIONS[primary.data.state.sceneId]?.parameters.find(p => p.key === scan.field);
+    return formatValueRange(scan.rows.map(r => r.value), param?.unit ?? '');
+  }
+  return '';
+}
+
 export function shortRecordTitle(record: ResearchResultRecord): string {
   const primary = record.artifacts.find(a => a.id === record.primaryId) ?? record.artifacts[0];
   if (!primary) return record.title;
   if (primary.kind === 'comparison') {
-    const field = (COMPARISON_LABELS[primary.data.field] ?? primary.data.field).replace(/（[^）]*）/, '');
-    return `${field}比较`;
+    const { label } = splitLabelUnit(COMPARISON_LABELS[primary.data.field] ?? primary.data.field);
+    return `${label}比较`;
   }
   const parts = record.title.split(' · ');
   if (parts.length > 1) return parts.slice(-1)[0];
   return record.title;
+}
+
+export function recordSidebarTitle(record: ResearchResultRecord, showObjectPrefix = true): string {
+  const primary = record.artifacts.find(a => a.id === record.primaryId) ?? record.artifacts[0];
+  if (!primary) return record.title;
+  if (primary.kind === 'comparison') {
+    if (!primary.data.rows.length) return record.title;
+    const { label } = splitLabelUnit(COMPARISON_LABELS[primary.data.field] ?? primary.data.field);
+    const range = recordRangeText(record);
+    const base = range ? `${label} ${range}` : `${label}比较`;
+    if (!showObjectPrefix) return base;
+    const prefix = record.title.split(' · ')[0];
+    return prefix && prefix !== base ? `${prefix} · ${base}` : base;
+  }
+  if (primary.kind === 'model' && primary.data.scans[0]?.rows.length) {
+    const scan = primary.data.scans[0];
+    const param = SCENE_DEFINITIONS[primary.data.state.sceneId]?.parameters.find(p => p.key === scan.field);
+    const label = param?.label ?? scan.field;
+    const range = recordRangeText(record);
+    const base = range ? `${label} ${range}` : shortRecordTitle(record);
+    if (!showObjectPrefix) return base;
+    const prefix = record.title.split(' · ')[0];
+    return prefix && prefix !== base ? `${prefix} · ${base}` : base;
+  }
+  if (primary.kind === 'simulation' && primary.data.screens.length > 0) {
+    const screenName = cleanElementDisplayName(primary.data.screens[0].name);
+    const base = `单点仿真 · ${screenName}`;
+    if (!showObjectPrefix) return base;
+    const prefix = record.title.split(' · ')[0];
+    return prefix && prefix !== base ? `${prefix} · ${base}` : base;
+  }
+  return showObjectPrefix ? record.title : shortRecordTitle(record);
 }
 
 export function summarizeRecord(record: ResearchResultRecord): { badge: string; summary: string } {

@@ -1,8 +1,35 @@
+import { ChevronRight } from 'lucide-react';
 import SpatialImagingResults from './SpatialImagingResults';
 import type { DiffractionProfile, SpatialResult } from './builderModel';
 import SpatialFourFOutput from './SpatialFourFOutput';
 import SpatialFourierOutput from './SpatialFourierOutput';
+import { cleanElementDisplayName, formatCompact, formatReadoutWithUnit } from './researchUnits';
 import {spatialResultNotes} from './spatialResultNotes';
+
+const POLARIZATION_KINDS = new Set(['polarizer', 'half-wave-plate', 'quarter-wave-plate', 'polarizing-splitter']);
+const ATTENUATING_KINDS = new Set(['splitter', 'polarizing-splitter', 'aperture', 'filter', 'slit']);
+
+function hasRelevantPolarization(result: SpatialResult): boolean {
+  return result.inputSnapshot.elements.some(e => POLARIZATION_KINDS.has(e.kind));
+}
+
+function hasRelevantAnisotropy(result: SpatialResult, u: number | null | undefined, v: number | null | undefined): boolean {
+  if (u == null || v == null) return false;
+  const asymmetric = Math.abs(u - v) > Math.max(0.005, 0.05 * Math.max(u, v));
+  return asymmetric || result.inputSnapshot.elements.some(e => e.kind.includes('cylinder') && (u > 0.005 || v > 0.005));
+}
+
+function beamSizeContext(result: SpatialResult, gaussianRadiusMm: number | null): string | null {
+  if (gaussianRadiusMm === null) return null;
+  const laser = result.inputSnapshot.elements.find(e => e.kind === 'laser' && e.beamModel === 'gaussian');
+  if (!laser || laser.beamRadiusMm <= 0) return null;
+  const ratio = gaussianRadiusMm / laser.beamRadiusMm;
+  const baseLabel = formatReadoutWithUnit(laser.beamRadiusMm, 'mm');
+  if (ratio < 0.98) return `较入射光束（${baseLabel}）聚焦压缩 ${formatCompact(1 / ratio, 3)}×`;
+  if (ratio > 1.02) return `较入射光束（${baseLabel}）扩展 ${formatCompact(ratio, 3)}×`;
+  return `与入射束腰（${baseLabel}）基本相当`;
+}
+
 function PolarizationState({state:s}:{state:{s1:number;s2:number;s3:number}}){
   const degree=Math.hypot(s.s1,s.s2,s.s3),angle=.5*Math.atan2(s.s2,s.s1),ellipticity=degree?Math.asin(Math.max(-1,Math.min(1,s.s3/degree)))/2:0;
   const label=degree<.001?'未偏振':degree<.999?'混合偏振':Math.abs(s.s3)>.999?'圆偏振':Math.abs(s.s3)<.001?'线偏振':'椭圆偏振';
@@ -23,16 +50,47 @@ function GratingOrders({result}:{result:SpatialResult}){
   return <>{result.gratingOrders?.map(entry=>{
     const grating=result.inputSnapshot.elements.find(e=>e.id===entry.gratingId),source=result.inputSnapshot.elements.find(e=>e.id===entry.sourceId);
     const table=(orders:typeof entry.orders)=><table className="sb-grating-table"><thead><tr><th>级次 m</th><th>角度 θₘ / °</th><th>效率 ηₘ / %</th></tr></thead><tbody>{orders.map(o=><tr key={o.m}><td>{o.m>0?'+':''}{o.m}</td><td>{o.angleDeg.toFixed(3)}</td><td>{o.efficiency===0?'0（缺级）':(o.efficiency*100).toFixed(3)}</td></tr>)}</tbody></table>;
-    return <article className="sb-diffraction" key={entry.gratingId+entry.sourceId}><strong>{grating?.name} · 衍射级次</strong><small>{source?.name} · λ = {source?.wavelengthNm} nm</small>{table(entry.orders.filter(o=>Math.abs(o.m)<=1))}{entry.orders.some(o=>Math.abs(o.m)>1)&&<details><summary>其余传播级次</summary>{table(entry.orders.filter(o=>Math.abs(o.m)>1))}</details>}<small>ηₘ：薄振幅光栅估算，角度相对法线</small></article>;
+    return <article className="sb-diffraction" key={entry.gratingId+entry.sourceId}><strong>{cleanElementDisplayName(grating?.name??'光栅')} · 衍射级次</strong><small>{cleanElementDisplayName(source?.name??'光源')} · λ = {source?.wavelengthNm} nm</small>{table(entry.orders.filter(o=>Math.abs(o.m)<=1))}{entry.orders.some(o=>Math.abs(o.m)>1)&&<details><summary>其余传播级次</summary>{table(entry.orders.filter(o=>Math.abs(o.m)>1))}</details>}<small>ηₘ：薄振幅光栅估算，角度相对法线</small></article>;
   })}</>;
 }
 export default function SpatialMeasurements({result,onSelect}:{result:SpatialResult;onSelect:(id:string)=>void}){
   const coherent=result.fourF??result.fourier,notes=spatialResultNotes(result);
-  return <><SpatialImagingResults result={result}/><div className="sb-measurement-grid">{result.fourF&&<SpatialFourFOutput result={result.fourF} radius={(result.inputSnapshot.elements.find(e=>e.id===result.fourF!.screenId)?.diameterMm??40)/2}/>}{result.fourier&&<SpatialFourierOutput result={result.fourier} radius={(result.inputSnapshot.elements.find(e=>e.id===result.fourier!.screenId)?.diameterMm??40)/2}/>}<div className="sb-screen-results">{result.inputSnapshot.elements.some(e=>e.kind==='laser')&&result.screens.length?result.screens.map(s=><button key={s.elementId} onClick={()=>onSelect(s.elementId)}><span>{s.name}</span>
-    {coherent?.screenId===s.elementId?<><strong>{coherent!.capturedPowerMw.toFixed(4)} mW</strong><small>到屏功率（波动计算）</small><small>输入条纹后 {coherent!.inputPowerMw.toFixed(4)} mW</small></>:s.detectorKind==='power-meter'?<><strong>{s.overRange?'超量程':`${(s.readingMw??0).toFixed(4)} mW`}</strong><small>收集功率（几何采样）</small></>:<><strong>{s.hits?`${(s.gaussianRadiusMm??s.footprintRadiusMm??0).toFixed(s.gaussianRadiusMm!==null?4:2)} mm`:'未到达'}</strong><small>{s.hits?(s.gaussianRadiusMm!==null?'高斯光斑半径':'采样光线范围半径'):'请检查位置与朝向'}</small><small>到屏功率（采样） {s.sampledPowerMw.toFixed(3)} mW</small></>}
-    {coherent?.screenId!==s.elementId&&s.sampledRadiusUMm!=null&&s.sampledRadiusVMm!=null&&<small>屏面 U / V 采样半径 {s.sampledRadiusUMm.toFixed(3)} / {s.sampledRadiusVMm.toFixed(3)} mm</small>}
-    {s.polarizationStokes&&<PolarizationState state={s.polarizationStokes}/>}
-  </button>):result.imaging?.length?null:<p>添加观察屏或功率计可以查看结果。</p>}</div>
+  const mayAttenuate=result.screens.length>1||result.inputSnapshot.elements.some(e=>ATTENUATING_KINDS.has(e.kind));
+  return <><SpatialImagingResults result={result}/><div className="sb-measurement-grid">{result.fourF&&<SpatialFourFOutput result={result.fourF} radius={(result.inputSnapshot.elements.find(e=>e.id===result.fourF!.screenId)?.diameterMm??40)/2}/>}{result.fourier&&<SpatialFourierOutput result={result.fourier} radius={(result.inputSnapshot.elements.find(e=>e.id===result.fourier!.screenId)?.diameterMm??40)/2}/>}<div className="sb-screen-results">{result.inputSnapshot.elements.some(e=>e.kind==='laser')&&result.screens.length?result.screens.map(s=>{
+    const name=cleanElementDisplayName(s.name);
+    const isCoherent=coherent?.screenId===s.elementId;
+    const uvRelevant=!isCoherent&&hasRelevantAnisotropy(result,s.sampledRadiusUMm,s.sampledRadiusVMm);
+    const polRelevant=!!s.polarizationStokes&&hasRelevantPolarization(result);
+    const kpiLabel=isCoherent?'到屏功率（波动计算）':s.detectorKind==='power-meter'?'收集功率（几何采样）':s.hits?(s.gaussianRadiusMm!==null?'1/e² 高斯半径':'几何覆盖半径'):'到屏状态';
+    const kpiValue=isCoherent?formatReadoutWithUnit(coherent!.capturedPowerMw,'mW'):s.detectorKind==='power-meter'?(s.overRange?'超量程':formatReadoutWithUnit(s.readingMw??0,'mW')):s.hits?formatReadoutWithUnit(s.gaussianRadiusMm??s.footprintRadiusMm??0,'mm'):'未到达';
+    const contextNote=isCoherent
+      ?`条纹后输入 ${formatReadoutWithUnit(coherent!.inputPowerMw,'mW')}`
+      :s.detectorKind==='power-meter'
+        ?(s.sampledPowerFraction<0.99?`占总功率 ${Math.round(s.sampledPowerFraction*100)}%`:null)
+        :s.hits>0
+          ?(beamSizeContext(result,s.gaussianRadiusMm)??(s.footprintRadiusMm!=null?`光斑覆盖范围约 ${formatReadoutWithUnit(s.footprintRadiusMm,'mm')}`:null))
+          :'光线未命中，请检查位置与朝向';
+    const showSplitPower=!isCoherent&&s.detectorKind!=='power-meter'&&s.hits>0&&(mayAttenuate||s.sampledPowerFraction<0.99);
+    return <div key={s.elementId} className="sb-screen-card">
+      <button type="button" className="sb-screen-card-select" onClick={()=>onSelect(s.elementId)}>
+        <div className="sb-screen-card-head">
+          <span className="sb-screen-name">{name}</span>
+          <span className="sb-screen-locate">选中定位<ChevronRight size={13}/></span>
+        </div>
+        <span className="sb-screen-kpi-label">{kpiLabel}</span>
+        <strong className="sb-screen-kpi">{kpiValue}</strong>
+        {contextNote&&<small className={s.hits===0&&!isCoherent?'sb-screen-unlit':'sb-screen-context'}>{contextNote}</small>}
+        {showSplitPower&&(
+          <div className="sb-screen-kv">
+            <div><span>到达功率</span><strong>{formatReadoutWithUnit(s.sampledPowerMw,'mW')}</strong></div>
+            <div><span>通过占比</span><strong>{Math.round(s.sampledPowerFraction*100)}%</strong></div>
+          </div>
+        )}
+      </button>
+      {uvRelevant&&<p className="sb-screen-extra-line">横向 / 纵向半径：{formatReadoutWithUnit(s.sampledRadiusUMm!,'mm')} / {formatReadoutWithUnit(s.sampledRadiusVMm!,'mm')}</p>}
+      {polRelevant&&s.polarizationStokes&&<PolarizationState state={s.polarizationStokes}/>}
+    </div>;
+  }):result.imaging?.length?null:<p>添加观察屏或功率计可以查看结果。</p>}</div>
   {!!result.diffraction?.length&&<div className="sb-diffraction-results">{result.diffraction.map(p=><DiffractionChart key={('gratingId' in p?p.gratingId:p.slitId)+p.screenId+p.sourceId} profile={p}/>)}</div>}
   {!!result.gratingOrders?.length&&<div className="sb-diffraction-results">{coherent?<details><summary>几何衍射级次</summary><GratingOrders result={result}/></details>:<GratingOrders result={result}/>}</div>}
   </div>

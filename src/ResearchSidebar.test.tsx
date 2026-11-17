@@ -53,3 +53,38 @@ test('record list shows type badge, title, and concise numeric summary without r
   assert.match(summaryHtml, /is-selected/);
   assert.equal(JSON.stringify(artifact), before);
 });
+
+test('multi-turn records on the same apparatus show turn number and distinct scan ranges', () => {
+  const makeScan = (requestId: string, createdAt: string, values: number[]): ResearchArtifact => ({
+    id: `scan-${requestId}`,
+    kind: 'comparison',
+    title: '高斯光束单透镜聚焦：光斑沿轴先缩后涨 · Z位置（mm）比较',
+    createdAt,
+    input: fromLegacy(makeTemplate('focus')),
+    reference: { requestId, objectId: 'object', kind: 'comparison', recordId: `rec-${requestId}` },
+    data: {
+      comparisonId: `rec-${requestId}`,
+      inputSnapshot: fromLegacy(makeTemplate('focus')),
+      elementId: 'screen',
+      field: 'z',
+      rows: values.map(value => ({
+        value,
+        screens: [{ elementId: 'screen', name: '探测屏', hits: 9, sampledPowerFraction: 1, sampledPowerMw: 1, centroid: null, footprintRadiusMm: 0.04, gaussianRadiusMm: 0.033868 }],
+        warnings: [],
+        error: null,
+      })),
+    },
+  });
+  const records = groupResearchArtifacts([
+    makeScan('t1', '2026-10-01T00:00:00Z', [200, 250, 450]),
+    makeScan('t2', '2026-10-01T00:01:00Z', [166.4, 200, 250]),
+  ]);
+  const html = renderToStaticMarkup(
+    <ResearchRecordList records={records} turnOrderByRequest={{ t1: 1, t2: 2 }} onSelect={() => {}}/>,
+  );
+  assert.match(html, /第 1 轮/);
+  assert.match(html, /第 2 轮/);
+  assert.match(html, /<strong>Z位置 200→450 mm<\/strong>/);
+  assert.match(html, /<strong>Z位置 166\.4→250 mm<\/strong>/);
+  assert.doesNotMatch(html, /3 点/);
+});
