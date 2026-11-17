@@ -1,6 +1,6 @@
 import { useSpatialSimulation } from './useSpatialSimulation';
 import type { SpatialExperiment, SpatialResult } from './builderModel';
-import { visualComparisonStatus, visualParameter, VISUAL_FIELDS, type ResearchVisualGuide } from './researchVisual';
+import { formatVisualValue, visualComparisonStatus, visualParameter, VISUAL_FIELDS, type ResearchVisualGuide } from './researchVisual';
 import { clampZero, cleanElementDisplayName, formatCompact, formatReadoutWithUnit } from './researchUnits';
 
 export function spotDeltaSummary(before: number | null | undefined, after: number | null | undefined, unchanged: boolean): { text: string; tone: 'muted' | 'grow' | 'shrink' } {
@@ -76,7 +76,7 @@ export default function InquiryComparison({ guide, experiment, result, pending, 
               <div className="sb-comp-metrics">
                 <div className="sb-comp-tag">
                   <span>{i === 0 ? '基准' : '当前'}</span>
-                  {fieldLabel && <small>{fieldLabel} {param == null ? '—' : `${formatCompact(param, 4)} mm`}</small>}
+                  {fieldLabel && guide.action.field && <small>{fieldLabel} {param == null ? '—' : formatVisualValue(param, guide.action.field)}</small>}
                 </div>
                 <strong className="sb-comp-value">
                   {waitingFirstReading

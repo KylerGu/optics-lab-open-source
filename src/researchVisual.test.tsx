@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { spatialTemplate } from './builderModel';
+import { makeSpatialElement, spatialTemplate } from './builderModel';
 import { buildVisualHandoffPrompt, resolveComparisonGuide, validateVisualActions, visualComparisonStatus, sameVisualSnapshot, type ResearchVisualAction } from './researchVisual';
 import { spotDeltaSummary } from './InquiryComparison';
 import { cleanElementDisplayName } from './researchUnits';
@@ -104,4 +104,64 @@ test('resolveComparisonGuide enables live comparison for adjust on Gaussian scre
   const multiText = buildVisualHandoffPrompt(adjustGuide, multiEdit, null);
   assert.match(multiText ?? '', /X · 前后 380→350 mm/);
   assert.match(multiText ?? '', /Y · 高度 60→45 mm/);
+});
+
+test('expanded visual coverage supports polarizer, slit, spherical lens, laser and handoff unit formatting', () => {
+  const rich = structuredClone(base);
+  const laser = rich.elements.find(e => e.kind === 'laser')!;
+  const pol = makeSpatialElement('polarizer', [120, 60, 0]);
+  const slit = makeSpatialElement('slit', [160, 60, 0]);
+  const sph = makeSpatialElement('biconvex-lens', [200, 60, 0]);
+  rich.elements = [laser, pol, slit, sph, rich.elements.find(e => e.kind === 'screen')!];
+
+  const polAction: ResearchVisualAction = {
+    objectId: 'a',
+    elementId: pol.id,
+    kind: 'adjust',
+    field: 'rollDeg',
+    screenId: null,
+    explanation: '转动偏振片透光轴角度。',
+  };
+  const slitAction: ResearchVisualAction = {
+    objectId: 'a',
+    elementId: slit.id,
+    kind: 'adjust',
+    field: 'slitWidthMm',
+    screenId: null,
+    explanation: '改变狭缝宽度。',
+  };
+  const sphAction: ResearchVisualAction = {
+    objectId: 'a',
+    elementId: sph.id,
+    kind: 'adjust',
+    field: 'frontRadiusMm',
+    screenId: null,
+    explanation: '调节前表面曲率半径。',
+  };
+
+  const validated = validateVisualActions([polAction, slitAction, sphAction], [{ id: 'a', experiment: rich }]);
+  assert.equal(validated.length, 3);
+  assert.throws(() =>
+    validateVisualActions([{ ...slitAction, elementId: laser.id }], [{ id: 'a', experiment: rich }]),
+  );
+
+  const rotated = structuredClone(rich);
+  rotated.elements.find(e => e.id === pol.id)!.rollDeg = 45;
+  const polPrompt = buildVisualHandoffPrompt({ action: polAction, snapshot: rich }, rotated, null);
+  assert.match(polPrompt ?? '', /轴向转角从 0° 调到了 45°/);
+  assert.doesNotMatch(polPrompt ?? '', /0 mm/);
+
+  const multiChanged = structuredClone(rich);
+  multiChanged.elements.find(e => e.id === slit.id)!.slitWidthMm = 0.08;
+  multiChanged.elements.find(e => e.id === sph.id)!.frontRadiusMm = 80;
+  multiChanged.elements.find(e => e.id === laser.id)!.beamModel = 'parallel';
+  const multiPrompt = buildVisualHandoffPrompt({ action: slitAction, snapshot: rich }, multiChanged, null);
+  assert.match(multiPrompt ?? '', /狭缝宽度/);
+  assert.match(multiPrompt ?? '', /前表面曲率半径/);
+  assert.match(multiPrompt ?? '', /几何光束/);
+
+  const removedGuided = structuredClone(rich);
+  removedGuided.elements = removedGuided.elements.filter(e => e.id !== pol.id);
+  const removedPrompt = buildVisualHandoffPrompt({ action: polAction, snapshot: rich }, removedGuided, null);
+  assert.match(removedPrompt ?? '', /移除了「偏振片」/);
 });

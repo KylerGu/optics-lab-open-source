@@ -5,7 +5,7 @@ import type { Experiment } from './model';
 import { DRAFT_KEY } from './model';
 import type { BuilderConversationContext } from './researchConversation';
 import InquiryComparison from './InquiryComparison';
-import { buildVisualHandoffPrompt, resolveComparisonGuide, sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, type ResearchVisualGuide, type VisualField } from './researchVisual';
+import { applyVisualFieldPatch, buildVisualHandoffPrompt, resolveComparisonGuide, sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, VISUAL_FIELD_SPECS, visualParameter, type ResearchVisualGuide, type VisualField } from './researchVisual';
 import { cleanElementDisplayName } from './researchUnits';
 import type { FormulaPresetRequest } from './researchFormulaLinks';
 import './inquiry-visual.css';
@@ -428,10 +428,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
               </div>
               <p>{guide.action.explanation}</p>
             </div>
-            {guidedEl&&gField&&<div className="sb-guide-control">{gField==='focalLengthMm'
-              ?<NumberInput key={`guide-${guidedEl.id}-f`} highlighted label="焦距" value={guidedEl.focalLengthMm} unit="mm" min={-2000} max={2000} sliderMin={-500} sliderMax={500} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={focalLengthMm=>update(guidedEl.id,{focalLengthMm})}/>
-              :(()=>{const idx=['x','y','z'].indexOf(gField);return <NumberInput key={`guide-${guidedEl.id}-${gField}`} highlighted label={VISUAL_FIELDS[gField]} value={guidedEl.position[idx]} unit="mm" min={-1000} max={1000} sliderMin={idx===1?0:-500} sliderMax={idx===1?500:800} step={1} onEditing={setEditing} onDrag={onSliderDrag} onChange={val=>{const position=[...guidedEl.position] as [number,number,number];position[idx]=val;return update(guidedEl.id,{position});}}/>;})()
-            }</div>}
+            {guidedEl&&gField&&(()=>{const spec=VISUAL_FIELD_SPECS[gField],val=visualParameter(experiment,{elementId:guidedEl.id,field:gField});return val!==null?<div className="sb-guide-control"><NumberInput key={`guide-${guidedEl.id}-${gField}`} highlighted label={spec.label} value={val} unit={spec.unit} min={spec.min} max={spec.max} sliderMin={spec.sliderMin} sliderMax={spec.sliderMax} step={spec.step} onEditing={setEditing} onDrag={onSliderDrag} onChange={nextVal=>update(guidedEl.id,applyVisualFieldPatch(guidedEl,gField,nextVal))}/></div>:null;})()}
             <div className="sb-inquiry-guide-actions">
               {changed&&<button type="button" className="sb-guide-close" onClick={()=>{if(!finishInput())return;if(commit({...guide.snapshot,name:latest.current.name})){setSelectedId(guide.action.elementId);setToast('已重置到引导起点。');}}}>重置起点</button>}
               {onResearch&&<button type="button" className={changed?'sb-guide-return is-changed':'sb-guide-return'} onClick={()=>onResearch(buildHandoff())}>{changed?'带变化回探究 ↗':'返回探究'}</button>}
