@@ -21,7 +21,7 @@
   --sb-action-hover: #1e40af;
 }
 .topbar .mode-switch { min-width: 0; flex-shrink: 1; overflow-x: auto; scrollbar-width: thin; }
-.topbar .mode-switch button { font-size: var(--sb-label-size); font-weight: 500; line-height: 1.5; min-height: 42px; padding: 9px 14px; color: var(--sb-label-color); flex-shrink: 0; }
+.topbar .mode-switch button { font-size: var(--sb-label-size); font-weight: 500; line-height: 1.4; min-height: 30px; padding: 4px 11px; color: var(--sb-label-color); flex-shrink: 0; }
 .topbar .mode-switch button.active { color: var(--sb-action); font-weight: 700; }
 .topbar .top-actions { flex-shrink: 0; gap: 12px; }
 .topbar .top-actions button { font-size: var(--ui-control-size); line-height: 1.5; }

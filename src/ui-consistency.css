@@ -1,6 +1,7 @@
 /* Shared page chrome. Optical diagrams, quantity colors and 3D canvases keep
    their own presentation; these tokens only style navigation and reading UI. */
 :root {
+  --topbar-height: 52px;
   --ui-page: #f4f6fa;
   --ui-surface: #ffffff;
   --ui-soft: #f7f9fc;
@@ -13,7 +14,17 @@
   --ui-shadow: 0 2px 6px #233e5c05;
 }
 
-.app-shell > .topbar { border-bottom-color: var(--ui-border); }
+.app-shell > .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--topbar-height, 52px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #dce4ef;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
 .topbar .mode-switch { background: var(--ui-soft); border-color: var(--ui-border); border-radius: 10px; }
 .topbar .brand strong { font-size: var(--sb-title-size); font-weight: var(--sb-title-weight); color: var(--sb-title-color); letter-spacing: 0; }
 .topbar .mode-switch button { border-radius: 7px; color: var(--sb-label-color); font-size: var(--sb-label-size); font-weight: 500; }
@@ -23,12 +34,12 @@
 .scene-catalog-page, .fk-library {
   background: var(--ui-page);
   color: var(--ui-text);
-  padding: 32px max(24px, calc((100% - 1664px) / 2)) 40px;
+  padding: 20px max(24px, calc((100% - 1664px) / 2)) 32px;
 }
-.sc-header, .fk-library-heading { margin-bottom: 28px; gap: 24px; }
-.sc-header h1, .fk-library-heading h1 { font-size: 28px; font-weight: 650; line-height: 1.4; margin: 0; letter-spacing: -.5px; }
-.sc-header .ui-page-description, .fk-library-heading .ui-page-description { margin: 8px 0 0; color: var(--ui-muted); font-size: 14px; line-height: 1.7; }
-.sc-search, .fk-search { min-height: 44px; width: 300px; max-width: 100%; padding: 10px 14px; border-color: var(--ui-border); border-radius: 8px; color: var(--ui-muted); box-shadow: var(--ui-shadow); }
+.sc-header, .fk-library-heading { margin-bottom: 18px; gap: 20px; }
+.sc-header h1, .fk-library-heading h1 { font-size: 24px; font-weight: 650; line-height: 1.4; margin: 0; letter-spacing: -.5px; }
+.sc-header .ui-page-description, .fk-library-heading .ui-page-description { margin: 4px 0 0; color: var(--ui-muted); font-size: 13.5px; line-height: 1.6; }
+.sc-search, .fk-search { min-height: 38px; width: 300px; max-width: 100%; padding: 7px 12px; border-color: var(--ui-border); border-radius: 8px; color: var(--ui-muted); box-shadow: var(--ui-shadow); }
 .sc-search svg, .fk-search svg { flex-shrink: 0; }
 .sc-search input, .fk-search input { width: 100%; min-width: 0; font-size: 14px; color: var(--ui-text); }
 .sc-search:focus-within, .fk-search:focus-within { border-color: #8aa9e4; box-shadow: 0 0 0 3px #2258cf12; }
@@ -58,6 +69,7 @@
 .sc-empty, .fk-empty { padding: 56px 24px; border-color: var(--ui-border); background: var(--ui-surface); border-radius: var(--ui-radius); color: var(--ui-muted); line-height: 1.8; }
 
 /* Shared directory, including nested formula categories. */
+.scene-library .optics-directory { top: calc(var(--topbar-height, 52px) + 16px); max-height: calc(100dvh - var(--topbar-height, 52px) - 32px); }
 :is(.scene-library, .fk-library) .optics-directory { padding: 18px 10px; border-color: var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
 :is(.scene-library, .fk-library) .optics-directory h2 { color: var(--ui-text); font-size: 15px; padding: 0 10px 14px; }
 :is(.scene-library, .fk-library) .od-select { font-size: 14px; font-weight: 500; padding: 11px 10px; color: #485e75; border-radius: 7px; }
@@ -85,12 +97,12 @@
 
 /* Scene page frames and parameter controls; never recolor scientific marks. */
 .gaussian-scene { background: var(--ui-page); }
-.gs-heading h1 { color: var(--ui-text); }
+.gs-heading h1, .gs-heading .gs-title h1 { color: var(--ui-text); font-size: 17.5px; }
 .gs-sidebar, .gs-visual { border-color: var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
 .gs-sidebar-title, .gs-toolbar { border-bottom-color: #e5ebf3; }
 .gs-sidebar-title h2 { color: var(--ui-text); font-weight: 600; }
 .gs-heading-actions button, .gs-presets button { border-color: var(--ui-border); border-radius: 7px; }
-.gs-heading-actions button:not(.icon-button) { min-height: 36px; }
+.gs-heading-actions button:not(.icon-button) { min-height: 30px; padding: 4px 10px; }
 .gs-number { border-color: #c9d5e3; border-radius: 7px; background: var(--ui-soft); min-height: 34px; }
 .gs-number:focus-within { border-color: #8aa9e4; box-shadow: 0 0 0 3px #2258cf12; background: var(--ui-surface); }
 .gs-number input:focus-visible { outline: none; }
@@ -124,7 +136,7 @@
 }
 @media(max-width:750px) {
   body:has(.scene-library), body:has(.fk-library) { min-width: 320px; }
-  .app-shell:has(.scene-library) > .topbar, .app-shell:has(.fk-library) > .topbar { height: auto; min-height: 72px; flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
+  .app-shell:has(.scene-library) > .topbar, .app-shell:has(.fk-library) > .topbar { height: auto; min-height: 52px; flex-wrap: wrap; gap: 8px 12px; padding: 8px 14px; }
   .app-shell:has(.scene-library) .topbar .mode-switch, .app-shell:has(.fk-library) .topbar .mode-switch { width: 100%; }
   .scene-catalog-page, .fk-library { padding: 22px 16px 32px; }
   .sc-header, .fk-library-heading { align-items: stretch; gap: 18px; margin-bottom: 20px; }

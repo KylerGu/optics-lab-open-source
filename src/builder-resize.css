@@ -8,10 +8,10 @@
 .sb-panel-resizer:after{content:"";position:absolute;left:4px;top:50%;width:4px;height:44px;border-radius:4px;background:#b9cbe0;transform:translateY(-50%)}
 .sb-panel-resizer:hover:after,.sb-panel-resizer:focus-visible:after{background:#2563eb}
 .sb-panel-resizing{user-select:none;cursor:col-resize}
-.sb-resizable-body .sb-stage-toolbar{height:auto;min-height:62px;flex-wrap:wrap;padding:9px;gap:8px}
+.sb-resizable-body .sb-stage-toolbar{height:auto;min-height:44px;flex-wrap:wrap;padding:4px 12px;gap:8px}
 
 /* Keep document actions beside the tabs so the canvas receives the freed height. */
-.sb-document-strip{display:flex;align-items:center;gap:16px;padding:10px 20px;flex-shrink:0;min-width:0}
+.sb-document-strip{display:flex;align-items:center;gap:12px;padding:5px 16px;min-height:42px;border-bottom:1px solid #e5ebf3;background:#f8fafc;flex-shrink:0;min-width:0}
 .sb-document-strip .sb-document-tabs{flex:1;min-width:0;margin:0;padding:0;border:0}
 .sb-document-strip .sb-project-actions{flex-shrink:0;gap:6px}
 .sb-document-strip .sb-autosave{margin:0 6px}

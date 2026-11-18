@@ -20,22 +20,66 @@
   margin-left: 0;
 }
 
+.topbar .mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #dce4ef;
+}
+
+.topbar .mode-switch button {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  color: #475569;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.topbar .mode-switch button:not(.active):hover {
+  background: rgba(255, 255, 255, 0.78);
+  color: #1d4ed8;
+}
+
+.topbar .mode-switch button.active {
+  background: #ffffff;
+  color: #1d4ed8;
+  font-weight: 650;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(37, 99, 235, 0.22);
+}
+
 .mode-switch-divider {
   width: 1px;
-  height: 20px;
-  background: #d5e0ee;
-  margin: 0 2px;
+  height: 18px;
+  background: #cbd5e1;
+  margin: 0 3px;
   align-self: center;
   flex-shrink: 0;
+}
+
+.mode-switch-workbench {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  background: transparent;
+  border: 0;
 }
 
 .formula-quick-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 13px;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
   border: 1px solid var(--ui-border, #d8e2ed);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--ui-surface, #ffffff);
   color: var(--sb-label-color, #475569);
   font-family: "Hanken Grotesk Variable", "Hanken Grotesk", "Noto Sans SC", "Microsoft YaHei", sans-serif;
@@ -44,10 +88,11 @@
   line-height: 1;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .formula-quick-trigger:hover {
-  background: #eaf1ff;
+  background: #f0f5ff;
   border-color: #b8cdf6;
   color: #1d4ed8;
 }
@@ -57,6 +102,28 @@
   border-color: #9cbbf5;
   color: #1d4ed8;
   font-weight: 700;
+}
+
+.topbar-shortcut {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 5px;
+  margin-left: 2px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #dce4ef;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.formula-quick-trigger:hover .topbar-shortcut,
+.formula-quick-trigger.active .topbar-shortcut {
+  background: #dbeafe;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
 }
 
 /* Split workbench shell */
@@ -225,8 +292,8 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
 }
 
 .research-workspace.rw-studio-split .rw-project-header {
-  padding: 12px 16px;
-  min-height: 58px;
+  padding: 5px 12px;
+  min-height: 42px;
   flex-shrink: 0;
 }
 
@@ -248,8 +315,9 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
 
 /* Compact adaptations inside the left 3D Builder pane when split */
 .studio-split-shell.is-split-active .studio-split-builder .sb-document-strip {
-  padding: 8px 12px;
-  gap: 8px 12px;
+  padding: 5px 12px;
+  min-height: 42px;
+  gap: 6px 10px;
   flex-wrap: wrap;
 }
 
@@ -258,12 +326,12 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
 }
 
 .studio-split-shell.is-split-active .studio-split-builder .sb-body {
-  padding: 0 12px 12px;
+  padding: 8px 12px 12px;
 }
 
 .studio-split-shell.is-split-active .studio-split-builder .sb-stage-toolbar {
-  padding: 8px 10px;
-  min-height: 52px;
+  padding: 4px 10px;
+  min-height: 42px;
 }
 
 .studio-split-shell.is-split-active .studio-split-builder .sb-toolbar-add {
@@ -745,8 +813,8 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
   .app-shell > .topbar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
-    padding: 0 18px;
-    gap: 12px;
+    padding: 0 16px;
+    gap: 10px;
   }
   .app-shell > .topbar > .brand {
     justify-self: start;
@@ -763,18 +831,24 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
     padding: 0 14px;
     gap: 10px;
   }
+  .topbar-shortcut {
+    display: none;
+  }
   .topbar .mode-switch button {
-    padding: 8px 10px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 9px;
     font-size: 12.5px;
     gap: 5px;
-    min-height: 38px;
   }
   .formula-quick-trigger {
-    padding: 8px 10px;
+    height: 32px;
+    padding: 0 9px;
     font-size: 12.5px;
   }
   .model-settings-entry {
-    padding: 8px 11px;
+    height: 32px;
+    padding: 0 9px;
   }
 }
 
@@ -782,15 +856,16 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
   .app-shell > .topbar {
     display: flex;
     height: auto;
-    min-height: 64px;
+    min-height: 52px;
     flex-wrap: wrap;
-    padding: 10px 14px;
+    padding: 8px 14px;
     gap: 8px 10px;
   }
   .app-shell > .topbar > .topbar-right {
     margin-left: auto;
   }
-  .mode-switch {
+  .app-shell > .topbar > .mode-switch {
+    display: inline-flex;
     order: 3;
     width: 100%;
     overflow-x: auto;

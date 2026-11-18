@@ -27,7 +27,7 @@ import FormulaLibrary from './FormulaKnowledge';
 import FormulaQuickPalette from './FormulaQuickPalette';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import ModelSettingsDialog, { ModelSettingsButton, ModelSettingsContext } from './ModelSettingsDialog';
-import { BookOpen, Box, Calculator, Check, Columns2, FlaskConical, Focus, X } from 'lucide-react';
+import { Aperture, BookOpen, Box, Calculator, Check, Columns2, FlaskConical, Focus, X } from 'lucide-react';
 import type { BuilderConversationContext } from './researchConversation';
 import type { ResearchBuilderCopy } from './researchBuilderLink';
 import type { ResearchBuilderOrigin } from './researchBuilderIdentity';
@@ -201,14 +201,16 @@ export default function App() {
 
   return <ModelSettingsContext.Provider value={openModelSettings}><div className={`app-shell ${surface === 'courses' ? 'is-scenes-area' : 'is-optical-area'}${route.area === 'research' ? ' is-inquiry-area' : ''}`}>
     <header className="topbar">
-      <a className="brand" href="#" onClick={event=>{event.preventDefault();openDirectory();}} aria-label="光学智研首页"><div className="brand-mark"><Focus size={26}/></div><strong>光学智研</strong></a>
+      <a className="brand" href="#" onClick={event=>{event.preventDefault();openDirectory();}} aria-label="光学智研首页"><div className="brand-mark"><Focus size={19}/></div><strong>光学智研</strong></a>
       <nav className="mode-switch" aria-label="工作区域">
-        <button className={surface==='courses'?'active':''} onClick={() => resumeWorkspace('scenes')} aria-pressed={surface==='courses'}><BookOpen size={15}/>仿真场景库</button>
-        <button className={surface==='formulas'?'active':''} onClick={() => resumeWorkspace('formulas')} aria-pressed={surface==='formulas'}><BookOpen size={15}/>公式库</button>
-        <span className="mode-switch-divider is-split-option" aria-hidden="true"/>
-        <button type="button" className={`is-split-option${surface==='lab'&&labLayout.split?' active':''}`} onClick={() => {selectStudioViewMode('split');if(surface!=='lab')resumeWorkspace('research');setAssistantOpen(false);}} aria-pressed={surface==='lab'&&labLayout.split}><Columns2 size={15}/>同屏工作台</button>
-        <button className={surface==='lab'&&!labLayout.split&&labLayout.showBuilder?'active':''} onClick={() => {selectStudioViewMode('builder');navigate({area:'builder'});setAssistantOpen(false);}} aria-pressed={surface==='lab'&&!labLayout.split&&labLayout.showBuilder}><Box size={15}/>光路搭建</button>
-        <button className={surface==='lab'&&!labLayout.split&&labLayout.showResearch?'active':''} onClick={() => {selectStudioViewMode('research');navigate({area:'research'});setAssistantOpen(false);}} aria-pressed={surface==='lab'&&!labLayout.split&&labLayout.showResearch}><FlaskConical size={15}/>实验探究工作区</button>
+        <button type="button" className={surface==='courses'?'active':''} onClick={() => resumeWorkspace('scenes')} aria-pressed={surface==='courses'} title="仿真场景库"><Aperture size={14}/><span>场景库</span></button>
+        <button type="button" className={surface==='formulas'?'active':''} onClick={() => resumeWorkspace('formulas')} aria-pressed={surface==='formulas'} title="光学公式与知识库"><BookOpen size={14}/><span>公式库</span></button>
+        <span className="mode-switch-divider" aria-hidden="true"/>
+        <div className="mode-switch-workbench" role="group" aria-label="实验工作台">
+          <button type="button" className={`is-split-option${surface==='lab'&&labLayout.split?' active':''}`} onClick={() => {selectStudioViewMode('split');if(surface!=='lab')resumeWorkspace('research');setAssistantOpen(false);}} aria-pressed={surface==='lab'&&labLayout.split} title="同屏工作台（光路搭建 + 实验探究分屏联动）"><Columns2 size={14}/><span>同屏</span></button>
+          <button type="button" className={surface==='lab'&&!labLayout.split&&labLayout.showBuilder?'active':''} onClick={() => {selectStudioViewMode('builder');navigate({area:'builder'});setAssistantOpen(false);}} aria-pressed={surface==='lab'&&!labLayout.split&&labLayout.showBuilder} title="光路搭建工作区"><Box size={14}/><span>光路</span></button>
+          <button type="button" className={surface==='lab'&&!labLayout.split&&labLayout.showResearch?'active':''} onClick={() => {selectStudioViewMode('research');navigate({area:'research'});setAssistantOpen(false);}} aria-pressed={surface==='lab'&&!labLayout.split&&labLayout.showResearch} title="实验探究工作区"><FlaskConical size={14}/><span>探究</span></button>
+        </div>
       </nav>
       <div className="topbar-right">
         <button
@@ -219,8 +221,9 @@ export default function App() {
           aria-expanded={paletteOpen}
           onClick={() => setPaletteOpen(open => !open)}
         >
-          <Calculator size={15} aria-hidden="true"/>
+          <Calculator size={14} aria-hidden="true"/>
           <span>公式速查</span>
+          <kbd className="topbar-shortcut" aria-hidden="true">Alt+F</kbd>
         </button>
         <ModelSettingsButton onClick={openModelSettings}/>
       </div>

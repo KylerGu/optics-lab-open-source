@@ -12,7 +12,7 @@
 @media(max-width:850px){.optics-scene .gs-title h1{font-size:18px}.os-legend{gap:8px}}
 
 /* Keep this commit independent of concurrent Gaussian panel improvements. */
-.optics-scene .gs-copy-button{display:flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #a9c5e3;border-radius:7px;background:#eaf3ff;color:#346794;font-size:13px;font-weight:550;white-space:nowrap}
+.optics-scene .gs-copy-button{display:flex;align-items:center;gap:7px;padding:5px 10px;border:1px solid #a9c5e3;border-radius:7px;background:#eaf3ff;color:#346794;font-size:13px;font-weight:550;white-space:nowrap}
 .optics-scene .gs-copy-button:hover{background:#dcecff;border-color:#7fa8d1}.optics-scene .gs-copy-button:focus-visible{outline:2px solid #5b8fc2;outline-offset:2px}
 .optics-scene .gs-sidebar-scroll .gs-parameter label>span,.optics-scene .gs-sidebar-scroll .gs-number input{font-size:14px}
 .optics-scene .gs-sidebar-scroll .gs-number input{padding-top:5px;padding-bottom:5px}.optics-scene .gs-sidebar-scroll .gs-parameter{margin-top:8px}

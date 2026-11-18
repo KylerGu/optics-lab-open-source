@@ -31,7 +31,7 @@ export function ModelSettingsButton({ onClick }: { onClick: () => void }) {
     ? `模型设置，当前 ${summary.providerLabel} · ${summary.model}`
     : "模型设置，尚未配置模型接口";
   return <button type="button" className={`model-settings-entry${model ? " is-ready" : ""}`} onClick={onClick} aria-label={label} title={summary ? `${summary.providerLabel} · ${summary.model}` : undefined}>
-    <KeyRound size={15} aria-hidden="true"/>
+    <KeyRound size={14} aria-hidden="true"/>
     <span className="model-settings-label">模型设置</span>
     <span className="model-settings-status"><i className="model-settings-dot" aria-hidden="true"/><span>{status}</span></span>
   </button>;

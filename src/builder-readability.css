@@ -5,7 +5,7 @@
 .spatial-builder .sb-body.has-builder-assistant{grid-template-columns:300px minmax(0,1fr) 360px}
 .spatial-builder .sb-library-heading h2,.spatial-builder .sb-optical-heading h2,.spatial-builder .sb-inspector h2,.spatial-builder .sb-results h2,.spatial-builder .sb-empty h1,.spatial-builder .sb-catalog-heading h2,.spatial-builder .sb-library-dialog h2,.spatial-builder .sb-close-dialog h2{font-size:var(--sb-title-size);font-weight:var(--sb-title-weight);color:var(--sb-title-color)}
 .spatial-builder .sb-library-heading h2 span,.spatial-builder .sb-device-list button>span{font-size:var(--sb-note-size);font-weight:var(--sb-note-weight);color:var(--sb-note-color)}
-.spatial-builder .sb-add-device{font-size:var(--sb-label-size);font-weight:700;color:#fff;background:var(--sb-action);border-color:var(--sb-action);padding:9px 11px}
+.spatial-builder .sb-add-device{font-size:var(--sb-label-size);font-weight:700;color:#fff;background:var(--sb-action);border-color:var(--sb-action);padding:6px 10px}
 .spatial-builder .sb-add-device:hover{background:var(--sb-action-hover)}
 .spatial-builder .sb-device-list button{padding:12px 9px;color:var(--sb-body-color)}
 .spatial-builder .sb-device-list button.active{color:var(--sb-action);background:#e7efff}
@@ -94,7 +94,7 @@
 .spatial-builder .sb-four-f-values{font-size:14px}
 .spatial-builder .sb-four-f-values strong{font-size:23px}
 
-@media(max-width:1450px){.spatial-builder .sb-stage-toolbar{height:auto;min-height:62px;flex-wrap:wrap;gap:8px;padding:10px 12px}}
+@media(max-width:1450px){.spatial-builder .sb-stage-toolbar{height:auto;min-height:44px;flex-wrap:wrap;gap:8px;padding:5px 10px}}
 @media(max-width:1350px){.spatial-builder .sb-four-f-output{width:340px;grid-template-columns:125px minmax(0,1fr);gap:6px 12px;grid-template-rows:auto 125px auto auto}.spatial-builder .sb-four-f-image{height:125px}}
 @media(max-width:1250px){.spatial-builder .sb-body{grid-template-columns:280px minmax(0,1fr)}.spatial-builder .sb-body.has-inspector{grid-template-columns:280px minmax(0,1fr) 250px}.spatial-builder .sb-body.has-builder-assistant{grid-template-columns:280px minmax(0,1fr) 320px}}
 @media(max-width:1050px){.spatial-builder .sb-body.has-inspector,.spatial-builder .sb-body.has-builder-assistant{grid-template-columns:280px minmax(0,1fr)}.spatial-builder .sb-inspector{width:260px}}
