@@ -3,6 +3,7 @@ import ResearchResults from './ResearchResults';
 import type { ResearchArtifact } from './ResearchResults';
 import { artifactOptionLabel, type ResearchResultRecord } from './researchResultRecords';
 import type { FormulaPresetRequest } from './researchFormulaLinks';
+import type { SpatialComparison } from './spatialAgent';
 
 const sameSnapshot = (a: SpatialExperiment, b: SpatialExperiment) => JSON.stringify(parseSpatial(a)) === JSON.stringify(parseSpatial(b));
 function coversBaseline(analysis: ResearchArtifact, baseline: Extract<ResearchArtifact, {kind: 'simulation'}>) {
@@ -12,12 +13,14 @@ function coversBaseline(analysis: ResearchArtifact, baseline: Extract<ResearchAr
   return analysis.reference.objectId === baseline.reference.objectId && sameSnapshot(input, baseline.input);
 }
 
-export default function ResearchRecordResults({ record, selectedArtifactId, onSelectArtifact, onOpenBuilder, onOpenFormula }: {
+export default function ResearchRecordResults({ record, selectedArtifactId, onSelectArtifact, onOpenBuilder, onOpenFormula, onHoverScanRow, onSelectScanRow }: {
   record: ResearchResultRecord;
   selectedArtifactId: string;
   onSelectArtifact: (id: string) => void;
   onOpenBuilder: (input: SpatialExperiment) => void;
   onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void;
+  onHoverScanRow?: (comparison: SpatialComparison | null, rowValue: number | null) => void;
+  onSelectScanRow?: (comparison: SpatialComparison, rowValue: number) => void;
 }) {
   const selected = record.artifacts.find(a => a.id === selectedArtifactId) ?? record.artifacts.find(a => a.id === record.primaryId)!;
   // Baseline measurements remain in the data, without becoming a duplicate result entry.
@@ -25,6 +28,6 @@ export default function ResearchRecordResults({ record, selectedArtifactId, onSe
   const baseline = selected.kind === 'comparison' ? record.artifacts.find(a => a.kind === 'simulation' && coversBaseline(selected, a)) : undefined;
   return <>
     {options.length > 1 && <div className="rw-chart-controls"><label>查看结果<select aria-label="查看探究结果" value={selected.id} onChange={event => onSelectArtifact(event.target.value)}>{options.map(a => <option key={a.id} value={a.id}>{artifactOptionLabel(a, options)}</option>)}</select></label></div>}
-    <ResearchResults key={selected.id} artifact={selected} baseline={baseline?.kind === 'simulation' ? baseline.data : undefined} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula}/>
+    <ResearchResults key={selected.id} artifact={selected} baseline={baseline?.kind === 'simulation' ? baseline.data : undefined} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} onHoverScanRow={onHoverScanRow} onSelectScanRow={onSelectScanRow}/>
   </>;
 }

@@ -17,7 +17,8 @@ import ResearchObjectPicker, { ResearchObjectUpdate } from './ResearchObjectPick
 import type { SpatialExperiment } from './builderModel';
 import { MAX_RESEARCH_OBJECTS, SOURCE_LABELS, attachResearchObject, importedObjectChoice, readResearchObjectSources, refreshedResearchObject, type ObjectChoice, type ResearchObject } from './researchObjects';
 import { assistantErrorMessage } from './agent';
-import { type AgentStep } from './spatialAgent';
+import { type AgentStep, type SpatialComparison } from './spatialAgent';
+import { applyComparisonValue } from './spatialScanGhost';
 import { appendProgressStep, buildCompletedTimeline, completedProgressSteps, formatChineseDuration, formatElapsedDuration, summarizeAgentProgress } from './agentProgress';
 import { RESEARCH_WORKSPACE_KEY, cancelResearchAgent, downloadResearch, isBlankResearchProject, newResearchProject, parseResearchStorage, readResearchStorage, requestResearchAgent, researchHistory, researchReport, retainResearchBuilds, selectResearchProject, type ResearchProject, type ResearchStorage, type ResearchTurn } from './researchSession';
 import './research-workspace.css';
@@ -30,6 +31,7 @@ import { researchBuilderKey, researchKeyMatchesProject, type ResearchBuilderOrig
 import { readSavedSpatial } from './spatialStorage';
 
 interface Props { builderContext?: BuilderConversationContext | null; inBuilder?: boolean; studioSplit?: boolean; visible?: boolean; builderReturnDraft?: { id: string; text: string } | null; onConsumeBuilderReturnDraft?: () => void; onOpenBuilder: (experiment?: SpatialExperiment, origin?: ResearchBuilderOrigin, guide?: ResearchVisualGuide) => void; onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void; onSyncBuiltApparatus?: (experiment: SpatialExperiment, origin?: ResearchBuilderOrigin) => void }
+const IDLE_STEPS: AgentStep[] = [];
 const STARTERS = [
   { title: '看懂一个现象', text: '为什么激光经过透镜后，光斑不是一直变小？请用一个简单的仿真实验帮我直观理解。', icon: CircleHelp },
   { title: '改变参数看看', text: '光束初始束腰越小，传播时扩展得越慢吗？请选择示范条件，比较两组结果，告诉我该观察哪里。', icon: BarChart3 },
@@ -125,7 +127,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, onSync
     const id = window.setInterval(() => setClockNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [busyCount]);
-  const busy = project.id in running, steps = running[project.id] ?? [];
+  const busy = project.id in running, steps = running[project.id] ?? IDLE_STEPS;
   const streamingText = streamingAnswers[project.id] ?? '';
   const progressView = summarizeAgentProgress(steps, inBuilder ? '正在分析光路与问题…' : '正在探究问题…');
   const elapsedText = busy && runningSince[project.id] ? formatElapsedDuration(clockNow - runningSince[project.id]) : '';
@@ -154,6 +156,29 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, onSync
     return [...sources.values()];
   },[artifacts]);
   const selectedArtifact = artifacts.find(a => a.id === artifactId);
+  const previewScan = builderContext?.previewScan;
+  const handleHoverScanRow = (comparison: SpatialComparison | null, rowValue: number | null) => {
+    if (!previewScan || !visible) return;
+    if (comparison) {
+      previewScan({ comparison, activeValue: rowValue, pinned: true });
+    } else if (selectedArtifact?.kind === 'comparison') {
+      previewScan({ comparison: selectedArtifact.data, activeValue: null, pinned: true });
+    } else {
+      previewScan(null);
+    }
+  };
+  const handleSelectScanRow = (comparison: SpatialComparison, rowValue: number) => {
+    if (builderContext?.applyScanRow?.(comparison, rowValue)) return;
+    onOpenBuilder(applyComparisonValue(comparison.inputSnapshot, comparison.elementId, comparison.field, rowValue));
+  };
+  useEffect(() => {
+    if (!previewScan) return;
+    if (visible && selectedArtifact?.kind === 'comparison') {
+      previewScan({ comparison: selectedArtifact.data, activeValue: null, pinned: true });
+      return;
+    }
+    previewScan(null);
+  }, [previewScan, visible, selectedArtifact]);
   useLocalDebug('research', {
     projectId: project.id, title: project.title, activeObjectId: project.activeObjectId,
     objects: project.objects, latestTurn: project.turns.at(-1) ?? null,
@@ -793,7 +818,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, onSync
           })()}
         </header>
         <div className="rw-record-drawer-body">
-          <ResearchRecordResults record={selectedRecord} selectedArtifactId={selectedArtifact.id} onSelectArtifact={setArtifactId} onOpenBuilder={input => { setArtifactId(null); onOpenBuilder(input); }} onOpenFormula={onOpenFormula}/>
+          <ResearchRecordResults record={selectedRecord} selectedArtifactId={selectedArtifact.id} onSelectArtifact={setArtifactId} onOpenBuilder={input => { setArtifactId(null); onOpenBuilder(input); }} onOpenFormula={onOpenFormula} onHoverScanRow={handleHoverScanRow} onSelectScanRow={handleSelectScanRow}/>
         </div>
       </aside>
     )}

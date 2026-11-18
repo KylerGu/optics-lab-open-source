@@ -7,7 +7,9 @@ import { DRAFT_KEY } from './model';
 import type { BuilderConversationContext } from './researchConversation';
 import InquiryComparison from './InquiryComparison';
 import { applyVisualFieldPatch, buildVisualHandoffPrompt, isVisualDetectorKind, resolveComparisonGuide, sameVisualSnapshot, validateVisualActions, VISUAL_FIELDS, VISUAL_FIELD_SPECS, visualParameter, type ResearchVisualGuide, type VisualField } from './researchVisual';
-import { cleanElementDisplayName } from './researchUnits';
+import { cleanElementDisplayName, formatCompact } from './researchUnits';
+import { COMPARISON_LABELS } from './spatialAgent';
+import { applyComparisonValue, type SpatialScanOverlay } from './spatialScanGhost';
 import type { FormulaPresetRequest } from './researchFormulaLinks';
 import './inquiry-visual.css';
 import './microscope-render.css';
@@ -144,6 +146,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   const setHistory=(update:(history:BuilderHistory)=>BuilderHistory)=>{const current=workspaceRef.current;changeWorkspace({...current,tabs:current.tabs.map(tab=>tab.id===current.activeId?{...tab,resetBaseline:tab.resetBaseline??tab.history.present,history:update(tab.history)}:tab)});};
   const [assistantHost,setAssistantHost]=useState<HTMLDivElement|null>(null);
   const [guide,setGuide]=useState<ResearchVisualGuide|null>(null);
+  const [scanOverlay,setScanOverlay]=useState<SpatialScanOverlay|null>(null);
   const [selectedId,setSelectedId]=useState<string|null>(null),[category,setCategory]=useState('all'),[query,setQuery]=useState(''),[lensGroup,setLensGroup]=useState('all');
   const [myLenses,setMyLenses]=useState<SavedLens[]>(()=>{try{return readMyLenses();}catch{return [];}});
   const [replacingLens,setReplacingLens]=useState<string|null>(null),[lensRevision,setLensRevision]=useState(0);
@@ -265,7 +268,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
   useEffect(()=>{setLeftPanelOpen(!studioMode);},[studioMode]);
   const hasRightPanel=!studioMode&&(assistantOpen||!!(selected&&!rendered));
   const panelLayout=useScenePanelWidth(panelContainer,hasRightPanel&&rightPanelOpen,leftPanelOpen&&!rendered,{leftKey:studioMode?'optics-builder-studio-left-width:v1':'optics-builder-left-width:v1',leftMin:studioMode?196:250,leftDefault:studioMode?220:276,resultKey:'optics-builder-right-width:v1',resultDefault:340,resultMin:240,onLeftClose:()=>setLeftPanelOpen(false),onRightClose:()=>setRightPanelOpen(false)});
-  const resetTabView=()=>{sliderDraggingRef.current=false;sliderDraftRef.current=null;setSliderDraft(null);setSliderActive(false);setGuide(null);setSelectedId(null);setEditing(false);setRun(latest.current.elements.some(e=>e.kind==='laser'||e.kind==='object'));setShowBeam(true);setResultsOpen(false);setAssistantOpen(false);setReset(n=>n+1);};
+  const resetTabView=()=>{sliderDraggingRef.current=false;sliderDraftRef.current=null;setSliderDraft(null);setSliderActive(false);setGuide(null);setScanOverlay(null);setSelectedId(null);setEditing(false);setRun(latest.current.elements.some(e=>e.kind==='laser'||e.kind==='object'));setShowBeam(true);setResultsOpen(false);setAssistantOpen(false);setReset(n=>n+1);};
   const openTab=(next:SpatialExperiment,savedId:string|null=null)=>{if(!finishInput())return false;try{const archive=savedId?readSaved().find(row=>row.id===savedId):undefined;let state=openBuilderTab(workspaceRef.current,next,savedId,archive?.conversationId,archive?.resetBaseline);const keys=archive?.researchKeys;if(keys?.length)state={...state,tabs:state.tabs.map(t=>t.id===state.activeId?{...t,researchKeys:[...new Set([...(t.researchKeys??[]),...keys])]}:t)};changeWorkspace(state);activeSaved.current=state.tabs.find(tab=>tab.id===state.activeId)!.savedId;resetTabView();return true;}catch(error){setToast(error instanceof Error?error.message:'无法打开装置。');return false;}};
   const openResearchObject=(copy:ResearchBuilderCopy)=>{
     if(!copy.origin)return openTab(copy.experiment);
@@ -369,6 +372,19 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
           setSaved(next.saved);
         }
         if(next.workspace&&next.workspace!==workspaceRef.current)changeWorkspace(next.workspace);
+      },
+      previewScan:(overlay)=>setScanOverlay(overlay),
+      applyScanRow:(comparison,rowValue)=>{
+        (document.activeElement as HTMLElement|null)?.blur();
+        const base=latest.current;
+        if(workspaceRef.current.activeId!==activeTab.id||editing||!comparison.inputSnapshot.elements.some(e=>e.id===comparison.elementId))return false;
+        const next=applyComparisonValue({...comparison.inputSnapshot,name:base.name},comparison.elementId,comparison.field,rowValue);
+        if(!commit(next))return false;
+        setSelectedId(comparison.elementId);setRendered(false);setRun(true);setShowBeam(true);
+        const elName=cleanElementDisplayName(next.elements.find(e=>e.id===comparison.elementId)?.name??'');
+        const fieldLabel=(COMPARISON_LABELS[comparison.field]??comparison.field).replace(/（.*?）/g,'').trim();
+        setToast(`已按该轮扫描装置将「${elName} · ${fieldLabel}」设为 ${formatCompact(rowValue,4)}（可点「撤销」还原）。`);
+        return true;
       }
     });
   },[activeTab,selectedId,editing,assistantHost,onConversation]);
@@ -450,7 +466,7 @@ export default function BuilderWorkspace({sceneCopy,onCopyConsumed,onScenes,rese
           </div>;})()}
         <div className="sb-stage-canvas-area">
         <div ref={viewport} className={`sb-viewport ${fullscreen?'sb-viewport-fullscreen':''} ${darkroom?'is-darkroom':''}`}>
-          <SpatialBench visible={visible} experiment={benchExperiment} selectedId={selectedId} rendered={rendered} result={result} view={view} reset={reset} tool={tool} showGrid={showGrid} showBeam={showBeam} darkroom={darkroom} axes={axes} showAxes={axisHelp&&!rendered&&!!selected} snapEnabled={snapEnabled} onSelect={setSelectedId} onEditing={setEditing} onTransform={update} onFocus={focus}/>
+          <SpatialBench visible={visible} experiment={benchExperiment} selectedId={selectedId} rendered={rendered} result={result} view={view} reset={reset} tool={tool} showGrid={showGrid} showBeam={showBeam} darkroom={darkroom} axes={axes} showAxes={axisHelp&&!rendered&&!!selected} snapEnabled={snapEnabled} scanOverlay={scanOverlay} onClearScanOverlay={()=>setScanOverlay(null)} onSelect={setSelectedId} onEditing={setEditing} onTransform={update} onFocus={focus}/>
           {run&&<div className="sb-canvas-status" aria-live="polite">{canvasStatus.visible&&<span className={`sb-compute-status ${simulation.status==='error'?'error':''}`}>{canvasStatus.visible}</span>}{canvasStatus.live==='光路已更新'&&<span className="sr-only">光路已更新</span>}</div>}
           {lightIssue&&<div className="sb-light-hint" role="status"><Sun size={14}/><span>{lightIssue}</span>{!showBeam?<button onClick={()=>setShowBeam(true)}>显示光线</button>:experiment.elements.filter(e=>e.kind==='laser').every(e=>e.powerMw===0)?<button onClick={()=>setSelectedId(experiment.elements.find(e=>e.kind==='laser')!.id)}>选择光源</button>:alignment?<button onClick={alignSelected}>对齐所选器件</button>:<button onClick={()=>setSelectedId(result?.screens.find(s=>s.hits===0)?.elementId??null)}>选择观察屏</button>}</div>}
           {!experiment.elements.length&&<div className="sb-empty"><div className="sb-empty-icon"><Focus size={37} strokeWidth={1}/></div><h1>从一束光开始</h1><div><button onClick={()=>add(CATALOG.find(item=>item.id==='laser-green')!)}><Plus size={14}/>添加光源</button><button onClick={()=>load('fold')}>体验立体折转<Move3D size={14}/></button></div></div>}
