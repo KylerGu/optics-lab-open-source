@@ -19,7 +19,7 @@ function FavoriteButton({ title, saved, onToggle }: { title: string; saved: bool
   return <button type="button" className={`fk-favorite ${saved ? 'is-saved' : ''}`} aria-label={label} aria-pressed={saved} title={label} onClick={onToggle}><Bookmark size={19} fill={saved ? 'currentColor' : 'none'} /></button>;
 }
 
-function FormulaPreview({ id, latex }: { id: string; latex: string }) {
+export function FormulaPreview({ id, latex }: { id: string; latex: string }) {
   // Pick the main relation rather than intermediate definitions in multi-relation cards.
   const mainRelation: Record<string, number> = {
     'wave-field-sum': 2, 'young-path-difference': 2, 'young-intensity': 1,
