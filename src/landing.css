@@ -7,7 +7,7 @@
   color: #e8edf6;
   background: radial-gradient(120% 90% at 42% 34%, #17233b 0%, #0c1322 55%, #060a12 100%);
   font-family: "Hanken Grotesk Variable", "Hanken Grotesk", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  transition: opacity 450ms ease, filter 450ms ease;
+  transition: filter 450ms ease;
   user-select: none;
 }
 /* 光学平台螺孔网格 */
@@ -21,7 +21,10 @@
   -webkit-mask-image: radial-gradient(75% 65% at 45% 38%, #000 25%, transparent 100%);
   pointer-events: none;
 }
-.landing[data-stage="leaving"] { opacity: 0; filter: blur(6px) brightness(1.6); }
+.landing[data-stage="leaving"] .landing__main,
+.landing[data-stage="leaving"] .landing__top,
+.landing[data-stage="leaving"] .landing__hint,
+.landing[data-stage="leaving"] .landing__readout { opacity: 0; transition: opacity 260ms ease; pointer-events: none; }
 .landing__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* 顶栏 */
@@ -97,9 +100,7 @@
 .landing__cta svg { transition: transform 250ms ease; }
 .landing__cta:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(255, 240, 210, 0.7) inset, 0 10px 40px rgba(var(--laser), 0.5), 0 0 90px rgba(var(--laser), 0.3); }
 .landing__cta:hover svg { transform: translateX(4px); }
-.landing__cta:focus-visible, .landing__ghost:focus-visible, .landing__entry:focus-visible { outline: 2px solid rgb(var(--laser)); outline-offset: 3px; }
-.landing__ghost { font-size: 15px; color: rgba(232, 237, 246, 0.7); text-decoration: none; border-bottom: 1px solid rgba(232, 237, 246, 0.25); padding-bottom: 2px; transition: color 200ms, border-color 200ms; }
-.landing__ghost:hover { color: #fff; border-color: #fff; }
+.landing__cta:focus-visible, .landing__entry:focus-visible { outline: 2px solid rgb(var(--laser)); outline-offset: 3px; }
 
 .landing__entries { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 38px; }
 .landing__entry {

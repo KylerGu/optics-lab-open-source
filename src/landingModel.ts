@@ -1,22 +1,8 @@
-export const LANDING_SEEN_KEY = 'optics-lab:landing-seen';
 export const LANDING_HASH = '#/home';
 
-export function isLandingHash(hash: string): boolean {
-  return hash === '#/home' || hash === '#/home/';
-}
-
-/** 首次访问根地址时显示引导页；任何时候访问 #/home 也会显示。 */
-export function shouldShowLanding(hash: string, seen: boolean): boolean {
-  if (isLandingHash(hash)) return true;
-  return !seen && (hash === '' || hash === '#' || hash === '#/');
-}
-
-export function readLandingSeen(storage: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage): boolean {
-  try { return storage?.getItem(LANDING_SEEN_KEY) === '1'; } catch { return false; }
-}
-
-export function markLandingSeen(storage: Pick<Storage, 'setItem'> | undefined = globalThis.localStorage): void {
-  try { storage?.setItem(LANDING_SEEN_KEY, '1'); } catch { /* 隐私模式等情况下忽略 */ }
+/** 首页地址：/、#、#/、#/home。每次访问首页都显示启动页。 */
+export function shouldShowLanding(hash: string): boolean {
+  return hash === '' || hash === '#' || hash === '#/' || hash === '#/home' || hash === '#/home/';
 }
 
 export type ImageKind = 'real' | 'virtual' | 'infinite';

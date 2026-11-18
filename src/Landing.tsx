@@ -2,14 +2,16 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNo
 import { ArrowRight, Box, FlaskConical, Github, LayoutGrid, Sigma } from 'lucide-react';
 import '@fontsource/noto-serif-sc/600.css';
 import './landing.css';
-import { isLandingHash, markLandingSeen, readLandingSeen, shouldShowLanding, slopeAfterLens, thinLensImage } from './landingModel';
+import { shouldShowLanding, slopeAfterLens, thinLensImage } from './landingModel';
 
 /** 开场动画总时长（ms）：光点 → 光束射入 → 聚焦 → 标题显现 */
 const INTRO_MS = 2200;
 const FOCUS_AT_MS = 1450;
-const LEAVE_MS = 450;
-/** 主按钮进入的场景：杨氏双缝 */
-const PRIMARY_TARGET = '#/scene/interference-0';
+const LEAVE_MS = 700;
+/** 主按钮进入场景目录，由用户自己挑选实验 */
+const PRIMARY_TARGET = '#/scenes';
+/** 网站主体背景色（styles.css 中 :root 的 background），离开过渡最终铺满此颜色 */
+const APP_BG = '#f3f4f7';
 const FOCAL_MM = 100;
 const RAY_COUNT = 13;
 /** 激光颜色（RGB），与 CSS 变量 --laser 保持一致 */
@@ -59,14 +61,18 @@ export function Landing({ playIntro, onEnter }: { playIntro: boolean; onEnter: (
   stageRef.current = stage;
   const pointer = useRef({ x: 0, y: 0, active: false, last: 0 });
 
+  const leaveRef = useRef<{ start: number; x: number; y: number } | null>(null);
+
   const skip = useCallback(() => {
     if (stageRef.current !== 'intro' && stageRef.current !== 'focus') return;
     startRef.current = performance.now() - INTRO_MS;
     setStage('ready');
   }, []);
 
-  const leave = useCallback((hash: string) => {
+  /** 离开：光从点击处扩散铺满屏幕（过渡到网站的浅色背景），再进入目标页面。 */
+  const leave = useCallback((hash: string, x: number, y: number) => {
     if (stageRef.current === 'leaving') return;
+    leaveRef.current = { start: performance.now(), x, y };
     setStage('leaving');
     window.setTimeout(() => onEnter(hash), reduced ? 0 : LEAVE_MS);
   }, [onEnter, reduced]);
@@ -262,12 +268,34 @@ export function Landing({ playIntro, onEnter }: { playIntro: boolean; onEnter: (
       const m = Number.isFinite(img.magnification) ? `${img.magnification > 0 ? '+' : '−'}${Math.abs(img.magnification).toFixed(2)}×` : '∞';
       const text = `f ${FOCAL_MM} mm · u ${formatMm(u, f)} mm · v ${formatMm(img.v, f)} mm · β ${m} · ${kindLabel}`;
       if (text !== readoutText && readoutRef.current) { readoutText = text; readoutRef.current.textContent = text; }
+
+      // 离开过渡：一圈光从点击处扩散，内部填充为网站的浅色背景
+      const lv = leaveRef.current;
+      if (lv && !reduced) {
+        const k = clamp((now - lv.start) / LEAVE_MS);
+        const reach = Math.hypot(Math.max(lv.x, w - lv.x), Math.max(lv.y, h - lv.y)) + 80;
+        const r = Math.max(1, reach * (k * k * (3 - 2 * k)));
+        const grad = ctx.createRadialGradient(lv.x, lv.y, 0, lv.x, lv.y, r);
+        grad.addColorStop(0, APP_BG);
+        grad.addColorStop(0.72, APP_BG);
+        grad.addColorStop(0.86, 'rgba(255,236,200,0.95)');
+        grad.addColorStop(1, rgba(0));
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(lv.x, lv.y, r, 0, Math.PI * 2); ctx.fill();
+      }
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
   }, [reduced, skipIntro]);
 
-  const go = (hash: string) => (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); leave(hash); };
+  const go = (hash: string) => (e: MouseEvent<HTMLElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    const box = e.currentTarget.getBoundingClientRect();
+    // 键盘触发时没有坐标，退回到按钮中心
+    const fromPointer = e.detail > 0;
+    leave(hash, fromPointer ? e.clientX : box.left + box.width / 2, fromPointer ? e.clientY : box.top + box.height / 2);
+  };
 
   return (
     <div className="landing" data-stage={stage} onClick={skip}>
@@ -284,7 +312,6 @@ export function Landing({ playIntro, onEnter }: { playIntro: boolean; onEnter: (
         <p className="landing__subtitle">看见光的每一次折射 —— 调参数、搭光路、问 AI，在浏览器里完成光学实验</p>
         <div className="landing__actions">
           <a className="landing__cta" href={PRIMARY_TARGET} onClick={go(PRIMARY_TARGET)}>开始实验<ArrowRight size={18} /></a>
-          <a className="landing__ghost" href="#/scenes" onClick={go('#/scenes')}>随便看看</a>
         </div>
         <nav className="landing__entries" aria-label="功能入口">
           {ENTRIES.map(({ hash, label, desc, Icon }) => (
@@ -301,25 +328,24 @@ export function Landing({ playIntro, onEnter }: { playIntro: boolean; onEnter: (
   );
 }
 
-/** 根据地址与访问记录决定显示引导页还是主应用。 */
+/** 访问首页（/、#/、#/home）时显示启动页，其余地址直接进入主应用。 */
 export function LandingGate({ children }: { children: ReactNode }) {
-  const [state, setState] = useState(() => {
-    const seen = readLandingSeen();
-    return { show: shouldShowLanding(window.location.hash, seen), intro: !seen, key: 0 };
-  });
+  // 打开网页时播放完整开场动画；在站内用「后退」回到首页时直接显示交互画面。
+  const [state, setState] = useState(() => ({ show: shouldShowLanding(window.location.hash), intro: true, key: 0 }));
 
   useEffect(() => {
-    const onHash = () => {
-      if (isLandingHash(window.location.hash)) setState(prev => prev.show ? prev : { show: true, intro: false, key: prev.key + 1 });
+    const onNav = () => {
+      const show = shouldShowLanding(window.location.hash);
+      setState(prev => prev.show === show ? prev : show ? { show, intro: false, key: prev.key + 1 } : { ...prev, show });
     };
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    window.addEventListener('hashchange', onNav);
+    window.addEventListener('popstate', onNav);
+    return () => { window.removeEventListener('hashchange', onNav); window.removeEventListener('popstate', onNav); };
   }, []);
 
   const enter = useCallback((hash: string) => {
-    markLandingSeen();
-    if (isLandingHash(window.location.hash)) window.location.hash = hash;
-    else window.history.replaceState(null, '', hash);
+    // 新增一条历史记录，浏览器「后退」可以回到启动页
+    if (window.location.hash !== hash) window.location.hash = hash;
     setState(prev => ({ ...prev, show: false }));
   }, []);
 

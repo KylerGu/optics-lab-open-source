@@ -1,25 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isLandingHash, markLandingSeen, readLandingSeen, shouldShowLanding, slopeAfterLens, thinLensImage } from './landingModel';
+import { shouldShowLanding, slopeAfterLens, thinLensImage } from './landingModel';
 
-test('首次访问根地址显示引导页，之后直接进入工作台', () => {
-  assert.equal(shouldShowLanding('', false), true);
-  assert.equal(shouldShowLanding('#/', false), true);
-  assert.equal(shouldShowLanding('', true), false);
-  assert.equal(shouldShowLanding('#/scenes', false), false);
-  assert.equal(shouldShowLanding('#/home', true), true);
-  assert.equal(isLandingHash('#/home/'), true);
-});
-
-test('访问标记读写，存储不可用时不抛错', () => {
-  const map = new Map<string, string>();
-  const storage = { getItem: (k: string) => map.get(k) ?? null, setItem: (k: string, v: string) => void map.set(k, v) };
-  assert.equal(readLandingSeen(storage), false);
-  markLandingSeen(storage);
-  assert.equal(readLandingSeen(storage), true);
-  const broken = { getItem: () => { throw new Error('denied'); }, setItem: () => { throw new Error('denied'); } };
-  assert.equal(readLandingSeen(broken), false);
-  assert.doesNotThrow(() => markLandingSeen(broken));
+test('每次访问首页都显示启动页，其他地址直接进入工作台', () => {
+  for (const hash of ['', '#', '#/', '#/home', '#/home/']) assert.equal(shouldShowLanding(hash), true, hash);
+  for (const hash of ['#/scenes', '#/scene/interference-0', '#/research']) assert.equal(shouldShowLanding(hash), false, hash);
 });
 
 test('薄透镜：二倍焦距成等大倒立实像，焦距内成放大虚像', () => {
