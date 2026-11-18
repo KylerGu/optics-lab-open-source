@@ -1,17 +1,14 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import { LandingGate } from './Landing';
 import './uiFonts';
-import './styles.css';
-import './workbench.css';
-import './gaussian-scene.css';
-import 'katex/dist/katex.min.css';
-import './readability.css';
-import './spatial-build.css';
-import './ui-consistency.css';
-import './type-scale.css';
-import './studio-split.css';
+
+// 立即开始加载主应用；引导页显示期间它会在后台下载完成。
+const appModule = import('./AppEntry');
+const App = lazy(() => appModule);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode><App /></React.StrictMode>,
+  <React.StrictMode>
+    <LandingGate><Suspense fallback={null}><App /></Suspense></LandingGate>
+  </React.StrictMode>,
 );
