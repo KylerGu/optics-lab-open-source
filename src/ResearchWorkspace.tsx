@@ -1,4 +1,4 @@
-import { builderConversationId } from './builderTabs';
+import { builderConversationId, type BuilderTab } from './builderTabs';
 import { createPortal } from 'react-dom';
 import { builderConversation, promoteBuilderConversation, sameApparatus, updateConversationObject, type BuilderConversationContext } from './researchConversation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
@@ -29,7 +29,7 @@ import { findResearchArchive, unlinkResearchStorage } from './researchBuilderLin
 import { researchBuilderKey, researchKeyMatchesProject, type ResearchBuilderOrigin } from './researchBuilderIdentity';
 import { readSavedSpatial } from './spatialStorage';
 
-interface Props { builderContext?: BuilderConversationContext | null; inBuilder?: boolean; visible?: boolean; builderReturnDraft?: { id: string; text: string } | null; onConsumeBuilderReturnDraft?: () => void; onOpenBuilder: (experiment?: SpatialExperiment, origin?: ResearchBuilderOrigin, guide?: ResearchVisualGuide) => void; onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void }
+interface Props { builderContext?: BuilderConversationContext | null; inBuilder?: boolean; studioSplit?: boolean; visible?: boolean; builderReturnDraft?: { id: string; text: string } | null; onConsumeBuilderReturnDraft?: () => void; onOpenBuilder: (experiment?: SpatialExperiment, origin?: ResearchBuilderOrigin, guide?: ResearchVisualGuide) => void; onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void; onSyncBuiltApparatus?: (experiment: SpatialExperiment, origin?: ResearchBuilderOrigin) => void }
 const STARTERS = [
   { title: '看懂一个现象', text: '为什么激光经过透镜后，光斑不是一直变小？请用一个简单的仿真实验帮我直观理解。', icon: CircleHelp },
   { title: '改变参数看看', text: '光束初始束腰越小，传播时扩展得越慢吗？请选择示范条件，比较两组结果，告诉我该观察哪里。', icon: BarChart3 },
@@ -37,9 +37,57 @@ const STARTERS = [
 ];
 
 
-export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builderReturnDraft = null, onConsumeBuilderReturnDraft, visible = true, builderContext = null, inBuilder = false }: Props) {
+function syncBuilderTabIntoProject(
+  targetProject: ResearchProject,
+  tab: BuilderTab,
+  boundObjectId?: string | null,
+): { project: ResearchProject; objectId: string | null; boundKey: string | null } {
+  const builderExp = tab.history.present;
+  if (!builderExp.elements.length) return { project: targetProject, objectId: null, boundKey: null };
+  const matched = targetProject.objects.find(o => sameApparatus(o.experiment, builderExp));
+  if (matched) {
+    const project = targetProject.activeObjectId === matched.id ? targetProject : { ...targetProject, activeObjectId: matched.id };
+    return {
+      project,
+      objectId: matched.id,
+      boundKey: researchBuilderKey({ projectId: targetProject.id, objectId: matched.id, savedId: null }),
+    };
+  }
+  const activeObj = targetProject.objects.find(o => o.id === targetProject.activeObjectId);
+  const updateTarget =
+    boundObjectId && activeObj?.id === boundObjectId
+      ? activeObj
+      : activeObj?.source === 'draft' && activeObj.sourceId === tab.id
+        ? activeObj
+        : targetProject.objects.find(o => o.source === 'draft' && o.sourceId === tab.id)
+          ?? (targetProject.objects.length >= MAX_RESEARCH_OBJECTS ? (activeObj ?? targetProject.objects[0]) : undefined);
+  if (updateTarget) {
+    const project = updateConversationObject(targetProject, updateTarget.id, builderExp);
+    return {
+      project,
+      objectId: updateTarget.id,
+      boundKey: researchBuilderKey({ projectId: targetProject.id, objectId: updateTarget.id, savedId: null }),
+    };
+  }
+  const addition = attachResearchObject({
+    source: tab.savedId ? 'saved' : 'draft',
+    sourceId: tab.savedId ?? tab.id,
+    label: tab.savedId ? '已保存装置' : '左侧工作台光路',
+    name: builderExp.name,
+    description: '当前左侧三维光路',
+    experiment: builderExp,
+  });
+  const project = { ...targetProject, objects: [...targetProject.objects, addition], activeObjectId: addition.id };
+  return {
+    project,
+    objectId: addition.id,
+    boundKey: researchBuilderKey({ projectId: targetProject.id, objectId: addition.id, savedId: null }),
+  };
+}
+
+export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, onSyncBuiltApparatus, builderReturnDraft = null, onConsumeBuilderReturnDraft, visible = true, builderContext = null, inBuilder = false, studioSplit = false }: Props) {
   const consumedReturnDraft = useRef<string | null>(null);
-  const layout = useResearchLayout();
+  const layout = useResearchLayout(studioSplit && !inBuilder);
   const [initial] = useState(readResearchStorage);
   const [savedApparatus, setSavedApparatus] = useState(() => { try { return readSavedSpatial(); } catch { return []; } });
   const [store, setStore] = useState<ResearchStorage>(() => {
@@ -62,7 +110,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
   const blockedBinding=!!(inBuilder&&(binding?.missing||binding?.ambiguous||binding?.conflict));
   const project = inBuilder&&builderContext?(binding?.selected?.project??standalone):(store.projects.find(p => p.id === store.selectedId) ?? store.projects[0]);
   const currentObject = project.objects.find(o => o.id === project.activeObjectId);
-  const latest = useRef({projects:[...store.projects,...detached],project,builderContext}); latest.current={projects:[...store.projects,...detached],project,builderContext};
+  const latest = useRef({projects:[...store.projects,...detached],project,builderContext,studioSplit,onSyncBuiltApparatus}); latest.current={projects:[...store.projects,...detached],project,builderContext,studioSplit,onSyncBuiltApparatus};
   const openModelSettings = useOpenModelSettings();
   const [configured, setConfigured] = useState<boolean | null>(null), [checking, setChecking] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null), [storageError, setStorageError] = useState(initial.warning);
@@ -139,6 +187,11 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
   useEffect(()=>{
     if(!builderContext)return;
     const selected=binding?.selected;
+    const activeKey=currentObject?researchBuilderKey({projectId:project.id,objectId:currentObject.id,savedId:null}):null;
+    if(studioSplit&&!inBuilder&&currentObject&&activeKey&&(!selected||selected.key!==activeKey)&&sameApparatus(currentObject.experiment,builderContext.tab.history.present)){
+      builderContext.bind(activeKey,builderContext.tab.history.present);
+      return;
+    }
     if(selected){
       // The builder follows its linked conversation without changing the research workspace selection.
       if(!binding?.conflict&&!binding?.missing){
@@ -150,7 +203,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
       const p=latest.current.projects.find(p=>p.id===standaloneId)??standalone;
       if(!detached.some(row=>row.id===p.id)||!sameApparatus(p.objects.find(o=>o.id===p.activeObjectId)?.experiment,builderContext.tab.history.present))changeProject(p.id,row=>updateConversationObject(row,row.activeObjectId!,builderContext.tab.history.present));
     }
-  },[builderContext,inBuilder,store.projects,standaloneId,detached]);
+  },[builderContext,inBuilder,studioSplit,project.id,currentObject,binding,store.projects,standaloneId,detached]);
   function unlinkBuilderReferences(matchKey: (key: string) => boolean) {
     if (latest.current.builderContext) latest.current.builderContext.unlink(matchKey);
     else unlinkResearchStorage(matchKey);
@@ -209,6 +262,9 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
       queueMicrotask(() => textarea.current?.focus());
     } else if (currentProject.draft.trim() !== builderReturnDraft.text.trim()) {
       setPendingReturnDraft({ projectId: currentProject.id, text: builderReturnDraft.text });
+      queueMicrotask(() => textarea.current?.focus());
+    } else {
+      queueMicrotask(() => textarea.current?.focus());
     }
     onConsumeBuilderReturnDraft?.();
   }, [visible, inBuilder, builderReturnDraft]);
@@ -275,6 +331,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
   function startNew() {
     if (!(project.id in running) && isBlankResearchProject(project)) {
       setError(null); setArtifactId(null); textarea.current?.focus();
+      if (studioSplit && !layout.leftHidden) layout.toggle('left');
       return;
     }
     const kept = store.projects.filter(p => (p.id in running) || !isBlankResearchProject(p));
@@ -282,11 +339,13 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
     const next = newResearchProject();
     setStore({ schemaVersion: 2, selectedId: next.id, projects: [next, ...kept] });
     setError(null); setArtifactId(null);
+    if (studioSplit && !layout.leftHidden) layout.toggle('left');
   }
   function selectProject(targetId: string) {
     setMenuId(null);
     setStore(s => selectResearchProject(s, targetId, running));
     setError(null); setArtifactId(null); setPickerOpen(false); setUpdate(null);
+    if (studioSplit && !layout.leftHidden) layout.toggle('left');
   }
   function chooseDevice() {
     if (project.objects.length >= MAX_RESEARCH_OBJECTS) { setError(`每项探究最多保留 ${MAX_RESEARCH_OBJECTS} 个对象，请先移除不用的对象。`); return; }
@@ -333,6 +392,15 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
     } catch (reason) { setError(reason instanceof SyntaxError ? '文件不是有效的装置 JSON，请重新选择。' : reason instanceof Error ? reason.message : '文件读取失败。'); }
   }
   function viewArtifact(id: string) { setArtifactId(records.find(record => record.id === id)?.primaryId ?? id); }
+  function bindLeftBuilderApparatus() {
+    if (!builderContext || busy) return;
+    const boundObjId = binding?.selected?.project.id === project.id ? binding.selected.object.id : null;
+    const synced = syncBuilderTabIntoProject(project, builderContext.tab, boundObjId);
+    if (!synced.boundKey) return;
+    if (synced.project !== project) changeProject(project.id, () => synced.project);
+    builderContext.bind(synced.boundKey, builderContext.tab.history.present);
+    setError(null);
+  }
   async function send(override?: string) {
     let current = latest.current.project;
     const message = (override ?? current?.draft ?? '').trim();
@@ -352,7 +420,22 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
       setStore(nextStore);setDetached(s=>s.filter(p=>p.id!==current.id));
       builderContext.bind(JSON.stringify([current.id,current.activeObjectId]),builderContext.tab.history.present);
     }
-    const linkedBuilder=builderContext&&(current.id==='builder:'+builderConversationId(builderContext.tab)||builderContext.tab.researchContext?.key===JSON.stringify([current.id,current.activeObjectId]));
+    let boundJustNow = false;
+    if (studioSplit && !inBuilder && builderContext && current.objects.length === 0 && builderContext.tab.history.present.elements.length > 0) {
+      const synced = syncBuilderTabIntoProject(current, builderContext.tab);
+      if (synced.boundKey) {
+        current = { ...synced.project, updatedAt: new Date().toISOString() };
+        latest.current = {
+          ...latest.current,
+          project: current,
+          projects: latest.current.projects.map(p => p.id === current.id ? current : p),
+        };
+        setStore(s => ({ ...s, projects: s.projects.map(p => p.id === current.id ? current : p) }));
+        builderContext.bind(synced.boundKey, builderContext.tab.history.present);
+        boundJustNow = true;
+      }
+    }
+    const linkedBuilder=boundJustNow||!!(builderContext&&(current.id==='builder:'+builderConversationId(builderContext.tab)||builderContext.tab.researchContext?.key===JSON.stringify([current.id,current.activeObjectId])));
     const id = crypto.randomUUID(), controller = new AbortController(), input = current.objects.find(o => o.id === current.activeObjectId)?.experiment ?? null;
     const keptSteps: AgentStep[] = [];
     const turnStartedAt = Date.now();
@@ -415,7 +498,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
         reply.answer+='\n\n'+(applied?'（修改已应用，后续交流使用新参数；前后计算分别保留原条件。保存装置存档请使用“保存装置”。）':reply.editsApplyAllowed===false?'（本轮任务未完整完成，修改未应用；已完成的候选计算保留，当前装置不变。）':'（本轮修改未应用：装置、关联或工作区已变化。当前参数保留；修改后读数仅对应候选方案，请按最新装置重试。）');
       }
       // An independent empty bench can receive its first verified apparatus.
-      const builtExperiment=build&&reply.objectSnapshots?.find(o=>o.id===build.objectId)?.experiment;
+      const builtExperiment=build&&(reply.objectSnapshots?.find(o=>o.id===build.objectId)?.experiment??(editedBuild?edit!.reply.experiment:build.reply.experiment));
       let buildApplied=false;
       if(build&&inBuilder&&current.id.startsWith('builder:')){
         const context=latest.current.builderContext;
@@ -430,6 +513,12 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
         const next=edit&&applied?updateConversationObject(retained,edit.objectId,edit.reply.experiment):retained;
         return {...next,turns:p.turns.map(t=>t.id===id?{...t,reply,durationMs,...(timeline.length?{steps:timeline}:{})}:t)};
       });
+      if(build&&!inBuilder&&builtExperiment&&reply.editsApplyAllowed!==false){
+        latest.current.onSyncBuiltApparatus?.(
+          structuredClone(builtExperiment),
+          current.id.startsWith('builder:') ? undefined : { projectId: current.id, objectId: build.objectId, savedId: null },
+        );
+      }
     } catch (reason) {
       if (controller.signal.reason === 'unmount' || controller.signal.reason === 'cancel' && active.current.get(current.id) !== controller) return;
       const failure = controller.signal.aborted ? controller.signal.reason === 'timeout' ? '模型长时间无响应，已停止。' : '已停止' : assistantErrorMessage(reason);
@@ -563,7 +652,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
   }
   const menuProject = store.projects.find(p => p.id === menuId) ?? null;
 
-  const content = <main ref={layout.workspace} style={layout.style} className={`research-workspace${inBuilder?' rw-builder-conversation':''}${emptyResearch || emptyBuilder ? ' rw-empty-chat' : ''}${layout.dragging ? ' rw-resizing' : ''}${layout.leftHidden ? ' rw-left-hidden' : ''}${layout.rightHidden ? ' rw-right-hidden' : ''}`} aria-label="实验探究工作区">
+  const content = <main ref={layout.workspace} style={layout.style} className={`research-workspace${inBuilder?' rw-builder-conversation':''}${studioSplit&&!inBuilder?' rw-studio-split':''}${emptyResearch || emptyBuilder ? ' rw-empty-chat' : ''}${layout.dragging ? ' rw-resizing' : ''}${layout.leftHidden ? ' rw-left-hidden' : ''}${layout.rightHidden ? ' rw-right-hidden' : ''}`} aria-label="实验探究工作区">
     <aside id="research-projects" className="rw-projects" hidden={layout.leftHidden}>
       <div className="rw-projects-title"><span><FolderOpen size={17}/>我的探究</span><button type="button" className="rw-panel-toggle" aria-label="收起我的探究" title="收起我的探究" aria-expanded aria-controls="research-projects" onClick={() => layout.toggle('left')}><PanelLeftClose size={18}/></button></div>
       <button className="rw-button rw-new-research" onClick={startNew}><Plus size={16}/>新建探究</button>
@@ -605,7 +694,7 @@ export default function ResearchWorkspace({ onOpenBuilder, onOpenFormula, builde
             <button type="button" className="is-muted" onClick={() => setPendingReturnDraft(null)}>忽略</button>
           </div>
         )}
-        <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" rows={emptyResearch ? 3 : inBuilder ? 2 : 1} value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button><span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button rw-send is-busy" type="button" onClick={stopResearch} aria-label="停止" title="停止"><LoaderCircle size={16}/></button> : <button className="rw-button rw-send rw-primary" type="submit" aria-label="发送" title="发送 (Ctrl/Cmd+Enter)" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}><ArrowUp size={16}/></button>}</div></form>
+        <form className="rw-composer" onSubmit={event => { event.preventDefault(); void send(); }}><label className="sr-only" htmlFor="research-prompt">探究问题</label><textarea ref={textarea} id="research-prompt" rows={emptyResearch ? 3 : inBuilder ? 2 : 1} value={project.draft} maxLength={2000} disabled={busy} onChange={event => setDraft(event.target.value)} placeholder={inBuilder ? (project.turns.length ? '哪里还没明白？也可以试着改变一个条件…' : '哪个光学现象让你困惑？直接说说你的问题…') : (project.turns.length ? '接着问，或改一个条件' : '说说你的光学问题')} onKeyDown={event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }}/><div className="rw-composer-actions"><button className="rw-text-button" type="button" disabled={busy} onClick={chooseDevice}><Paperclip size={16}/>选择装置</button>{studioSplit && !inBuilder && builderContext && currentObject && !sameApparatus(currentObject.experiment, builderContext.tab.history.present) && builderContext.tab.history.present.elements.length > 0 && <button className="rw-text-button" type="button" disabled={busy} onClick={bindLeftBuilderApparatus}><RefreshCw size={13}/>同步左栏</button>}<span>{checking ? '正在连接助手…' : ''}</span>{busy ? <button className="rw-button rw-send is-busy" type="button" onClick={stopResearch} aria-label="停止" title="停止"><LoaderCircle size={16}/></button> : <button className="rw-button rw-send rw-primary" type="submit" aria-label="发送" title="发送 (Ctrl/Cmd+Enter)" aria-keyshortcuts="Control+Enter" disabled={blockedBinding || !!(inBuilder&&builderContext?.editing) || !configured || !project.draft.trim()}><ArrowUp size={16}/></button>}</div></form>
       </div>
       <div className="rw-empty-tail">{emptyResearch && <div className="rw-starters">{STARTERS.map(item => { const Icon = item.icon; return <button key={item.title} type="button" disabled={busy} onClick={() => { setDraft(item.text); textarea.current?.focus(); }}><Icon size={20}/><strong>{item.title}</strong><ChevronRight size={15}/></button>; })}</div>}</div>
       </div>

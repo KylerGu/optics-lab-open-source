@@ -22,9 +22,10 @@ function readLayout() {
     return { left, right, leftHidden: saved?.leftHidden === true, rightHidden: chosen ? saved?.rightHidden === true : narrowRight(), rightChoice: chosen };
   } catch { return { ...DEFAULT, rightHidden: narrowRight() }; }
 }
-export function useResearchLayout() {
+export function useResearchLayout(studioSplit = false) {
   const workspace = useRef<HTMLElement>(null);
   const [panels, setPanels] = useState(readLayout);
+  const [splitHidden, setSplitHidden] = useState({ leftHidden: true, rightHidden: true });
   const [bounds, setBounds] = useState({ width: 1200, desktop: false });
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ side: Side; pointerId: number; x: number; width: number } | null>(null);
@@ -46,13 +47,25 @@ export function useResearchLayout() {
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
   }, []);
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(panels)); } catch { /* Optional preference. */ } }, [panels]);
+  const activeLeftHidden = studioSplit ? splitHidden.leftHidden : panels.leftHidden;
+  const activeRightHidden = studioSplit ? splitHidden.rightHidden : panels.rightHidden;
   const budget = Math.max(0, bounds.width - 360 - 18);
-  const desiredLeft = panels.leftHidden ? 0 : panels.left;
-  const desiredRight = panels.rightHidden ? 0 : panels.right;
+  const desiredLeft = activeLeftHidden ? 0 : panels.left;
+  const desiredRight = activeRightHidden ? 0 : panels.right;
   const scale = Math.min(1, budget / Math.max(1, desiredLeft + desiredRight));
   const widths = { left: Math.round(desiredLeft * scale), right: Math.floor(desiredRight * scale) };
   const maximum = (side: Side) => Math.max(MIN[side], Math.min(MAX[side], budget - widths[side === 'left' ? 'right' : 'left']));
-  const toggle = (side: Side) => setPanels(p => ({ ...p, [side + 'Hidden']: !p[side === 'left' ? 'leftHidden' : 'rightHidden'], ...(side === 'right' ? { rightChoice: true } : {}) }));
+  const toggle = (side: Side) => {
+    if (studioSplit) {
+      setSplitHidden(prev => (
+        side === 'left'
+          ? { leftHidden: !prev.leftHidden, rightHidden: true }
+          : { leftHidden: true, rightHidden: !prev.rightHidden }
+      ));
+      return;
+    }
+    setPanels(p => ({ ...p, [side + 'Hidden']: !p[side === 'left' ? 'leftHidden' : 'rightHidden'], ...(side === 'right' ? { rightChoice: true } : {}) }));
+  };
   function adjust(side: Side, value: number) {
     setPanels(p => {
       const choice = side === 'right' ? { rightChoice: true } : {};
@@ -98,7 +111,7 @@ export function useResearchLayout() {
       onDoubleClick: () => setPanels(p => ({ ...p, [side]: DEFAULT[side], [side + 'Hidden']: false, ...(side === 'right' ? { rightChoice: true } : {}) })),
     };
   }
-  return { workspace, dragging, leftHidden: panels.leftHidden, rightHidden: panels.rightHidden, toggle,
+  return { workspace, dragging, leftHidden: activeLeftHidden, rightHidden: activeRightHidden, toggle,
     style: { '--rw-projects-width': `${widths.left}px`, '--rw-inspector-width': `${widths.right}px` } as CSSProperties,
     leftSeparator: separator('left'), rightSeparator: separator('right') };
 }

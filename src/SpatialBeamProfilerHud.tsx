@@ -27,7 +27,7 @@ export default function SpatialBeamProfilerHud({
   selectedId,
   onSelectDetector,
 }: Props) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [palette, setPalette] = useState<ProfilerPalette>('inferno');
   const [zoomMode, setZoomMode] = useState<ProfilerZoomMode>('auto');
   const [preferredId, setPreferredId] = useState<string | null>(null);
@@ -115,7 +115,7 @@ export default function SpatialBeamProfilerHud({
         <div className="sb-profiler-title">
           <Crosshair size={13} />
           <span>CCD 光斑仪</span>
-          <span className="sb-profiler-mode">{field.modeLabel}</span>
+          {collapsed && <span className="sb-profiler-mode">{field.modeLabel}</span>}
         </div>
         <div className="sb-profiler-actions">
           {!collapsed && (
@@ -187,7 +187,10 @@ export default function SpatialBeamProfilerHud({
                 <polyline fill="none" stroke="currentColor" strokeWidth="1.4" points={vPoints} />
               </svg>
             </div>
-            <div className="sb-profiler-fov">视场 ±{field.extentMm.toFixed(2)} mm</div>
+            <div className="sb-profiler-fov">
+              <span className="sb-profiler-mode">{field.modeLabel}</span>
+              <span>视场 ±{field.extentMm.toFixed(2)} mm</span>
+            </div>
           </div>
 
           <div className="sb-profiler-metrics">

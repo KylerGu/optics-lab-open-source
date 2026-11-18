@@ -78,10 +78,12 @@
 
 /* Phase 1C: Live CCD Beam Profiler HUD */
 .sb-profiler-hud {
+  box-sizing: border-box;
   position: absolute;
   top: 17px;
   right: 136px;
   width: 212px;
+  max-width: calc(100% - 140px);
   padding: 10px 11px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.86);
@@ -127,6 +129,10 @@
   white-space: nowrap;
 }
 .sb-profiler-fov {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin-top: 3px;
   text-align: center;
   font-size: 10px;
