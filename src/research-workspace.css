@@ -878,3 +878,11 @@ button.rw-formula-card.is-clickable:hover {
   font-weight: 600;
   vertical-align: middle;
 }
+.research-workspace .rw-record-drawer tr.rw-scan-linked-row {
+  cursor: pointer;
+  transition: background-color 0.14s ease;
+}
+.research-workspace .rw-record-drawer tr.rw-scan-linked-row:hover td {
+  background: #eff6ff;
+  color: #0369a1;
+}

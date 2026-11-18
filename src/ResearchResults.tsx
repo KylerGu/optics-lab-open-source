@@ -119,12 +119,14 @@ function ResearchLineChart({
   yLabel,
   yUnit = '',
   highlightMin = true,
+  onHoverIndex,
 }: {
   points: Point[];
   xLabel: string;
   yLabel: string;
   yUnit?: string;
   highlightMin?: boolean;
+  onHoverIndex?: (index: number | null) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const gradId = useId();
@@ -221,8 +223,15 @@ function ResearchLineChart({
         viewBox={`0 0 ${width} 248`}
         role="img"
         aria-label={`${xLabel}与${yLabel}的实际计算比较，${values.length}个有效点`}
-        onMouseMove={event => setHoverIndex(nearestIndex(event))}
-        onMouseLeave={() => setHoverIndex(null)}
+        onMouseMove={event => {
+          const idx = nearestIndex(event);
+          setHoverIndex(idx);
+          onHoverIndex?.(idx);
+        }}
+        onMouseLeave={() => {
+          setHoverIndex(null);
+          onHoverIndex?.(null);
+        }}
         onClick={event => {
           const idx = nearestIndex(event);
           setPinnedIndex(prev => (prev === idx ? null : idx));
@@ -445,11 +454,15 @@ function ComparisonResults({
   comparison,
   artifact,
   onOpenFormula,
+  onHoverScanRow,
+  onSelectScanRow,
 }: {
   comparison: SpatialComparison;
   artifact: ResearchArtifact;
   baseline?: SpatialResult;
   onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void;
+  onHoverScanRow?: (comparison: SpatialComparison | null, rowValue: number | null) => void;
+  onSelectScanRow?: (comparison: SpatialComparison, rowValue: number) => void;
 }) {
   const screens = [...new Map(comparison.rows.flatMap(row => row.error ? [] : row.screens).map(s => [s.elementId, s])).values()];
   const [screenId, setScreenId] = useState(screens[0]?.elementId ?? '');
@@ -499,7 +512,7 @@ function ComparisonResults({
     {hasWave && <section className="rw-detail-section"><h3>波动计算读数</h3><p className="rw-result-note">取样点光强是相对值，不是功率；下方几何采样指标不能代替它。</p><div className="rw-table-wrap"><table><thead><tr><th>{fieldLabel}</th><th>屏上取样点 / mm</th><th>相对光强</th><th>到屏功率 / mW</th></tr></thead><tbody>{comparison.rows.map((row, i) => {
       const wave = row.error ? null : [row.fourier, row.fourF].find(w => w?.screenId === screenId);
       const probe = wave && ('observationUm' in wave.parameters ? wave.parameters.observationUm / 1000 : wave.parameters.observationMm);
-      return <tr key={i}><td>{formatNumber(row.value)}</td><td>{probe == null ? '—' : formatNumber(probe)}</td><td>{wave ? formatNumber(wave.pointIntensity) : '—'}</td><td>{wave ? formatNumber(wave.capturedPowerMw) : '—'}</td></tr>;
+      return <tr key={i} className={onHoverScanRow || onSelectScanRow ? 'rw-scan-linked-row' : undefined} onMouseEnter={() => onHoverScanRow?.(comparison, row.value)} onMouseLeave={() => onHoverScanRow?.(comparison, null)} onClick={() => onSelectScanRow?.(comparison, row.value)}><td>{formatNumber(row.value)}</td><td>{probe == null ? '—' : formatNumber(probe)}</td><td>{wave ? formatNumber(wave.pointIntensity) : '—'}</td><td>{wave ? formatNumber(wave.capturedPowerMw) : '—'}</td></tr>;
     })}</tbody></table></div><p className="rw-result-note">傅里叶光强相对频谱中心；4f光强相对输入中心。— 表示该点未得到有效波动结果。</p></section>}
     {(screens.length > 1 || availableMetrics.length > 1) && (
       <div className="rw-chart-controls">
@@ -511,7 +524,7 @@ function ComparisonResults({
     )}
     <ResultHighlights items={comparisonHighlightCards(readings, baseUnit, fieldLabel)} />
     {hasRowIssues && <p className="rw-result-alert">有效读数 {readings.length} / {comparison.rows.length}；存在警告的点 {comparison.rows.filter(r => r.warnings.length).length} 个，无法计算的点 {comparison.rows.filter(r => r.error).length} 个。</p>}
-    <ResearchLineChart points={chartPoints} xLabel={fieldLabel} yLabel={label} yUnit={display.unit} highlightMin={metric !== 'sampledPowerMw'} />
+    <ResearchLineChart points={chartPoints} xLabel={fieldLabel} yLabel={label} yUnit={display.unit} highlightMin={metric !== 'sampledPowerMw'} onHoverIndex={idx => onHoverScanRow?.(comparison, idx !== null ? comparison.rows[idx]?.value ?? null : null)} />
     <ResultDetails artifact={artifact} metric={metric} onOpenFormula={onOpenFormula}>
       <section className="rw-detail-section">
         <div className="rw-detail-section-head">
@@ -528,7 +541,8 @@ function ComparisonResults({
                 : row.warnings.length ? <span className="rw-status-pill is-warn">警告</span>
                 : value == null ? <span className="rw-status-pill is-muted">无读数</span>
                 : <span className="rw-status-pill is-ok">✓</span>;
-              return <tr key={i} className={isMin ? 'rw-result-min' : undefined}><td>{formatCompact(row.value, 4)}{isMin && <span className="rw-table-tag">最小</span>}</td><td>{value == null ? '—' : formatScaled(value, display)}</td>{hasRowIssues && <td>{badge}</td>}</tr>;
+              const rowClass = [isMin ? 'rw-result-min' : '', onHoverScanRow || onSelectScanRow ? 'rw-scan-linked-row' : ''].filter(Boolean).join(' ') || undefined;
+              return <tr key={i} className={rowClass} title={onHoverScanRow || onSelectScanRow ? '悬停在左侧 3D 画布预览该参数对应的空间分身，点击直接应用到光路' : undefined} onMouseEnter={() => onHoverScanRow?.(comparison, row.value)} onMouseLeave={() => onHoverScanRow?.(comparison, null)} onClick={() => onSelectScanRow?.(comparison, row.value)}><td>{formatCompact(row.value, 4)}{isMin && <span className="rw-table-tag">最小</span>}</td><td>{value == null ? '—' : formatScaled(value, display)}</td>{hasRowIssues && <td>{badge}</td>}</tr>;
             })}</tbody>
           </table>
         </div>
@@ -769,11 +783,15 @@ export default function ResearchResults({
   baseline,
   onOpenBuilder,
   onOpenFormula,
+  onHoverScanRow,
+  onSelectScanRow,
 }: {
   artifact: ResearchArtifact;
   baseline?: SpatialResult;
   onOpenBuilder: (input: SpatialExperiment) => void;
   onOpenFormula?: (preset: Omit<FormulaPresetRequest, 'id'>) => void;
+  onHoverScanRow?: (comparison: SpatialComparison | null, rowValue: number | null) => void;
+  onSelectScanRow?: (comparison: SpatialComparison, rowValue: number) => void;
 }) {
   const subtitle = artifactSubtitle(artifact);
   return <div className="rw-results" key={artifact.id}>
@@ -789,6 +807,6 @@ export default function ResearchResults({
         </button>
       )}
     </div>
-    {artifact.kind === 'model' ? <ModelResults artifact={artifact} onOpenFormula={onOpenFormula} /> : artifact.kind === 'objects' ? <ObjectComparisonResults artifact={artifact} rows={artifact.data} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} /> : artifact.kind === 'comparison' ? <ComparisonResults artifact={artifact} comparison={artifact.data} baseline={baseline} onOpenFormula={onOpenFormula} /> : artifact.kind === 'simulation' ? <SimulationResults artifact={artifact} data={artifact.data} onOpenFormula={onOpenFormula} /> : artifact.kind === 'design' ? <DesignResults artifact={artifact} design={artifact.data} input={artifact.input} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} /> : <StudyResults artifact={artifact} study={artifact.data} input={artifact.input} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} />}
+    {artifact.kind === 'model' ? <ModelResults artifact={artifact} onOpenFormula={onOpenFormula} /> : artifact.kind === 'objects' ? <ObjectComparisonResults artifact={artifact} rows={artifact.data} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} /> : artifact.kind === 'comparison' ? <ComparisonResults artifact={artifact} comparison={artifact.data} baseline={baseline} onOpenFormula={onOpenFormula} onHoverScanRow={onHoverScanRow} onSelectScanRow={onSelectScanRow} /> : artifact.kind === 'simulation' ? <SimulationResults artifact={artifact} data={artifact.data} onOpenFormula={onOpenFormula} /> : artifact.kind === 'design' ? <DesignResults artifact={artifact} design={artifact.data} input={artifact.input} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} /> : <StudyResults artifact={artifact} study={artifact.data} input={artifact.input} onOpenBuilder={onOpenBuilder} onOpenFormula={onOpenFormula} />}
   </div>;
 }

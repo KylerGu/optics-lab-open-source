@@ -3,6 +3,8 @@ import { builderConversationId, type BuilderTab } from './builderTabs';
 import type { ResearchProject } from './researchSession';
 import { researchBuilderKey } from './researchBuilderIdentity';
 import type { ResearchVisualGuide } from './researchVisual';
+import type { SpatialComparison } from './spatialAgent';
+import type { SpatialScanOverlay } from './spatialScanGhost';
 
 export interface BuilderConversationContext {
   tab: BuilderTab;
@@ -13,6 +15,8 @@ export interface BuilderConversationContext {
   bind: (key: string, baseline: SpatialExperiment) => void;
   unlink: (matchKey: (key: string) => boolean) => void;
   locate: (guide: ResearchVisualGuide) => void;
+  previewScan?: (overlay: SpatialScanOverlay | null) => void;
+  applyScanRow?: (comparison: SpatialComparison, rowValue: number) => boolean;
 }
 export const sameApparatus = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 

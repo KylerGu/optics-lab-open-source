@@ -12,7 +12,7 @@ import SpatialObjectPreview from './SpatialObjectPreview';
 import {objectPatternLines} from './spatialImaging';
 import {gratingMountRadius} from './amplitudeGrating';
 import {fourFOutputCanvas} from './SpatialFourFOutput';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
@@ -27,6 +27,7 @@ import { createInfiniteGrid } from './spatialGrid';
 import { createGaussianBeamMaterial } from './spatialBeamShader';
 import { wavelengthToRgb } from './spatialBeamProfiler';
 import { cleanElementDisplayName } from './researchUnits';
+import { buildScanGhostScene, type SpatialScanOverlay } from './spatialScanGhost';
 
 export type SpatialView = 'perspective'|'top'|'side';
 interface Props {
@@ -34,13 +35,15 @@ interface Props {
   experiment:SpatialExperiment; selectedId:string|null; rendered:boolean; result:SpatialResult|null;
   view:SpatialView; reset:number; tool:'translate'|'rotate'; showGrid:boolean; showBeam:boolean; darkroom?:boolean;
   axes:OpticalAxis[];showAxes:boolean;snapEnabled:boolean;
+  scanOverlay?:SpatialScanOverlay|null;
+  onClearScanOverlay?:()=>void;
   onSelect:(id:string|null)=>void; onEditing:(value:boolean)=>void;
   onTransform:(id:string,patch:Partial<SpatialElement>)=>void;
   onFocus?:(phase:FocusPhase,distance?:number,part?:CameraDragPart)=>void;
 }
 interface State {
   scene:THREE.Scene; camera:THREE.PerspectiveCamera; renderer:THREE.WebGLRenderer;
-  orbit:OrbitControls; transform:TransformControls; devices:THREE.Group; supports:THREE.Group; rays:THREE.Group; guides:THREE.Group;
+  orbit:OrbitControls; transform:TransformControls; devices:THREE.Group; supports:THREE.Group; rays:THREE.Group; guides:THREE.Group; ghosts:THREE.Group;
   rig:THREE.Group;housing:THREE.Group;environment:THREE.Texture;focus:ReturnType<typeof installMicroscopeControls>;
   grid:ReturnType<typeof createInfiniteGrid>; floor:THREE.Mesh; resize:()=>void;
 }
@@ -282,6 +285,8 @@ export default function SpatialBench(props:Props){
   const host=useRef<HTMLDivElement>(null),state=useRef<State|null>(null),latest=useRef(props);latest.current=props;
   const directionWidget=useRef<SVGSVGElement>(null),axisLabels=useRef<HTMLDivElement>(null);
   const componentLabels=useRef<HTMLDivElement>(null),hoveredId=useRef<string|null>(null);
+  const ghostBadges=useRef<HTMLDivElement>(null),ghostAnchors=useRef<{id:string;pos:THREE.Vector3}[]>([]);
+  const scanScene=useMemo(()=>props.scanOverlay&&!props.rendered?buildScanGhostScene(props.scanOverlay.comparison,props.scanOverlay.activeValue,props.experiment):null,[props.scanOverlay,props.experiment,props.rendered]);
   const objects=props.experiment.elements.filter(e=>e.kind==='object');
   const previewObject=objects.find(e=>e.id===props.selectedId)??objects[0];
   const microscopeCopy=props.experiment.presentation?.kind==='microscope'||props.experiment.name.startsWith('显微镜成像 · 器件副本');
@@ -310,12 +315,12 @@ export default function SpatialBench(props:Props){
     const grid=createInfiniteGrid();scene.add(grid);
     // Upward-facing floor only: retain shadows above, leave underside views unobstructed.
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(820,580).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:'#e5ebf2',roughness:.8,side:THREE.FrontSide}));floor.receiveShadow=true;scene.add(floor);
-    const devices=new THREE.Group(),supports=new THREE.Group(),rays=new THREE.Group(),guides=new THREE.Group(),rig=new THREE.Group(),housing=new THREE.Group();rig.add(devices,supports,rays,guides);scene.add(rig,housing);
+    const devices=new THREE.Group(),supports=new THREE.Group(),rays=new THREE.Group(),guides=new THREE.Group(),ghosts=new THREE.Group(),rig=new THREE.Group(),housing=new THREE.Group();rig.add(devices,supports,rays,guides,ghosts);scene.add(rig,housing);
     const transform=new TransformControls(camera,renderer.domElement);transform.setSize(.8);transform.setTranslationSnap(1);transform.setRotationSnap(Math.PI/180);scene.add(transform.getHelper());
     const resize=()=>{const rect=container.getBoundingClientRect();renderer.setSize(Math.max(rect.width,1),Math.max(rect.height,1));camera.aspect=Math.max(rect.width,1)/Math.max(rect.height,1);camera.zoom=THREE.MathUtils.clamp(camera.aspect*.8,.6,1.65);camera.updateProjectionMatrix();rays.traverse(child=>{if(child instanceof Line2)child.material.resolution.set(Math.max(rect.width,1),Math.max(rect.height,1));});};
     const observer=new ResizeObserver(resize);observer.observe(container);resize();
     const focus=installMicroscopeControls(renderer.domElement,camera,housing,orbit,()=>latest.current);
-    state.current={scene,camera,renderer,orbit,transform,devices,supports,rays,guides,rig,housing,grid,floor,resize,environment,focus};
+    state.current={scene,camera,renderer,orbit,transform,devices,supports,rays,guides,ghosts,rig,housing,grid,floor,resize,environment,focus};
     let cancelling=false,gizmoUsed=false;
     transform.addEventListener('dragging-changed',event=>{if(event.value)gizmoUsed=true;orbit.enabled=!event.value;latest.current.onEditing(!!event.value);});
     const pose=()=>{
@@ -391,6 +396,20 @@ export default function SpatialBench(props:Props){
           if(y<58||y>height-72){label.style.visibility='hidden';continue;}
           occupied.push({x,y,w});label.style.visibility='visible';label.style.left=x+'px';label.style.top=y+'px';
           label.style.setProperty('--leader-height',Math.max(12,below?y-anchorY:anchorY-y-32)+'px');
+        }
+      }
+      if(!latest.current.rendered&&ghostBadges.current){
+        const width=container.clientWidth,height=container.clientHeight;
+        const badges=Array.from(ghostBadges.current.children) as HTMLSpanElement[];
+        for(const badge of badges){
+          const anchor=ghostAnchors.current.find(a=>a.id===badge.dataset.ghostId);
+          if(!anchor){badge.style.visibility='hidden';continue;}
+          labelCenter.copy(anchor.pos).project(camera);
+          const x=(labelCenter.x+1)*width/2,y=(1-labelCenter.y)*height/2;
+          if(labelCenter.z<-1||labelCenter.z>1||x<-40||x>width+40||y<30||y>height-20){badge.style.visibility='hidden';continue;}
+          badge.style.visibility='visible';
+          badge.style.left=Math.max(72,Math.min(width-72,x))+'px';
+          badge.style.top=Math.max(92,Math.min(height-46,y))+'px';
         }
       }
       directions.forEach((direction,index)=>{
@@ -647,6 +666,115 @@ export default function SpatialBench(props:Props){
       const back=new THREE.Mesh(geometry.clone(),stripeMaterial.clone());back.position.addScaledVector(normal,-3*facing);s.rays.add(back);
     }
   },[props.result,props.rendered,props.showBeam,props.experiment,ready]);
+  // Phase 3: 3D Scan Ghost Trail & Ray Envelope
+  useEffect(()=>{
+    const s=state.current;if(!s)return;
+    clear(s.ghosts);ghostAnchors.current=[];
+    if(!scanScene||props.rendered)return;
+    const dark=!!props.darkroom;
+    const activeHex=dark?'#38bdf8':'#0284c7';
+    const bestHex=dark?'#34d399':'#059669';
+    const trailHex=dark?'#38bdf8':'#0284c7';
+    if(scanScene.trajectoryPoints.length>=2){
+      const trajPts=scanScene.trajectoryPoints.map(p=>world(p));
+      const trajLine=new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(trajPts),
+        new THREE.LineDashedMaterial({color:trailHex,dashSize:4,gapSize:3,transparent:true,opacity:dark?.55:.45,depthWrite:false}),
+      );
+      trajLine.computeLineDistances();trajLine.raycast=()=>{};s.ghosts.add(trajLine);
+    }
+    for(const ctxEl of scanScene.contextOptics){
+      const ctxObj=createSpatialOptic(ctxEl,false);
+      ctxObj.traverse(child=>{
+        child.raycast=()=>{};
+        if(child.name==='selection'){child.visible=false;return;}
+        if(child instanceof THREE.Mesh){
+          const old=child.material;(Array.isArray(old)?old:[old]).forEach(m=>m?.dispose());
+          child.material=new THREE.MeshBasicMaterial({color:trailHex,transparent:true,opacity:dark?.14:.16,depthWrite:false,side:THREE.DoubleSide});
+        }else if(child instanceof THREE.Line||child instanceof THREE.LineSegments||child instanceof THREE.LineLoop){
+          const old=child.material;(Array.isArray(old)?old:[old]).forEach(m=>m?.dispose());
+          child.material=new THREE.LineBasicMaterial({color:trailHex,transparent:true,opacity:.45,depthWrite:false});
+        }
+      });
+      s.ghosts.add(ctxObj);
+    }
+    for(const sample of scanScene.samples){
+      const colorHex=sample.role==='best'?bestHex:sample.role==='active'?(sample.isBest?bestHex:activeHex):trailHex;
+      if(scanScene.trajectoryPoints.length>=2){
+        const nodeR=sample.role==='active'?2.5:sample.role==='best'?2.2:1.35;
+        const nodeMesh=new THREE.Mesh(
+          new THREE.SphereGeometry(nodeR,12,8),
+          new THREE.MeshBasicMaterial({color:colorHex,transparent:true,opacity:sample.role==='trail'?.48:.92,depthWrite:false}),
+        );
+        nodeMesh.position.copy(world(sample.element.position));nodeMesh.raycast=()=>{};s.ghosts.add(nodeMesh);
+      }
+      if(!(sample.role==='trail'&&sample.overlapWithLive)){
+        const ghostObj=createSpatialOptic(sample.element,false);
+        const meshOpacity=sample.role==='active'?(dark?.3:.26):sample.role==='best'?(dark?.2:.18):(dark?.09:.1);
+        const lineOpacity=sample.role==='active'?.94:sample.role==='best'?.86:.35;
+        ghostObj.traverse(child=>{
+          child.raycast=()=>{};
+          if(child.name==='selection'){child.visible=false;return;}
+          if(child instanceof THREE.Mesh){
+            const old=child.material;(Array.isArray(old)?old:[old]).forEach(m=>m?.dispose());
+            child.material=new THREE.MeshBasicMaterial({color:colorHex,transparent:true,opacity:meshOpacity,depthWrite:false,side:THREE.DoubleSide});
+          }else if(child instanceof THREE.Line||child instanceof THREE.LineSegments||child instanceof THREE.LineLoop){
+            const old=child.material;(Array.isArray(old)?old:[old]).forEach(m=>m?.dispose());
+            child.material=new THREE.LineBasicMaterial({color:colorHex,transparent:true,opacity:lineOpacity,depthWrite:false});
+          }
+        });
+        if(sample.role==='active'||sample.role==='best'){
+          const haloR=Math.max(12,(sample.element.diameterMm||40)/2+3);
+          const haloPts:THREE.Vector3[]=[];
+          for(let j=0;j<48;j++){const a=j/48*Math.PI*2;haloPts.push(new THREE.Vector3(0,Math.cos(a)*haloR,Math.sin(a)*haloR));}
+          const halo=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(haloPts),new THREE.LineBasicMaterial({color:colorHex,transparent:true,opacity:.92,depthWrite:false}));
+          halo.raycast=()=>{};ghostObj.add(halo);
+        }
+        if((sample.element.kind==='screen'||sample.element.kind==='power-meter'||sample.element.kind==='sensor')&&sample.spotRadiusMm!==null){
+          const spotR=Math.max(0.6,Math.min((sample.element.diameterMm||40)/2,visualBeamRadius(sample.spotRadiusMm)));
+          const spotPts:THREE.Vector3[]=[];
+          for(let j=0;j<40;j++){const a=j/40*Math.PI*2;spotPts.push(new THREE.Vector3(0,Math.cos(a)*spotR,Math.sin(a)*spotR));}
+          const spotRingGeo=new THREE.BufferGeometry().setFromPoints(spotPts);
+          const spotRingMat=new THREE.LineBasicMaterial({color:colorHex,transparent:true,opacity:sample.role==='trail'?.55:.96,depthWrite:false});
+          const spotFillMat=new THREE.MeshBasicMaterial({color:colorHex,transparent:true,opacity:sample.role==='active'?.42:sample.role==='best'?.34:.18,depthWrite:false,side:THREE.DoubleSide});
+          for(const sideX of [-1.85,1.85]){
+            const loop=new THREE.LineLoop(spotRingGeo.clone(),spotRingMat.clone());loop.position.x=sideX;loop.raycast=()=>{};ghostObj.add(loop);
+            const disc=new THREE.Mesh(new THREE.CircleGeometry(spotR,32),spotFillMat.clone());disc.rotation.y=Math.PI/2;disc.position.x=sideX;disc.raycast=()=>{};ghostObj.add(disc);
+          }
+          spotRingGeo.dispose();spotRingMat.dispose();spotFillMat.dispose();
+        }
+        s.ghosts.add(ghostObj);
+      }
+      if(sample.rayEnvelope.length>0&&props.showBeam){
+        const envMat=new THREE.LineDashedMaterial({color:colorHex,dashSize:5,gapSize:3.5,transparent:true,opacity:sample.role==='active'?(dark?.86:.76):(dark?.66:.56),depthWrite:false});
+        for(const seg of sample.rayEnvelope){
+          const start=world(seg.start),end=world(seg.end),dir=end.clone().sub(start).normalize();
+          const u=new THREE.Vector3().crossVectors(dir,Math.abs(dir.y)<.9?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1)).normalize();
+          const v=new THREE.Vector3().crossVectors(dir,u);
+          const visR=seg.beamRadiiMm.map(visualBeamRadius);
+          for(const [axisVec,sign] of [[u,1],[u,-1],[v,1],[v,-1]] as const){
+            const pts:THREE.Vector3[]=[];
+            for(let row=0;row<seg.beamRadiiMm.length;row++){
+              pts.push(start.clone().lerp(end,row/(seg.beamRadiiMm.length-1)).addScaledVector(axisVec,sign*visR[row]));
+            }
+            const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),envMat.clone());
+            line.computeLineDistances();line.raycast=()=>{};s.ghosts.add(line);
+          }
+          if(seg.waistPos&&seg.waistRadiusMm!==null){
+            const wp=world(seg.waistPos),wr=Math.max(1.8,visualBeamRadius(seg.waistRadiusMm)+1.2),wPts:THREE.Vector3[]=[];
+            for(let j=0;j<36;j++){const a=j/36*Math.PI*2;wPts.push(wp.clone().addScaledVector(u,Math.cos(a)*wr).addScaledVector(v,Math.sin(a)*wr));}
+            const wLoop=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(wPts),new THREE.LineDashedMaterial({color:colorHex,dashSize:2.5,gapSize:2,transparent:true,opacity:.85,depthWrite:false}));
+            wLoop.computeLineDistances();wLoop.raycast=()=>{};s.ghosts.add(wLoop);
+          }
+        }
+        envMat.dispose();
+      }
+      if(sample.role==='active'||sample.role==='best'){
+        const r=(sample.element.diameterMm||36)/2;
+        ghostAnchors.current.push({id:sample.role,pos:world(sample.element.position).add(new THREE.Vector3(0,r+10,0))});
+      }
+    }
+  },[scanScene,props.rendered,props.showBeam,props.darkroom,ready]);
   useEffect(()=>{
     const s=state.current;if(!s)return;s.resize();
     if(props.rendered&&!lastRendered.current)buildPose.current={position:s.camera.position.clone(),target:s.orbit.target.clone(),up:s.camera.up.clone()};
@@ -677,5 +805,5 @@ export default function SpatialBench(props:Props){
     if(props.view==='top')s.camera.up.set(0,0,-1);
     s.orbit.enableRotate=props.view==='perspective';s.orbit.update();
   },[props.view,props.reset,props.rendered,!!cutaway,!!telescope,!!cameraBody,ready]);
-  return <div className={`spatial-canvas ${props.rendered?'':'sb-principle-canvas'}`} ref={host} data-testid="spatial-bench" data-camera-housing={!!cameraBody}>{!props.rendered&&<><div className="sb-build-labels" ref={componentLabels} aria-label="光学元件定位">{props.experiment.elements.map((element,index)=>{const displayName=cleanElementDisplayName(element.name);return <button key={element.id} data-element={element.id} data-below={element.kind==='object'||element.kind==='eye'} className={element.id===props.selectedId?'selected':''} aria-label={`选择${displayName}`} aria-pressed={element.id===props.selectedId} onClick={()=>props.onSelect(element.id)}><span>{String(index+1).padStart(2,'0')}</span><strong>{displayName}</strong></button>;})}</div></>}{cutaway&&props.onFocus&&<MicroscopeFocusReadout layout={cutaway} onChange={distance=>props.onFocus?.('end',distance)}/>} {previewObject?.objectMode==='distant'?<SpatialDistantPreview object={previewObject} result={props.result?.imaging?.find(r=>r.objectId===previewObject.id)}/>:previewObject&&<SpatialObjectPreview observerKind={observerKind==='eye'||observerKind==='sensor'?observerKind:undefined} steady={!!cutaway} object={previewObject} image={props.result?.imaging?.find(r=>r.objectId===previewObject.id)?imageView(props.experiment,props.result.imaging.find(r=>r.objectId===previewObject.id)!,undefined,!!cutaway):null} warning={props.result?.imaging?.find(r=>r.objectId===previewObject.id)?.warnings[0]}/>}<div className="sb-coordinate-widget" hidden={!!cutaway} role="img" aria-label="世界坐标方向：红色 X 前后，绿色 Y 高度，蓝色 Z 左右；方向随视角转动" title="X · 前后　Y · 高度　Z · 左右"><span>坐标方向</span><svg ref={directionWidget} viewBox="0 0 108 98" aria-hidden="true">{(['X','Y','Z'] as const).map((axis,index)=><g key={axis} data-axis={axis} className={'sb-axis-'+axis.toLowerCase()}><line x1="54" y1="49" x2={index===0?87:54} y2={index===1?16:49}/><circle r="3" cx="54" cy="49" visibility="hidden"/><text x={index===0?98:54} y={index===1?5:49}>{axis}</text></g>)}</svg></div><div ref={axisLabels} className="sb-gizmo-labels" aria-hidden="true"><span className="sb-axis-x">X</span><span className="sb-axis-y">Y</span><span className="sb-axis-z">Z</span></div>{failed&&<div className="sb-webgl-error">浏览器无法显示三维画面，请开启硬件加速。装置仍可编辑和保存。</div>}</div>;
+  return <div className={`spatial-canvas ${props.rendered?'':'sb-principle-canvas'}`} ref={host} data-testid="spatial-bench" data-camera-housing={!!cameraBody}>{!props.rendered&&<><div className="sb-build-labels" ref={componentLabels} aria-label="光学元件定位">{props.experiment.elements.map((element,index)=>{const displayName=cleanElementDisplayName(element.name);return <button key={element.id} data-element={element.id} data-below={element.kind==='object'||element.kind==='eye'} className={element.id===props.selectedId?'selected':''} aria-label={`选择${displayName}`} aria-pressed={element.id===props.selectedId} onClick={()=>props.onSelect(element.id)}><span>{String(index+1).padStart(2,'0')}</span><strong>{displayName}</strong></button>;})}</div><div className="sb-ghost-badges" ref={ghostBadges} aria-hidden="true">{scanScene?.activeSample&&<span data-ghost-id="active" className={scanScene.activeSample.isBest?'is-best':'is-active'}>{scanScene.activeSample.badgeText}</span>}{scanScene?.bestSample&&<span data-ghost-id="best" className="is-best">{scanScene.bestSample.badgeText}</span>}</div>{scanScene&&<div className="sb-scan-ghost-pill" role="status"><span>👻 扫描分身 · {scanScene.elementName}</span>{scanScene.activeSample?<strong>{scanScene.activeSample.paramText}{scanScene.activeSample.metricText?` → ${scanScene.activeSample.metricText}`:''}</strong>:scanScene.bestSample?<em>★ 最优 {scanScene.bestSample.paramText}{scanScene.bestSample.metricText?` → ${scanScene.bestSample.metricText}`:''}</em>:<span>{scanScene.fieldLabel}（{props.scanOverlay?.comparison.rows.length??0} 点）</span>}{props.scanOverlay?.pinned&&props.onClearScanOverlay&&<button type="button" onClick={props.onClearScanOverlay}>关闭分身</button>}</div>}</>}{cutaway&&props.onFocus&&<MicroscopeFocusReadout layout={cutaway} onChange={distance=>props.onFocus?.('end',distance)}/>} {previewObject?.objectMode==='distant'?<SpatialDistantPreview object={previewObject} result={props.result?.imaging?.find(r=>r.objectId===previewObject.id)}/>:previewObject&&<SpatialObjectPreview observerKind={observerKind==='eye'||observerKind==='sensor'?observerKind:undefined} steady={!!cutaway} object={previewObject} image={props.result?.imaging?.find(r=>r.objectId===previewObject.id)?imageView(props.experiment,props.result.imaging.find(r=>r.objectId===previewObject.id)!,undefined,!!cutaway):null} warning={props.result?.imaging?.find(r=>r.objectId===previewObject.id)?.warnings[0]}/>}<div className="sb-coordinate-widget" hidden={!!cutaway} role="img" aria-label="世界坐标方向：红色 X 前后，绿色 Y 高度，蓝色 Z 左右；方向随视角转动" title="X · 前后　Y · 高度　Z · 左右"><span>坐标方向</span><svg ref={directionWidget} viewBox="0 0 108 98" aria-hidden="true">{(['X','Y','Z'] as const).map((axis,index)=><g key={axis} data-axis={axis} className={'sb-axis-'+axis.toLowerCase()}><line x1="54" y1="49" x2={index===0?87:54} y2={index===1?16:49}/><circle r="3" cx="54" cy="49" visibility="hidden"/><text x={index===0?98:54} y={index===1?5:49}>{axis}</text></g>)}</svg></div><div ref={axisLabels} className="sb-gizmo-labels" aria-hidden="true"><span className="sb-axis-x">X</span><span className="sb-axis-y">Y</span><span className="sb-axis-z">Z</span></div>{failed&&<div className="sb-webgl-error">浏览器无法显示三维画面，请开启硬件加速。装置仍可编辑和保存。</div>}</div>;
 }
