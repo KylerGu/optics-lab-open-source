@@ -42,10 +42,10 @@
 @media(max-height:800px){.gs-sidebar>.gs-readouts dl>div:last-child{grid-column:auto;display:block}.gs-sidebar>.gs-readouts dl>div:last-child dd{margin-top:4px}.gs-sidebar>.gs-readouts .gs-curvature dt{font-size:10px}}
 
 .gs-workspace{gap:0}
-.gs-panel-resizer{position:relative;flex:0 0 16px;cursor:col-resize;touch-action:none;outline:none;border-radius:5px}
-.gs-panel-resizer::before{content:'';position:absolute;left:6px;top:calc(50% - 24px);width:4px;height:48px;background:#c0cddd;border-radius:4px;transition:background .12s}
-.gs-panel-resizer:hover::before,.gs-panel-resizer:focus-visible::before,.gs-panel-resizing .gs-panel-resizer::before{background:#5b8fc2}
-.gs-panel-resizer:focus-visible{outline:2px solid #6e9aca;outline-offset:-3px}
+.gs-panel-resizer{position:relative;flex:0 0 10px;cursor:col-resize;touch-action:none;outline:none}
+.gs-panel-resizer::before{content:'';position:absolute;left:50%;top:50%;width:4px;height:42px;background:#2563eb;border-radius:999px;opacity:0;transform:translate(-50%,-50%) scaleY(.72);transition:opacity .16s ease,transform .16s ease,box-shadow .16s ease}
+.gs-panel-resizer:hover::before,.gs-panel-resizer:focus-visible::before,.gs-panel-resizing .gs-panel-resizer::before{opacity:1;transform:translate(-50%,-50%) scaleY(1);box-shadow:0 0 8px rgba(37,99,235,.28)}
+.gs-panel-resizer:focus-visible{outline:none}
 .gs-panel-resizing,.gs-panel-resizing *{cursor:col-resize!important;user-select:none!important}
 .gs-copy-button{display:flex;align-items:center;gap:7px;padding:5px 10px;border:1px solid #a9c5e3;border-radius:7px;background:#eaf3ff;color:#346794;font-size:13px;font-weight:550;white-space:nowrap}
 .gs-copy-button:hover{background:#dcecff;border-color:#7fa8d1}

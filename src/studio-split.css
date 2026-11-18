@@ -134,7 +134,7 @@
   min-width: 0;
   width: 100%;
   overflow: hidden;
-  background: #f3f6fa;
+  background: #f1f5f9;
 }
 
 .studio-split-shell[hidden] {
@@ -155,7 +155,7 @@
 }
 
 .studio-split-shell.is-split-active .studio-split-research {
-  flex: 0 0 calc(var(--studio-split-ratio, 0.44) * 100% - 5px);
+  flex: 0 0 calc(var(--studio-split-ratio, 0.44) * 100% - 4px);
 }
 
 .studio-split-shell.is-split-active .studio-split-builder {
@@ -191,16 +191,26 @@
 /* Resizer handle between 3D Builder (left) and Research (right) */
 .studio-split-resizer {
   position: relative;
-  flex: 0 0 10px;
+  flex: 0 0 8px;
   height: 100%;
   cursor: col-resize;
   touch-action: none;
-  background: #e8eef6;
-  border-left: 1px solid #d8e1ee;
-  border-right: 1px solid #d8e1ee;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  background: transparent;
+  border: 0;
   outline: none;
   z-index: 5;
+}
+
+.studio-split-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: #dde5f0;
+  transform: translateX(-50%);
+  transition: background-color 0.16s ease, width 0.16s ease;
 }
 
 .studio-split-resizer::after {
@@ -209,29 +219,31 @@
   top: 50%;
   left: 50%;
   width: 4px;
-  height: 48px;
+  height: 44px;
   border-radius: 999px;
-  background: #9fb2cc;
-  transform: translate(-50%, -50%);
-  transition: background-color 0.15s ease, height 0.15s ease;
+  background: #2563eb;
+  opacity: 0;
+  transform: translate(-50%, -50%) scaleY(0.72);
+  transition: opacity 0.16s ease, transform 0.16s ease, height 0.16s ease, box-shadow 0.16s ease;
 }
 
-.studio-split-resizer:hover,
-.studio-split-resizer:focus-visible,
-.studio-split-shell.is-resizing .studio-split-resizer {
-  background: #dce8fc;
-  border-color: #9ebef6;
+.studio-split-resizer:hover::before,
+.studio-split-resizer:focus-visible::before,
+.studio-split-shell.is-resizing .studio-split-resizer::before {
+  background: #60a5fa;
 }
 
 .studio-split-resizer:hover::after,
 .studio-split-resizer:focus-visible::after,
 .studio-split-shell.is-resizing .studio-split-resizer::after {
-  background: #2563eb;
-  height: 60px;
+  opacity: 1;
+  height: 52px;
+  transform: translate(-50%, -50%) scaleY(1);
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.32);
 }
 
 .studio-split-resizer:focus-visible {
-  box-shadow: inset 0 0 0 2px #2563eb;
+  box-shadow: none;
 }
 
 /* Compact adaptations inside the right Research pane when split */
@@ -291,9 +303,13 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
   display: inline-flex;
 }
 
+body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-conversation) .rw-main .rw-project-header,
 .research-workspace.rw-studio-split .rw-project-header {
-  padding: 5px 12px;
-  min-height: 42px;
+  padding: 0 14px;
+  height: 44px;
+  min-height: 44px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5ebf3;
   flex-shrink: 0;
 }
 
@@ -315,14 +331,17 @@ body .studio-split-shell .research-workspace.rw-studio-split:not(.rw-builder-con
 
 /* Compact adaptations inside the left 3D Builder pane when split */
 .studio-split-shell.is-split-active .studio-split-builder .sb-document-strip {
-  padding: 5px 12px;
-  min-height: 42px;
+  padding: 0 12px;
+  height: 44px;
+  min-height: 44px;
   gap: 6px 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  background: #ffffff;
+  border-bottom: 1px solid #e5ebf3;
 }
 
 .studio-split-shell.is-split-active .studio-split-builder .sb-document-tabs {
-  min-width: 160px;
+  min-width: 100px;
 }
 
 .studio-split-shell.is-split-active .studio-split-builder .sb-body {

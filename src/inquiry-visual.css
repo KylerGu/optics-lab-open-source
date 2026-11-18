@@ -514,13 +514,16 @@
   top: 50%;
   width: 3px;
   height: 44px;
-  border-radius: 3px;
-  background: #cbd5e1;
-  transform: translateY(-50%);
+  border-radius: 999px;
+  background: #2563eb;
+  opacity: 0;
+  transform: translateY(-50%) scaleY(0.72);
+  transition: opacity 0.16s ease, transform 0.16s ease;
 }
 .spatial-builder .sb-results-resizer:hover::after,
 .spatial-builder .sb-results-resizer:focus-visible::after {
-  background: #2563eb;
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
 }
 .spatial-builder .sb-results.sb-results-drawer .sb-results-heading {
   flex: none;

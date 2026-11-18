@@ -4,14 +4,16 @@
 .sb-resizable-body>.sb-right-panel{flex:none;min-width:0;min-height:0;display:flex}
 .sb-resizable-body>.sb-library[hidden],.sb-resizable-body>.sb-right-panel[hidden]{display:none}
 .sb-right-panel>.sb-inspector,.sb-right-panel>.sb-assistant{position:relative;inset:auto;width:100%;max-height:none;flex:1;box-shadow:none;min-width:0}
-.sb-panel-resizer{flex:0 0 12px;position:relative;touch-action:none;cursor:col-resize;outline-offset:-2px}
-.sb-panel-resizer:after{content:"";position:absolute;left:4px;top:50%;width:4px;height:44px;border-radius:4px;background:#b9cbe0;transform:translateY(-50%)}
-.sb-panel-resizer:hover:after,.sb-panel-resizer:focus-visible:after{background:#2563eb}
+.sb-panel-resizer{flex:0 0 10px;position:relative;touch-action:none;cursor:col-resize;outline:none}
+.sb-panel-resizer::before{content:"";position:absolute;top:12px;bottom:12px;left:50%;width:1px;background:transparent;transform:translateX(-50%);transition:background-color .15s ease}
+.sb-panel-resizer::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:42px;border-radius:999px;background:#2563eb;opacity:0;transform:translate(-50%,-50%) scaleY(.72);transition:opacity .16s ease,transform .16s ease,box-shadow .16s ease}
+.sb-panel-resizer:hover::before,.sb-panel-resizer:focus-visible::before,.sb-panel-resizing .sb-panel-resizer::before{background:rgba(59,130,246,.32)}
+.sb-panel-resizer:hover::after,.sb-panel-resizer:focus-visible::after,.sb-panel-resizing .sb-panel-resizer::after{opacity:1;transform:translate(-50%,-50%) scaleY(1);box-shadow:0 0 8px rgba(37,99,235,.28)}
 .sb-panel-resizing{user-select:none;cursor:col-resize}
 .sb-resizable-body .sb-stage-toolbar{height:auto;min-height:44px;flex-wrap:wrap;padding:4px 12px;gap:8px}
 
 /* Keep document actions beside the tabs so the canvas receives the freed height. */
-.sb-document-strip{display:flex;align-items:center;gap:12px;padding:5px 16px;min-height:42px;border-bottom:1px solid #e5ebf3;background:#f8fafc;flex-shrink:0;min-width:0}
+.sb-document-strip{display:flex;align-items:center;gap:12px;padding:0 16px;height:44px;min-height:44px;border-bottom:1px solid #e5ebf3;background:#ffffff;flex-shrink:0;min-width:0}
 .sb-document-strip .sb-document-tabs{flex:1;min-width:0;margin:0;padding:0;border:0}
 .sb-document-strip .sb-project-actions{flex-shrink:0;gap:6px}
 .sb-document-strip .sb-autosave{margin:0 6px}
