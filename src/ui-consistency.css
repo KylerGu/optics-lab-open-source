@@ -1,12 +1,16 @@
 /* Shared page chrome. Optical diagrams, quantity colors and 3D canvases keep
    their own presentation; these tokens only style navigation and reading UI. */
 :root {
+  --ui-font-sans: "Hanken Grotesk Variable", "Hanken Grotesk", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --ui-font-serif: "Source Serif 4", "Source Serif 4 Variable", "Noto Serif SC", "Songti SC", serif;
   --topbar-height: 52px;
   --ui-page: #f1f5f9;
   --ui-surface: #ffffff;
   --ui-soft: #f7f9fc;
-  --ui-text: #253d54;
-  --ui-muted: #5c6f83;
+  --ui-text: #172033;
+  --ui-body: #243044;
+  --ui-ink-serif: #29261b;
+  --ui-muted: #3e5168;
   --ui-border: #d8e2ed;
   --ui-accent: #2258cf;
   --ui-selected: #eaf0ff;
@@ -53,17 +57,17 @@
   background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px, 100% 100%;
   box-shadow: 0 2px 10px rgba(30, 64, 175, 0.04);
 }
-.sc-header h1, .fk-library-heading h1 { font-size: 24px; font-weight: 650; line-height: 1.4; margin: 0; letter-spacing: -.5px; }
-.sc-header .ui-page-description, .fk-library-heading .ui-page-description { margin: 4px 0 0; color: var(--ui-muted); font-size: 13.5px; line-height: 1.6; }
-.sc-search, .fk-search { min-height: 38px; width: 300px; max-width: 100%; padding: 7px 12px; border-color: var(--ui-border); border-radius: 8px; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: var(--ui-muted); box-shadow: var(--ui-shadow); }
+.sc-header h1, .fk-library-heading h1 { font-size: 24px; font-weight: 700; color: #172033; line-height: 1.4; margin: 0; letter-spacing: -.5px; }
+.sc-header .ui-page-description, .fk-library-heading .ui-page-description { margin: 4px 0 0; color: #334155; font-size: 14px; line-height: 1.65; }
+.sc-search, .fk-search { min-height: 38px; width: 300px; max-width: 100%; padding: 7px 12px; border-color: var(--ui-border); border-radius: 8px; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #475569; box-shadow: var(--ui-shadow); }
 .sc-search svg, .fk-search svg { flex-shrink: 0; }
-.sc-search input, .fk-search input { width: 100%; min-width: 0; font-size: 14px; color: var(--ui-text); }
+.sc-search input, .fk-search input { width: 100%; min-width: 0; font-size: 14px; color: #172033; }
 .sc-search:focus-within, .fk-search:focus-within { border-color: #8aa9e4; box-shadow: 0 0 0 3px #2258cf12; }
 .sc-search input:focus-visible, .fk-search input:focus-visible { outline: none; }
 .sc-layout, .fk-library-layout { grid-template-columns: 224px minmax(0, 1fr); gap: 24px; }
 .sc-category, .fk-library-category { min-height: 28px; margin: 0 0 16px; gap: 12px; }
-.sc-category h2, .fk-library-category > span { margin: 0; font-size: 16px; font-weight: 600; color: var(--ui-text); }
-.sc-category > span, .fk-library-category small { color: var(--ui-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.sc-category h2, .fk-library-category > span { margin: 0; font-size: 16px; font-weight: 650; color: #172033; }
+.sc-category > span, .fk-library-category small { color: #475569; font-size: 13px; font-variant-numeric: tabular-nums; }
 .sc-grid, .fk-library-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 20px; }
 .sc-card, .fk-library-item {
   border: 1px solid rgba(216, 226, 237, 0.9);
@@ -81,51 +85,60 @@
 .fk-library-item:hover .fk-item-open svg { transform: translateX(3px); }
 .sc-preview { aspect-ratio: 1.8; border-bottom-color: var(--ui-border); }
 .sc-card-body { padding: 20px; }
-.sc-card h3, .fk-library-item .fk-card-link h2 { color: var(--ui-text); font-size: 17px; line-height: 1.55; font-weight: 600; }
+.sc-card h3, .fk-library-item .fk-card-link h2 { color: #172033; font-size: 17px; line-height: 1.55; font-weight: 650; }
 .sc-card h3 { margin: 0 0 8px; }
-.sc-card p, .fk-card-link > p { color: var(--ui-muted); font-size: 14px; line-height: 1.75; }
+.sc-card p, .fk-card-link > p { color: #29261b; font-size: 14px; line-height: 1.75; }
 .sc-card p { min-height: 49px; margin: 0 0 16px; }
-.sc-open, .fk-card-link .fk-item-open { margin: 0; border-top: 1px solid #edf1f6; padding-top: 12px; color: var(--ui-accent); font-size: 13px; line-height: 1.6; font-weight: 500; }
+.sc-open, .fk-card-link .fk-item-open { margin: 0; border-top: 1px solid #edf1f6; padding-top: 12px; color: var(--ui-accent); font-size: 13px; line-height: 1.6; font-weight: 600; }
 .fk-card-link { grid-template-rows: minmax(53px, auto) minmax(49px, auto) minmax(90px, auto) auto; gap: 10px; padding: 20px; }
-.fk-formula-preview { border: 1px solid #e7edf5; background: var(--ui-soft); border-radius: 8px; color: #315e89; }
-.fk-favorite { color: var(--ui-muted); }
+.fk-formula-preview { border: 1px solid #e7edf5; background: var(--ui-soft); border-radius: 8px; color: #224d7a; }
+.fk-favorite { color: #475569; }
 .fk-favorite.is-saved { color: var(--ui-accent); }
 .sc-pagination { margin-top: 28px; gap: 20px; }
-.sc-pagination button { background: var(--ui-surface); color: var(--ui-text); border-color: var(--ui-border); border-radius: 8px; padding: 9px 16px; }
+.sc-pagination button { background: var(--ui-surface); color: #243044; border-color: var(--ui-border); border-radius: 8px; padding: 9px 16px; font-weight: 500; }
 .sc-pagination button:hover:not(:disabled) { background: var(--ui-selected); border-color: #b5c8eb; color: var(--ui-accent); }
-.sc-pagination button:disabled { color: var(--ui-muted); opacity: .55; background: #eef2f7; }
-.sc-empty, .fk-empty { padding: 56px 24px; border-color: var(--ui-border); background: var(--ui-surface); border-radius: var(--ui-radius); color: var(--ui-muted); line-height: 1.8; }
+.sc-pagination button:disabled { color: #64748b; opacity: .55; background: #eef2f7; }
+.sc-empty, .fk-empty { padding: 56px 24px; border-color: var(--ui-border); background: var(--ui-surface); border-radius: var(--ui-radius); color: #3e5168; line-height: 1.8; }
 
 /* Shared directory, including nested formula categories. */
 .scene-library .optics-directory { top: calc(var(--topbar-height, 52px) + 16px); max-height: calc(100dvh - var(--topbar-height, 52px) - 32px); }
 :is(.scene-library, .fk-library) .optics-directory { padding: 18px 10px; border-color: var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
-:is(.scene-library, .fk-library) .optics-directory h2 { color: var(--ui-text); font-size: 15px; padding: 0 10px 14px; }
-:is(.scene-library, .fk-library) .od-select { font-size: 14px; font-weight: 500; padding: 11px 10px; color: #485e75; border-radius: 7px; }
-:is(.scene-library, .fk-library) .od-select small { color: var(--ui-muted); font-size: 12px; min-width: 24px; text-align: center; font-variant-numeric: tabular-nums; }
-:is(.scene-library, .fk-library) .od-select.active { color: var(--ui-accent); background: var(--ui-selected); box-shadow: inset 3px 0 var(--ui-accent); font-weight: 600; }
+:is(.scene-library, .fk-library) .optics-directory h2 { color: #172033; font-size: 15px; font-weight: 650; padding: 0 10px 14px; }
+:is(.scene-library, .fk-library) .od-select { font-size: 14px; font-weight: 500; padding: 11px 10px; color: #243044; border-radius: 7px; }
+:is(.scene-library, .fk-library) .od-select small { color: #475569; font-size: 12px; min-width: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+:is(.scene-library, .fk-library) .od-select.active { color: var(--ui-accent); background: var(--ui-selected); box-shadow: inset 3px 0 var(--ui-accent); font-weight: 650; }
 :is(.scene-library, .fk-library) .od-select.active small { color: var(--ui-accent); }
 :is(.scene-library, .fk-library) .od-children .od-select { font-size: 13px; padding: 9px 8px; }
 
 /* Knowledge cards: readable explanations and consistently framed calculators. */
-.fk-library-breadcrumb .outline-button { border-color: var(--ui-border); border-radius: 8px; background: var(--ui-surface); color: var(--ui-accent); min-height: 40px; }
-.fk-knowledge-card { border-color: var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
-.fk-card-heading h2 { color: var(--ui-text); }
-.fk-card-heading > p, .fk-application p, .fk-conditions p, .fk-insight p { color: var(--ui-muted); font-size: 14px; line-height: 1.85; }
+.fk-library-breadcrumb .outline-button { border-color: var(--ui-border); border-radius: 8px; background: var(--ui-surface); color: var(--ui-accent); min-height: 40px; font-weight: 600; }
+.fk-library-breadcrumb .text-button { color: #243044; font-weight: 500; }
+.fk-knowledge-card { border-color: var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); color: #243044; }
+.fk-card-heading h2, .fk-knowledge-card h3, .fk-section-heading h3 { color: #172033; font-weight: 650; }
+.fk-card-heading > p { color: #334155; font-size: 14.5px; line-height: 1.8; }
+.fk-knowledge-card .fk-concept > p,
+.fk-knowledge-card .fk-symbols dd,
+.fk-knowledge-card .fk-symbols > p,
+.fk-knowledge-card .fk-conditions p,
+.fk-knowledge-card .fk-application p,
+.fk-knowledge-card .fk-insight p { color: #29261b; font-size: var(--ui-body-size, 15px); line-height: 1.85; }
+.fk-knowledge-card .fk-figure figcaption,
+.fk-knowledge-card .fk-calculator-note { color: #3e5168; }
 .fk-symbols > h3:not(:first-child) { margin: 20px 0 8px; }
-.fk-symbols > p { color: var(--ui-muted); font-size: 14px; line-height: 1.85; }
-.fk-symbols dd small, .fk-card-footer, .fk-calculator-note, .fk-calculator-result small { color: var(--ui-muted); font-size: 12px; }
+.fk-symbols dd small, .fk-card-footer, .fk-calculator-result small { color: #475569; font-size: 12px; }
 .fk-calculator { background: var(--ui-soft); border-color: var(--ui-border); padding: 20px; }
 .fk-detail-grid > .fk-calculator { align-self: start; margin-top: 0; }
-.fk-calculator-grid > label > span, .fk-solve-target { font-size: 13px; color: var(--ui-muted); }
-.fk-calculator-grid > label > div, .fk-solve-target select { border-color: #c9d5e3; border-radius: 7px; min-height: 38px; }
-.fk-calculator-grid input { padding: 9px 10px; font-size: 14px; color: var(--ui-text); }
-.fk-calculator-grid > label > div > span { font-size: 12px; color: var(--ui-muted); }
+.fk-knowledge-card .fk-calculator :is(.fk-solve-target, .fk-calculator-grid > label > span, .fk-calculator-result > span) { font-size: 13.5px; color: #243044; font-weight: 500; }
+.fk-knowledge-card .fk-calculator-grid > label > div, .fk-knowledge-card .fk-solve-target select { border-color: #c9d5e3; border-radius: 7px; min-height: 38px; color: #172033; font-weight: 500; }
+.fk-knowledge-card .fk-calculator-grid input,
+.fk-knowledge-card .fk-calculator-grid select { padding: 9px 10px; font-size: 14.5px; color: #172033; font-weight: 500; }
+.fk-calculator-grid > label > div > span { font-size: 12px; color: #475569; }
 .fk-calculator-grid > label > div:focus-within { border-color: #8aa9e4; box-shadow: 0 0 0 3px #2258cf12; }
 .fk-calculator-grid input:focus-visible { outline: none; }
 
 /* Scene page frames and parameter controls; never recolor scientific marks. */
-.gaussian-scene { background: var(--ui-page); }
-.gs-heading h1, .gs-heading .gs-title h1 { color: var(--ui-text); font-size: 17.5px; }
+.gaussian-scene { background: var(--ui-page); color: #172033; }
+.gs-heading h1, .gs-heading .gs-title h1 { color: #172033; font-size: 17.5px; font-weight: 650; }
 .gs-sidebar, .gs-visual { border-color: rgba(226, 232, 240, 0.85); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
 :is(.gaussian-scene, .gaussian-focus-scene) .gs-panel-resizer { position: relative; flex: 0 0 10px; cursor: col-resize; touch-action: none; outline: none; border-radius: 0; }
 :is(.gaussian-scene, .gaussian-focus-scene) .gs-panel-resizer::before { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 42px; background: #2563eb; border-radius: 999px; opacity: 0; transform: translate(-50%, -50%) scaleY(.72); transition: opacity .16s ease, transform .16s ease, box-shadow .16s ease; }
@@ -134,15 +147,23 @@
 :is(.gaussian-scene, .gaussian-focus-scene).gs-panel-resizing .gs-panel-resizer::before { opacity: 1; transform: translate(-50%, -50%) scaleY(1); box-shadow: 0 0 8px rgba(37, 99, 235, .28); }
 :is(.gaussian-scene, .gaussian-focus-scene) .gs-panel-resizer:focus-visible { outline: none; }
 .gs-sidebar-title, .gs-toolbar { border-bottom-color: #e5ebf3; }
-.gs-sidebar-title h2 { color: var(--ui-text); font-weight: 600; }
+.gs-sidebar-title h2, .gs-spot-heading h2 { color: #172033; font-weight: 650; }
+:is(.gaussian-scene, .optics-scene) :is(.gs-sidebar-scroll h3, .gs-readouts h3, .os-system-readouts > h3, .os-system-trend > h3, .os-refraction-trend > h3, .os-double-trend > h3, .os-lens-trend > h3, .os-microscope-observation h3, .os-energy h3),
+.gaussian-scene .gs-sidebar-scroll .gs-readouts h3 { color: #172033; font-weight: 600; }
+.gaussian-scene .gs-sidebar .gs-readouts dt { color: #334155; font-weight: 500; }
+.gs-parameter label > span { font-weight: 500; }
+.gs-number input { font-weight: 600; }
+:is(.gaussian-scene, .optics-scene) :is(.os-presets button, .gs-presets button:not(.selected), .gs-sidebar-footer .text-button) { color: #243044; font-weight: 500; }
+.gs-range-caption, .gs-sidebar-footer, .gs-visual-footer { color: #475569; }
 .gs-heading-actions button, .gs-presets button { border-color: var(--ui-border); border-radius: 7px; }
 .gs-heading-actions button:not(.icon-button) { min-height: 30px; padding: 4px 10px; }
 .gs-number { border-color: #c9d5e3; border-radius: 7px; background: var(--ui-soft); min-height: 34px; }
 .gs-number:focus-within { border-color: #8aa9e4; box-shadow: 0 0 0 3px #2258cf12; background: var(--ui-surface); }
 .gs-number input:focus-visible { outline: none; }
 .gs-sidebar-footer { background: var(--ui-soft); border-top-color: var(--ui-border); }
-.gs-spot-heading h2 { font-size: 15px; font-weight: 600; }
-.gs-spot-heading p, .gs-spot-caption, .gs-spot-reading small { font-size: 12px; color: var(--ui-muted); line-height: 1.7; }
+.gs-spot-heading h2 { font-size: 15px; }
+.gs-spot-heading p, .gs-spot-caption, .gs-spot-reading small { font-size: 12px; color: #3e5168; line-height: 1.7; }
+:is(.gaussian-scene, .optics-scene) :is(.gs-spot-caption, .os-result p, .os-double-results details > p, .os-lens-results details > p, .os-aperture-details > p, .os-aperture-help-text) { color: #29261b; }
 
 /* Standalone research workspace. Its embedded builder conversation is excluded. */
 .research-workspace:not(.rw-builder-conversation) { --rw-blue: var(--ui-accent); --rw-text: var(--ui-text); --rw-muted: var(--ui-muted); --rw-line: var(--ui-border); }
@@ -162,6 +183,116 @@
 .research-workspace:not(.rw-builder-conversation) .rw-user-message { background: var(--ui-soft); border-color: #e4eaf3; border-radius: var(--ui-radius); }
 .research-workspace:not(.rw-builder-conversation) .rw-user-message > span { font-size: 12px; color: var(--ui-muted); }
 .research-workspace:not(.rw-builder-conversation) .rw-starters button { border-color: var(--ui-border); border-radius: 10px; }
+
+/* Dual-font typography unification:
+ * - UI chrome / controls / tabs / headings / units: --ui-font-sans (Hanken Grotesk + Noto Sans SC)
+ * - Reading prose / physical explanations / numeric readouts: --ui-font-serif (Source Serif 4 + Noto Serif SC)
+ */
+.scene-catalog-page,
+.fk-library,
+.fk-drawer,
+.fqp-drawer,
+.gaussian-scene,
+.optics-scene,
+.coupling-plot .fiber-banner span,
+.fiber-modes-scene .gs-visual-footer,
+.malus-scene .fiber-banner {
+  font-family: var(--ui-font-sans);
+}
+
+/* Catalog & Formula Library reading descriptions and knowledge prose */
+.sc-header .ui-page-description,
+.fk-library-heading .ui-page-description,
+.sc-card p,
+.fk-card-link > p,
+.fqp-drawer .fqp-item-btn > p,
+.fk-card-heading > p,
+.fk-concept > p,
+.fk-insight p,
+.fk-symbols dt,
+.fk-symbols dd,
+.fk-symbols > p,
+.fk-conditions p,
+.fk-application p,
+.fk-figure figcaption,
+.fk-calculator-note,
+.os-symbol-formulas p,
+.os-symbol-formulas dd,
+.os-double-trend > p,
+.os-lens-trend > p,
+.os-microscope-trend p,
+.os-metric-note,
+.gs-region span,
+.gs-spot-caption,
+.os-result p,
+.os-double-results details > p,
+.os-lens-results details > p,
+.os-aperture-details > p,
+.os-aperture-help-text,
+.fiber-mode-summary p,
+.fiber-curve p,
+.fiber-hint,
+.fiber-conditions p,
+.gfocus-result-note {
+  font-family: var(--ui-font-serif);
+}
+
+.fqp-drawer .fqp-item-btn > p {
+  color: #29261b;
+}
+
+/* Keep inline unit / symbol sub-tags inside symbol definitions in UI sans */
+.fk-symbols dd small {
+  font-family: var(--ui-font-sans);
+}
+
+/* Real-time calculated numeric readouts across Formula Solver, Simulation Scenes, and Builder */
+.fk-calculator-result strong,
+.fk-multiple-results strong,
+.gs-primary-reading strong,
+.gaussian-scene .gs-readouts dd,
+.optics-scene .gs-readouts dd,
+.optics-scene dl dd,
+.gs-spot-reading strong,
+.fiber-mode-summary strong,
+.fiber-readings strong,
+.os-microscope-primary strong,
+.os-microscope-fields dd,
+.os-double-readouts dd,
+.os-lens-readouts dd,
+.os-aberration-readouts dd,
+.os-aberration-focal-readouts dd,
+.os-aperture-value,
+.os-energy > div strong,
+.optics-scene [data-testid="scene-metric-rmsRadius"],
+.spatial-builder .sb-screen-results strong,
+.spatial-builder .sb-meter-reading strong,
+.spatial-builder .sb-four-f-values strong,
+.spatial-builder .sb-lens-readings dd {
+  font-family: var(--ui-font-serif);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 600;
+}
+
+/* Keep nested unit labels next to numeric readouts crisp in UI sans */
+.fk-calculator-result small,
+.fk-multiple-results strong > small,
+.gs-primary-reading strong span,
+.gs-primary-reading strong small,
+:is(.gaussian-scene, .optics-scene) .gs-readouts dd span,
+:is(.gaussian-scene, .optics-scene) .os-double-readouts dd span,
+:is(.gaussian-scene, .optics-scene) .os-lens-readouts dd span,
+:is(.gaussian-scene, .optics-scene) .os-microscope-fields dd span,
+:is(.gaussian-scene, .optics-scene) .os-aberration-readouts dd span,
+:is(.gaussian-scene, .optics-scene) .os-microscope-primary strong small,
+:is(.gaussian-scene, .optics-scene) .os-aperture-value .os-aperture-unit,
+.gs-spot-reading strong span,
+.fiber-mode-summary strong small,
+.fiber-readings small {
+  font-family: var(--ui-font-sans);
+  font-weight: 400;
+  color: #475569;
+}
 
 @media(max-width:1100px) {
   .scene-catalog-page, .fk-library { padding: 24px; }

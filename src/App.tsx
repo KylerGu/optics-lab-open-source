@@ -71,6 +71,9 @@ export default function App() {
   useEffect(() => {
     saveSplitRatio(splitRatio);
   }, [splitRatio]);
+  useEffect(() => {
+    void import('./researchReadingFonts');
+  }, []);
   const selectStudioViewMode = useCallback((mode: StudioViewMode) => {
     setStudioViewMode(mode);
     saveStudioViewMode(mode);

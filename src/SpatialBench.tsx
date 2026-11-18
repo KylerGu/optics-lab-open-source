@@ -446,6 +446,7 @@ export default function SpatialBench(props:Props){
     s.renderer.toneMappingExposure=props.rendered?1:1.1;
     const darkroom=props.darkroom??false;
     s.renderer.setClearColor(darkroom?'#090d16':(props.rendered?'#edf2f6':'#f6f8fb'));
+    if(s.scene.fog instanceof THREE.Fog)s.scene.fog.color.set(darkroom?'#090d16':'#f6f8fb');
     (s.scene.children.find(c=>c instanceof THREE.HemisphereLight) as THREE.HemisphereLight).intensity=darkroom?(props.rendered?.28:.42):(props.rendered?.6:1.25);
     s.scene.environmentIntensity=darkroom?.55:(props.rendered?.75:.65);
     (s.scene.getObjectByName('key-light') as THREE.DirectionalLight).intensity=props.rendered?2.4:2.6;
@@ -488,13 +489,13 @@ export default function SpatialBench(props:Props){
     }
     s.grid.material.uniforms.strength.value=props.rendered?.045:.3;
     s.floor.visible=props.rendered;s.grid.visible=props.showGrid;
-  },[props.experiment,props.rendered,props.showGrid,ready]);
+  },[props.experiment,props.rendered,props.showGrid,props.darkroom,ready]);
   useEffect(()=>{
     const s=state.current;if(!s)return;
     const object=s.devices.children.find(child=>child.userData.elementId===props.selectedId);
     for(const child of s.devices.children){const selection=child.getObjectByName('selection');if(selection)selection.visible=!props.rendered&&child===object;}
     if(object&&!props.rendered){s.transform.attach(object);s.transform.setMode(props.tool);s.transform.showX=props.tool==='translate';s.transform.showY=true;s.transform.showZ=true;}else s.transform.detach();
-  },[props.selectedId,props.experiment,props.rendered,props.tool,props.showGrid,ready]);
+  },[props.selectedId,props.experiment,props.rendered,props.tool,props.showGrid,props.darkroom,ready]);
   useEffect(()=>{
     const s=state.current;if(!s)return;clear(s.guides);if(!props.showAxes||props.rendered)return;
     for(const axis of props.axes){
@@ -665,7 +666,7 @@ export default function SpatialBench(props:Props){
       const stripeMaterial=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,side:THREE.DoubleSide,depthWrite:false});s.rays.add(new THREE.Mesh(geometry,stripeMaterial));
       const back=new THREE.Mesh(geometry.clone(),stripeMaterial.clone());back.position.addScaledVector(normal,-3*facing);s.rays.add(back);
     }
-  },[props.result,props.rendered,props.showBeam,props.experiment,ready]);
+  },[props.result,props.rendered,props.showBeam,props.experiment,props.darkroom,ready]);
   // Phase 3: 3D Scan Ghost Trail & Ray Envelope
   useEffect(()=>{
     const s=state.current;if(!s)return;
