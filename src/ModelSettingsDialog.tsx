@@ -22,15 +22,43 @@ export const useOpenModelSettings = () => useContext(ModelSettingsContext);
 
 const CUSTOM_MODEL = "__custom__";
 
+async function fetchServerKeyReady(signal?: AbortSignal): Promise<boolean> {
+  try {
+    // Omit X-AI-* headers so the backend reports whether a server fallback key is active.
+    const response = await fetch("/api/agent/status", { signal });
+    if (!response.ok) return false;
+    const data: unknown = await response.json();
+    return Boolean(data && typeof data === "object" && "configured" in data && data.configured === true);
+  } catch {
+    return false;
+  }
+}
+
 export function ModelSettingsButton({ onClick }: { onClick: () => void }) {
   const [summary, setSummary] = useState(modelSettingsSummary);
+  const [serverReady, setServerReady] = useState(false);
   useEffect(() => listenModelSettings(() => setSummary(modelSettingsSummary())), []);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchServerKeyReady(controller.signal).then(ready => {
+      if (!controller.signal.aborted) setServerReady(ready);
+    });
+    return () => controller.abort();
+  }, []);
   const model = summary?.model;
-  const status = model ?? "未配置";
+  const ready = Boolean(model) || serverReady;
+  const status = model ?? (serverReady ? "演示密钥" : "未配置");
   const label = summary
     ? `模型设置，当前 ${summary.providerLabel} · ${summary.model}`
-    : "模型设置，尚未配置模型接口";
-  return <button type="button" className={`model-settings-entry${model ? " is-ready" : ""}`} onClick={onClick} aria-label={label} title={summary ? `${summary.providerLabel} · ${summary.model}` : undefined}>
+    : serverReady
+      ? "模型设置，当前使用站点演示密钥"
+      : "模型设置，尚未配置模型接口";
+  const title = summary
+    ? `${summary.providerLabel} · ${summary.model}`
+    : serverReady
+      ? "当前已开启演示密钥，可直接使用 AI 助手；点击可填入自己的密钥"
+      : undefined;
+  return <button type="button" className={`model-settings-entry${ready ? " is-ready" : ""}`} onClick={onClick} aria-label={label} title={title}>
     <KeyRound size={14} aria-hidden="true"/>
     <span className="model-settings-label">模型设置</span>
     <span className="model-settings-status"><i className="model-settings-dot" aria-hidden="true"/><span>{status}</span></span>
@@ -62,8 +90,18 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
   const [savedPersistence, setSavedPersistence] = useState<"local" | "session" | null>(null);
   const [reveal, setReveal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serverReady, setServerReady] = useState(false);
 
   const provider = getModelProvider(providerId);
+
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    void fetchServerKeyReady(controller.signal).then(ready => {
+      if (!controller.signal.aborted) setServerReady(ready);
+    });
+    return () => controller.abort();
+  }, [open]);
 
   useEffect(() => {
     const node = dialog.current;
@@ -161,6 +199,12 @@ export default function ModelSettingsDialog({ open, onClose }: { open: boolean; 
         <h2 id="model-settings-title">模型设置</h2>
         <button type="button" className="icon-button" aria-label="关闭模型设置" onClick={onClose}><X size={18}/></button>
       </div>
+
+      {serverReady && <p className="ms-server-notice" role="status">
+        {hasSaved
+          ? "当前优先使用你保存的浏览器密钥；若点击下方「清除」，将切回站点演示密钥。"
+          : "当前站点已开启演示体验密钥，无需配置即可直接使用 AI 助手；你也可以在下方填入自己的密钥。"}
+      </p>}
 
       <div className="ms-section">
         <div className="ms-field-head">

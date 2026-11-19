@@ -11,7 +11,15 @@ from pydantic import BaseModel, Field
 from .models import SimulationRequest
 from .optics import MODEL_VERSION, simulate
 from .agent import AgentError, AgentRequest, run_agent
-from .settings import ByokRejected, get_settings, production_mode, settings_for_request
+from .rate_limit import ServerKeyRateLimiter
+from .settings import (
+    ByokRejected,
+    get_settings,
+    production_mode,
+    server_key_rate_limits,
+    settings_for_request,
+    using_server_key,
+)
 from .research import FocusSearchRequest, search_focus
 from .tolerance import ToleranceRequest, run_tolerance
 from .spatial import SpatialRequest, trace
@@ -102,8 +110,39 @@ spatial_requests = {}
 spatial_requests_lock = Lock()
 scene_requests = {}
 scene_requests_lock = Lock()
+server_key_limiter = ServerKeyRateLimiter()
 STREAM_KEEPALIVE_SECONDS = 10
 UNCONFIGURED = "请先在「模型设置」中配置模型接口与密钥。"
+
+
+def _client_ip(request: Request) -> str:
+    headers = getattr(request, "headers", None)
+    if headers is not None:
+        forwarded = headers.get("x-forwarded-for", "")
+        if forwarded:
+            first = forwarded.split(",")[0].strip()
+            if first:
+                return first
+        real_ip = headers.get("x-real-ip", "").strip()
+        if real_ip:
+            return real_ip
+    client = getattr(request, "client", None)
+    host = getattr(client, "host", None)
+    return host or "unknown"
+
+
+def enforce_server_key_limit(request: Request) -> None:
+    if not using_server_key(getattr(request, "headers", None)):
+        return
+    minute_limit, ip_daily_limit, global_daily_limit = server_key_rate_limits()
+    message = server_key_limiter.consume(
+        _client_ip(request),
+        minute_limit=minute_limit,
+        ip_daily_limit=ip_daily_limit,
+        global_daily_limit=global_daily_limit,
+    )
+    if message is not None:
+        raise HTTPException(status_code=429, detail=message)
 
 
 def request_settings(request: Request, *, research=False, research_build=False):
@@ -327,6 +366,11 @@ async def spatial_agent_chat(document: SpatialAgentRequest, request: Request):
         if document.requestId in spatial_requests:
             spatial_agent_slots.release()
             raise HTTPException(status_code=409, detail='这条搭建请求已经在运行。')
+        try:
+            enforce_server_key_limit(request)
+        except HTTPException:
+            spatial_agent_slots.release()
+            raise
         spatial_requests[document.requestId] = stopped
     debug = DebugRun('builder', document, settings)
     emit_delta = _delta_emitter(events)
@@ -381,6 +425,11 @@ async def research_agent_chat(document: ResearchAgentRequest, request: Request):
         if document.requestId in research_requests:
             research_agent_slots.release()
             raise HTTPException(status_code=409, detail='这条研究请求已经在运行。')
+        try:
+            enforce_server_key_limit(request)
+        except HTTPException:
+            research_agent_slots.release()
+            raise
         research_requests[document.requestId] = stopped
     builder_settings = request_settings(request, research_build=True)
     debug = DebugRun('research', document, settings, builder_settings)
@@ -417,6 +466,11 @@ async def agent_chat(document: AgentRequest, request: Request):
         raise HTTPException(status_code=503, detail=UNCONFIGURED)
     if not agent_slots.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="助手正在处理其他请求，请稍后重试。")
+    try:
+        enforce_server_key_limit(request)
+    except HTTPException:
+        agent_slots.release()
+        raise
     started = time.monotonic()
     deadline_at = started + turn_limits.SCENE_TURN_SECONDS
 
@@ -484,6 +538,11 @@ async def scene_chat(document: SceneAgentRequest, request: Request):
         if document.requestId in scene_requests:
             agent_slots.release()
             raise HTTPException(status_code=409, detail='这条助教请求已经在运行。')
+        try:
+            enforce_server_key_limit(request)
+        except HTTPException:
+            agent_slots.release()
+            raise
         scene_requests[document.requestId] = stopped
     emit_delta = _delta_emitter(events)
     def report(step):

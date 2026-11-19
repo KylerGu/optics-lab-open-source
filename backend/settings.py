@@ -20,9 +20,13 @@ OPEN_MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
 LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 _CONFIG_KEYS = frozenset({
     "AI_API_KEY", "AI_MODEL", "AI_BASE_URL", "AI_REASONING_EFFORT", "AI_RESEARCH_REASONING_EFFORT",
-    "AI_RESEARCH_BUILD_REASONING_EFFORT", "AI_ALLOW_SERVER_KEY", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL",
+    "AI_RESEARCH_BUILD_REASONING_EFFORT", "AI_ALLOW_SERVER_KEY", "AI_SERVER_KEY_MINUTE_LIMIT",
+    "AI_SERVER_KEY_IP_DAILY_LIMIT", "AI_SERVER_KEY_DAILY_LIMIT", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL",
 })
 _TRUE_FLAGS = frozenset({"1", "true", "yes", "on"})
+_DEFAULT_SERVER_MINUTE_LIMIT = 20
+_DEFAULT_SERVER_IP_DAILY_LIMIT = 100
+_DEFAULT_SERVER_DAILY_LIMIT = 500
 
 
 def _is_local_base_url(base: str) -> bool:
@@ -119,6 +123,27 @@ def server_key_enabled() -> bool:
     return _setting(_file_values(), "AI_ALLOW_SERVER_KEY").lower() in _TRUE_FLAGS
 
 
+def _positive_int_setting(values, key: str, default: int) -> int:
+    raw = _setting(values, key)
+    if not raw:
+        return default
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return default
+    return max(0, parsed)
+
+
+def server_key_rate_limits() -> tuple[int, int, int]:
+    """Return (per_ip_minute, per_ip_daily, global_daily) caps; 0 disables a tier."""
+    values = _file_values()
+    return (
+        _positive_int_setting(values, "AI_SERVER_KEY_MINUTE_LIMIT", _DEFAULT_SERVER_MINUTE_LIMIT),
+        _positive_int_setting(values, "AI_SERVER_KEY_IP_DAILY_LIMIT", _DEFAULT_SERVER_IP_DAILY_LIMIT),
+        _positive_int_setting(values, "AI_SERVER_KEY_DAILY_LIMIT", _DEFAULT_SERVER_DAILY_LIMIT),
+    )
+
+
 def get_settings(*, research=False, research_build=False) -> Settings:
     values = _file_values()
     def setting(key, default=""):
@@ -151,6 +176,11 @@ def _header(headers, name):
 
 def _byok_requested(headers) -> bool:
     return any(_header(headers, name) for name in ("x-ai-key", "x-ai-base-url", "x-ai-model", "x-ai-reasoning"))
+
+
+def using_server_key(headers) -> bool:
+    """True when this request falls back to the server-configured AI key."""
+    return not _byok_requested(headers) and server_key_enabled()
 
 
 def _user_settings(headers) -> Settings:
